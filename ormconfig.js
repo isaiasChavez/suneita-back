@@ -5,7 +5,7 @@ module.exports = {
   username: process.env.TYPEORM_USERNAME,
   password: process.env.TYPEORM_PASSWORD,
   database: process.env.TYPEORM_DATABASE,
-  entities: [process.env.TYPEORM_ENTITIES],
+  entities: ['dist/**/*.entity.js'],
   migrationTableName: 'migrations',
   migrations: ['dist/database/migrations/*{.ts,.js}'],
   ssl: true,
@@ -20,5 +20,5 @@ module.exports = {
   cli: {
     migrationsDir: 'dist/database/migrations',
   },
-  // synchronize: true,
+  synchronize: true,
 };
