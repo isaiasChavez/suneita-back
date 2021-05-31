@@ -15,6 +15,7 @@ import { SesionModule } from './modules/user/sesion/sesion.module';
 import { RoleModule } from './modules/user/role/role.module';
 import { UploadModule } from './upload/upload.module';
 import { TargetModule } from './modules/target/target.module';
+import { SuscriptionModule } from './modules/suscription/suscription.module';
 
 
 @Module({
@@ -47,7 +48,7 @@ import { TargetModule } from './modules/target/target.module';
         },
       }),
     }),
-    ConfigModule, UserModule, TypeModule, AssetModule, TokenModule, SesionModule, RoleModule, UploadModule, TargetModule],
+    ConfigModule, UserModule, TypeModule, AssetModule, TokenModule, SesionModule, RoleModule, UploadModule, TargetModule, SuscriptionModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -17,7 +17,8 @@ import {
     UpdateUserDTO,
     UpdateUserAdminDTO,
     DeleteAdminUserDTO,
-    DeleteUserDTO
+    DeleteUserDTO,
+    CreateAdminDTO
 } from "./user.dto";
 import { validateOrReject } from "class-validator";
 
@@ -48,6 +49,9 @@ export class UserController {
     async findUserDetail(@Param("email") email): Promise<any> {
         return await this.userService.findUserDetail(email);
     }
+
+
+
 
     @Post("confirm")
     async confirmUserPassword(
@@ -94,6 +98,20 @@ export class UserController {
         try {
             await validateOrReject(newcreateSuperAdminDTO);
             return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            }
+        }
+
+    }
+    @Post("admin")
+    async createAdmin(@Body() createAdminDTO: CreateAdminDTO): Promise<any> {
+        let newcreateAdminDTO = new CreateAdminDTO(createAdminDTO)
+        try {
+            await validateOrReject(newcreateAdminDTO);
+            return await this.userService.createAdmin(newcreateAdminDTO);
         } catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {

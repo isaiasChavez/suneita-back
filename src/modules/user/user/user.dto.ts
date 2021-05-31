@@ -62,12 +62,17 @@ export class PasswordRecovery {
 
 }
 export class CreateSuperAdminDTO {
-    constructor({ name, lastname, email, password }) {
+    constructor({ name, lastname, email, password, passwordmaster }) {
         this.name = name;
         this.lastname = lastname
         this.email = email
+        this.passwordmaster = passwordmaster
         this.password = password
     }
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(12)
+    passwordmaster: string;
     @IsNotEmpty()
     @IsString()
     @MaxLength(100)
@@ -87,9 +92,9 @@ export class CreateSuperAdminDTO {
 }
 
 export class CreateAdminDTO {
-    constructor({ type, superAdmin, name, lastname, email, password }) {
-        this.type = type
-        this.superAdminUuid = superAdmin
+
+    constructor({ superAdminUuid, name, lastname, email, password }) {
+        this.superAdminUuid = superAdminUuid
         this.name = name;
         this.lastname = lastname
         this.email = email
@@ -98,9 +103,6 @@ export class CreateAdminDTO {
     @IsUUID()
     @IsNotEmpty()
     superAdminUuid: number;
-    @IsNumber()
-    @IsNotEmpty()
-    type: number;
     @IsNotEmpty()
     @IsString()
     @MaxLength(100)
@@ -120,8 +122,7 @@ export class CreateAdminDTO {
     password: string;
 }
 export class CreateUserDTO {
-    constructor({ type, adminUuid, name, lastname, email, password }) {
-        this.type = type
+    constructor({ adminUuid, name, lastname, email, password }) {
         this.adminUuid = adminUuid
         this.name = name;
         this.lastname = lastname
@@ -132,9 +133,6 @@ export class CreateUserDTO {
     @IsUUID()
     @IsNotEmpty()
     adminUuid: number;
-    @IsNumber()
-    @IsNotEmpty()
-    type: number;
     @IsNotEmpty()
     @IsString()
     @MaxLength(100)

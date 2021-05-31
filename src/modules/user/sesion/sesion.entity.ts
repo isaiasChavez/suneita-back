@@ -1,4 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
+import { Admin } from "../user/admin.entity";
+import { SuperAdmin } from "../user/superadmin.entity";
 import { User } from "../user/user.entity";
 
 @Entity({ schema: "Users" })
@@ -15,9 +17,19 @@ export class Sesion {
     @Column({ length: 200, nullable: true })
     playerId: string;
 
+    // @ManyToOne(
+    //     (type) => User,
+    //     (user) => user.sesion
+    // )
+    // user: User;
     @ManyToOne(
-        (type) => User,
-        (user) => user.sesion
+        (type) => Admin,
+        (admin) => admin.sesion
     )
-    user: User;
+    admin: Admin;
+    @ManyToOne(
+        (type) => SuperAdmin,
+        (superadmin) => superadmin.sesion
+    )
+    superadmin: Admin;
 }

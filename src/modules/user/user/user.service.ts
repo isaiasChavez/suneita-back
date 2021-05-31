@@ -221,18 +221,37 @@ export class UserService {
 
 
     async createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any> {
-        console.log({ createSuperAdminDTO })
+
+        if (createSuperAdminDTO.passwordmaster !== process.env.MASTER_PASS) {
+            return {
+                status: 1,
+            }
+        }
+        const existSuperAdmin = await this.adminRepository.findOne({
+            where: {
+                email: createSuperAdminDTO.email
+            }
+        })
+        if (existSuperAdmin) {
+            return {
+                status: 2
+            }
+        }
+
 
         const superAdminRole = await this.roleRepository.findOne({
             where: {
                 name: this.roles.SUPERADMIN
             }
         })
+
         const superAdminType = await this.roleRepository.findOne({
             where: {
                 name: this.types.SUPERADMIN
             }
         })
+
+
         try {
             const userPassword = await bcrypt.hash(createSuperAdminDTO.password, 12);
             let newUser = this.superAdminRepository.create({
@@ -261,19 +280,19 @@ export class UserService {
 
         //Verificar que el superadministrador exista
 
-        const superAdmin = this.superAdminRepository.findOne({
+        const superadmin = await this.superAdminRepository.findOne({
             where: {
                 uuid: createAdminDTO.superAdminUuid
             }
         })
 
-        if (!superAdmin) {
+        if (!superadmin) {
             return {
                 status: 1,
                 error: "No existe el superusuario"
             }
         }
-        const existUser = this.adminRepository.findOne({
+        const existUser = await this.adminRepository.findOne({
             where: {
                 email: createAdminDTO.email
             }
@@ -281,7 +300,8 @@ export class UserService {
         if (existUser) {
             return {
                 status: 2,
-                error: "Este email ya existe"
+                error: "Este email ya existe",
+                existUser
             }
         }
 
@@ -298,6 +318,7 @@ export class UserService {
         try {
             const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
             let newUser = this.adminRepository.create({
+                superadmin,
                 role: adminRole,
                 type: adminType,
                 name: createAdminDTO.name,
@@ -322,7 +343,7 @@ export class UserService {
 
     async create(createUserDTO: CreateUserDTO): Promise<any> {
         try {
-            const admin = this.adminRepository.findOne({
+            const admin = await this.adminRepository.findOne({
                 where: {
                     uuid: createUserDTO.adminUuid
                 }
@@ -331,11 +352,11 @@ export class UserService {
             if (!admin) {
                 return {
                     status: 1,
-                    error: "No existe el usuario"
+                    error: "No existe el administrador"
                 }
             }
 
-            const existUser = this.adminRepository.findOne({
+            const existUser = await this.userRepository.findOne({
                 where: {
                     email: createUserDTO.email
                 }
@@ -361,6 +382,7 @@ export class UserService {
             const userPassword = await bcrypt.hash(createUserDTO.password, 12);
 
             let newUser = this.userRepository.create({
+                admin,
                 role: userRole,
                 type: userType,
                 name: createUserDTO.name,
@@ -448,7 +470,7 @@ export class UserService {
         try {
             let response = {}
 
-            const admin = this.adminRepository.findOne({
+            const admin = await this.adminRepository.findOne({
                 where: {
                     uuid: updateUserDTO.adminUuid
                 }
@@ -458,7 +480,7 @@ export class UserService {
                 return { status: 1, msg: 'admin not found' };
             }
 
-            let user = await this.userRepository.findOne({
+            let user = await await this.userRepository.findOne({
                 where: { email: updateUserDTO.email },
             });
 
@@ -514,7 +536,7 @@ export class UserService {
     async deleteUserAdmin(deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
         try {
 
-            const superAdmin = this.superAdminRepository.findOne({
+            const superAdmin = await this.superAdminRepository.findOne({
                 where: {
                     uuid: deleteAdminUserDTO.superAdminUuid
                 }
@@ -557,7 +579,7 @@ export class UserService {
 
     async deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any> {
         try {
-            const admin = this.adminRepository.findOne({
+            const admin = await this.adminRepository.findOne({
                 where: {
                     uuid: deleteUserDTO.adminUuid
                 }
@@ -591,13 +613,16 @@ export class UserService {
 
     async requestPasswordReset(requestEmail: string): Promise<any> {
         try {
-            let response = { status: 0 };
 
+            let response = { status: 0 };
             const user = await this.userRepository.findOne({
                 where: { email: requestEmail },
             });
+            const admin = await this.adminRepository.findOne({
+                where: { email: requestEmail },
+            });
 
-            if (user) {
+            if (user || admin) {
                 let newToken = this.tokenRepository.create({
                     email: requestEmail,
                 });
@@ -617,11 +642,9 @@ export class UserService {
                         email: requestEmail,
                     },
                 });
-
             } else {
                 response = { status: 1 };
             }
-
             return response;
         } catch (err) {
             console.log("UserService - requestPasswordReset: ", err);
@@ -642,14 +665,14 @@ export class UserService {
 
             const jwtDecoded = await jwt.verify(
                 requestDTO.token,
-                "Bi0d3rmaTokenJWT."
+                process.env.TOKEN_SECRET
             );
 
             if (!jwtDecoded.token) {
                 response = { status: 10 };
             } else {
-                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.token);
 
+                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.token);
                 if (tokenExist) {
                     const passwordHashed = await bcrypt.hash(requestDTO.password, 12);
 

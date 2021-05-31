@@ -11,91 +11,144 @@ import {
 } from "./sesion.dto";
 import * as bcrypt from "bcrypt";
 import * as moment from "moment";
-
+import { Types } from '../../../types'
+import { Type } from "../type/type.entity";
+import { User } from "../user/user.entity";
+import { Admin } from "../user/admin.entity";
+import { SuperAdmin } from "../user/superadmin.entity";
 @Injectable()
 export class SesionService {
     constructor(
         @InjectRepository(Sesion) private sesionRepository: Repository<Sesion>,
-        // @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(Type) private typeRepository: Repository<Type>,
+        @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(Admin) private adminRepository: Repository<Admin>,
+        @InjectRepository(SuperAdmin) private superAdminRepository: Repository<SuperAdmin>,
         // @InjectRepository(Configuration)
         // private configurationRepository: Repository<Configuration>,
 
-    ) { }
+    ) {
+        this.types = {
+            ADMIN: "ADMIN",
+            SUPERADMIN: "SUPERADMIN",
+            USER: "USER"
+        }
+    }
+    types: Types
 
     async RequesLogin(requestDTO: ReuestSesionDTO): Promise<any> {
-        // try {
-        //     let response = null;
-        //     let user = await this.userRepository.findOne({
-        //         relations: [
-        //             "type",
-        //             "chain",
-        //             "clinic",
-        //             "business",
-        //             "city",
-        //             "delegation",
-        //             "position",
-        //         ],
-        //         where: { email: requestDTO.email, isActive: true },
-        //     });
-        //     if (user) {
+        try {
+            let response = null;
 
-        //         const match = await bcrypt.compare(requestDTO.password, user.password);
+            let user: Admin | SuperAdmin
+            const type = await this.typeRepository.findOne(requestDTO.type)
+            if (type.name === this.types.ADMIN) {
+                user = await this.adminRepository.findOne({
+                    relations: [
+                        "type", 'users'
+                    ],
+                    where: { email: requestDTO.email, isActive: true },
+                });
+            }
+            if (type.name === this.types.SUPERADMIN) {
+                user = await this.superAdminRepository.findOne({
+                    relations: [
+                        "type", 'admins'
+                    ],
+                    where: { email: requestDTO.email, isActive: true },
+                });
+            }
 
-        //         if (match) {
-        //             const sesionExist = await this.sesionRepository.findOne({
-        //                 where: { user: user },
-        //             });
+            if (!user) {
+                return {
+                    status: 1,
+                    msg: "user does't exist"
+                }
+            }
 
-        //             if (sesionExist) {
-        //                 await this.sesionRepository.remove(sesionExist);
-        //             }
+            const match = await bcrypt.compare(requestDTO.password, user.password);
 
-        //             const sesion = this.sesionRepository.create({
-        //                 user: user,
-        //             });
+            if (match) {
+                let sesionExist: Sesion
+                if (type.name === this.types.ADMIN) {
+                    sesionExist = await this.sesionRepository.findOne({
+                        where: { admin: user },
+                    });
+                }
+                if (type.name === this.types.SUPERADMIN) {
+                    sesionExist = await this.sesionRepository.findOne({
+                        where: { superadmin: user },
+                    });
+                }
 
-        //             // const userNotifications = await this.notificationRepository
-        //             //     .createQueryBuilder("not")
-        //             //     .select(["not.id"])
-        //             //     .innerJoin("not.user", "user", "user.email = :email", {
-        //             //         email: requestDTO.email,
-        //             //     })
-        //             //     .orderBy("not.id", "DESC")
-        //             //     .limit(10)
-        //             //     .getMany();
 
-        //             const loggedUser = await this.sesionRepository.save(sesion);
-        //             // const generalConfiguration = await this.configurationRepository.findOne(
-        //             //     1
-        //             // );
-        //             response = {
-        //                 profile: {
-        //                     token: loggedUser.id,
-        //                     name: user.name,
-        //                     lastName: user.lastName,
-        //                     email: user.email,
-        //                     type: user.type.id,
-        //                 },
-        //             };
-        //         } else {
-        //             response = { status: 2 };
-        //         }
-        //     } else {
-        //         response = { status: 1 };
-        //     }
+                if (sesionExist) {
+                    await this.sesionRepository.remove(sesionExist);
+                }
 
-        //     return response;
-        // } catch (err) {
-        //     console.log("SesionService - RequesLogin: ", err);
+                let sesion
+                if (type.name === this.types.ADMIN) {
+                    sesion = this.sesionRepository.create({
+                        admin: user,
+                    });
+                }
+                if (type.name === this.types.SUPERADMIN) {
+                    sesion = this.sesionRepository.create({
+                        superadmin: user,
+                    });
+                }
 
-        //     throw new HttpException(
-        //         {
-        //             status: HttpStatus.INTERNAL_SERVER_ERROR,
-        //             error: "Error requesting login",
-        //         },
-        //         500
-        //     );
-        // }
+
+                let childrens: User[] | Admin[]
+
+                if (type.name === this.types.ADMIN) {
+                    childrens = await this.userRepository.find({
+                        select: ["name", "lastname", "avatar", "uuid", "isActive"],
+                        where: {
+                            admin: user,
+                            isActive: true
+                        },
+                    });
+                }
+                if (type.name === this.types.SUPERADMIN) {
+                    childrens = await this.adminRepository.find({
+                        select: ["name", "lastname", "avatar", "uuid", "isActive"],
+                        where: {
+                            superadmin: user
+                        },
+                    });
+                }
+
+                const loggedUser = await this.sesionRepository.save(sesion);
+
+                response = {
+                    profile: {
+                        token: loggedUser.id,
+                        name: user.name,
+                        lastname: user.lastname,
+                        email: user.email,
+                        type: user.type.id,
+                        uuid: user.uuid,
+                        childrens,
+                    },
+                    status: 0
+                };
+            } else {
+                response = { status: 2, msg: "pass doesn't match" };
+            }
+
+            return response;
+        } catch (err) {
+            console.log("SesionService - RequesLogin: ", err);
+
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error requesting login",
+                },
+                500
+            );
+        }
     }
 
 
@@ -134,61 +187,6 @@ export class SesionService {
         // }
     }
 
-    async RequesLoginAdmin(requestDTO: ReuestSesionDTO): Promise<any> {
-        // try {
-        //     let response = null;
-        //     const user = await this.userRepository.findOne({
-        //         // relations: ["role"],
-        //         select: ["id", "email", "password", "name", "lastName"],
-        //         where: { email: requestDTO.email, role: 1 },
-        //     });
 
-        //     if (user) {
-        //         const match = await bcrypt.compare(requestDTO.password, user.password);
-
-        //         if (match) {
-        //             const sesionExist = await this.sesionRepository.findOne({
-        //                 where: { user: user },
-        //             });
-
-        //             if (sesionExist) {
-        //                 await this.sesionRepository.remove(sesionExist);
-        //             }
-
-        //             const sesion = this.sesionRepository.create({
-        //                 user: user,
-        //             });
-
-        //             const loggedUser = await this.sesionRepository.save(sesion);
-        //             const completeName =
-        //                 user.name.split(" ")[0] + " " + user.lastName.split(" ")[0];
-
-        //             response = {
-        //                 profile: {
-        //                     token: loggedUser.id,
-        //                     name: completeName,
-        //                     email: user.email,
-        //                 },
-        //             };
-        //         } else {
-        //             response = { status: 2 };
-        //         }
-        //     } else {
-        //         response = { status: 1 };
-        //     }
-
-        //     return response;
-        // } catch (err) {
-        //     console.log("SesionService - RequesLoginAdmin: ", err);
-
-        //     throw new HttpException(
-        //         {
-        //             status: HttpStatus.INTERNAL_SERVER_ERROR,
-        //             error: "Error requesting login",
-        //         },
-        //         500
-        //     );
-        // }
-    }
 
 }

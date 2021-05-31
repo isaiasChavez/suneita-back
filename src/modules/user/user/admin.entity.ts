@@ -13,6 +13,8 @@ import { Type } from "../type/type.entity";
 import { Role } from "../role/role.entity";
 import { Sesion } from "../sesion/sesion.entity";
 import { v4 as uuid } from "uuid";
+import { SuperAdmin } from "./superadmin.entity";
+import { User } from "./user.entity";
 
 @Entity({ schema: "Users" })
 export class Admin {
@@ -49,9 +51,18 @@ export class Admin {
     )
     role: Role;
 
+
+    @ManyToOne(() => SuperAdmin, superadmin => superadmin.admins)
+    superadmin: SuperAdmin;
+
+    @OneToMany(() => User, user => user.admin)
+    users: User[];
+
+
+
     @OneToMany(
         (type) => Sesion,
-        (sesion) => sesion.user
+        (sesion) => sesion.admin
     )
     sesion: Sesion[];
 
