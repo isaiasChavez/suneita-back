@@ -13,17 +13,28 @@ import {
     CreateUserDTO,
     ConfirmUserPassword,
     PasswordRecovery,
+    CreateSuperAdminDTO,
+    UpdateUserDTO,
+    CreateAdminDTO,
+    UpdateUserAdminDTO,
+    DeleteAdminUserDTO,
+    DeleteUserDTO
 } from "./user.dto";
 import { MailerService } from "@nestjs-modules/mailer";
 import * as jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
 import * as moment from "moment";
+import { Roles, Types } from "src/types";
+import { SuperAdmin } from "./superadmin.entity";
+import { Admin } from "./admin.entity";
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly mailerService: MailerService,
         @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(SuperAdmin) private superAdminRepository: Repository<SuperAdmin>,
+        @InjectRepository(Admin) private adminRepository: Repository<Admin>,
         // @InjectRepository(Target) private targetRepository: Repository<Target>,
         @InjectRepository(Token) private tokenRepository: Repository<Token>,
         @InjectRepository(Type) private typeRepository: Repository<Type>,
@@ -31,7 +42,21 @@ export class UserService {
         @InjectRepository(Sesion) private sesionRepository: Repository<Sesion>,
         // @InjectRepository(Configuration)
         // private configurationRepository: Repository<Configuration>
-    ) { }
+    ) {
+        this.roles = {
+            SUPERADMIN: "SUPERADMIN",
+            ADMIN: "ADMIN",
+            USER: "USER",
+        }
+        this.types = {
+            SUPERADMIN: "SUPERADMIN",
+            ADMIN: "ADMIN",
+            USER: "USER",
+        }
+
+    }
+    roles: Roles
+    types: Types
 
     async invite(request: InviteUserDTO): Promise<number> {
         try {
@@ -176,7 +201,7 @@ export class UserService {
                 profile: {
                     id: user.id,
                     name: user.name,
-                    lastName: user.lastName,
+                    lastname: user.lastname,
                     email: user.email,
                     type: user.type.id,
                 },
@@ -194,17 +219,158 @@ export class UserService {
         }
     }
 
+
+    async createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any> {
+        console.log({ createSuperAdminDTO })
+
+        const superAdminRole = await this.roleRepository.findOne({
+            where: {
+                name: this.roles.SUPERADMIN
+            }
+        })
+        const superAdminType = await this.roleRepository.findOne({
+            where: {
+                name: this.types.SUPERADMIN
+            }
+        })
+        try {
+            const userPassword = await bcrypt.hash(createSuperAdminDTO.password, 12);
+            let newUser = this.superAdminRepository.create({
+                role: superAdminRole,
+                type: superAdminType,
+                name: createSuperAdminDTO.name,
+                lastname: createSuperAdminDTO.lastname,
+                email: createSuperAdminDTO.email,
+                password: userPassword,
+            });
+            await this.superAdminRepository.save(newUser);
+            return { status: 0 };
+        } catch (err) {
+            console.log("UserService - create: ", err);
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error creting users",
+                },
+                500
+            );
+        }
+    }
+    async createAdmin(createAdminDTO: CreateAdminDTO): Promise<any> {
+
+
+        //Verificar que el superadministrador exista
+
+        const superAdmin = this.superAdminRepository.findOne({
+            where: {
+                uuid: createAdminDTO.superAdminUuid
+            }
+        })
+
+        if (!superAdmin) {
+            return {
+                status: 1,
+                error: "No existe el superusuario"
+            }
+        }
+        const existUser = this.adminRepository.findOne({
+            where: {
+                email: createAdminDTO.email
+            }
+        })
+        if (existUser) {
+            return {
+                status: 2,
+                error: "Este email ya existe"
+            }
+        }
+
+        const adminRole = await this.roleRepository.findOne({
+            where: {
+                name: this.roles.ADMIN
+            }
+        })
+        const adminType = await this.roleRepository.findOne({
+            where: {
+                name: this.types.SUPERADMIN
+            }
+        })
+        try {
+            const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
+            let newUser = this.adminRepository.create({
+                role: adminRole,
+                type: adminType,
+                name: createAdminDTO.name,
+                lastname: createAdminDTO.lastname,
+                email: createAdminDTO.email,
+                password: userPassword,
+            });
+            await this.adminRepository.save(newUser);
+
+            return { status: 0 };
+        } catch (err) {
+            console.log("UserService - create: ", err);
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error creting users",
+                },
+                500
+            );
+        }
+    }
+
     async create(createUserDTO: CreateUserDTO): Promise<any> {
         try {
+            const admin = this.adminRepository.findOne({
+                where: {
+                    uuid: createUserDTO.adminUuid
+                }
+            })
+
+            if (!admin) {
+                return {
+                    status: 1,
+                    error: "No existe el usuario"
+                }
+            }
+
+            const existUser = this.adminRepository.findOne({
+                where: {
+                    email: createUserDTO.email
+                }
+            })
+            if (existUser) {
+                return {
+                    status: 2,
+                    error: "Este email ya existe"
+                }
+            }
+
+            const userRole = await this.roleRepository.findOne({
+                where: {
+                    name: this.roles.ADMIN
+                }
+            })
+            const userType = await this.roleRepository.findOne({
+                where: {
+                    name: this.types.SUPERADMIN
+                }
+            })
+
             const userPassword = await bcrypt.hash(createUserDTO.password, 12);
-            let newUser = await this.userRepository.create({
+
+            let newUser = this.userRepository.create({
+                role: userRole,
+                type: userType,
                 name: createUserDTO.name,
-                lastName: createUserDTO.lastName,
+                lastname: createUserDTO.lastname,
                 email: createUserDTO.email,
                 password: userPassword,
             });
 
             await this.userRepository.save(newUser);
+
             return { status: 0 };
         } catch (err) {
             console.log("UserService - create: ", err);
@@ -219,17 +385,196 @@ export class UserService {
         }
     }
 
-
-    async deleteUser(requestEmail: string): Promise<any> {
+    async updateAdminUser(
+        updateUserAdminDTO: UpdateUserAdminDTO
+    ): Promise<any> {
         try {
-            let userToDelete = await this.userRepository.findOne({
-                where: { email: requestEmail },
+            let response = {}
+
+            let user = await this.userRepository.findOne({
+                where: { uuid: updateUserAdminDTO.adminUuid },
             });
 
+            if (!user) {
+                response = { status: 1, msg: 'user not found' };
+            } else {
+                if (updateUserAdminDTO.name) {
+                    user.name = updateUserAdminDTO.name;
+                }
+                if (updateUserAdminDTO.lastname) {
+                    user.lastname = updateUserAdminDTO.lastname;
+                }
+                user.isActive = true;
+
+                await this.adminRepository.save(user);
+
+                const userToReturn = await this.userRepository.findOne({
+                    relations: [
+                        "type",
+                    ],
+                    where: { uuid: user.uuid },
+                });
+
+                const loggedUser = await this.sesionRepository.findOne({
+                    where: { user: userToReturn },
+                });
+
+                response = {
+                    user: {
+                        token: loggedUser.id,
+                        name: userToReturn.name,
+                        lastname: userToReturn.lastname,
+                        email: userToReturn.email,
+                        type: userToReturn.type.id,
+                    },
+                };
+            }
+
+            return response;
+        } catch (err) {
+            console.log("UserService - updateAdmin: ", err);
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error updating  user",
+                },
+                500
+            );
+        }
+    }
+    async updateUser(
+        updateUserDTO: UpdateUserDTO
+    ): Promise<any> {
+        try {
+            let response = {}
+
+            const admin = this.adminRepository.findOne({
+                where: {
+                    uuid: updateUserDTO.adminUuid
+                }
+            })
+
+            if (!admin) {
+                return { status: 1, msg: 'admin not found' };
+            }
+
+            let user = await this.userRepository.findOne({
+                where: { email: updateUserDTO.email },
+            });
+
+            if (!user) {
+                response = { status: 1, msg: 'user not found' };
+            } else {
+                if (updateUserDTO.name) {
+                    user.name = updateUserDTO.name;
+                }
+                if (updateUserDTO.lastname) {
+                    user.lastname = updateUserDTO.lastname;
+                }
+                user.isActive = true;
+
+                await this.userRepository.save(user);
+
+                const userToReturn = await this.userRepository.findOne({
+                    relations: [
+                        "type",
+                    ],
+                    where: { uuid: user.uuid },
+                });
+
+                const loggedUser = await this.sesionRepository.findOne({
+                    where: { user: userToReturn },
+                });
+
+                response = {
+                    user: {
+                        token: loggedUser.id,
+                        name: userToReturn.name,
+                        lastname: userToReturn.lastname,
+                        email: userToReturn.email,
+                        type: userToReturn.type.id,
+                    },
+                };
+            }
+
+            return response;
+        } catch (err) {
+            console.log("UserService - updateAdmin: ", err);
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error updating  user",
+                },
+                500
+            );
+        }
+    }
+
+
+    async deleteUserAdmin(deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
+        try {
+
+            const superAdmin = this.superAdminRepository.findOne({
+                where: {
+                    uuid: deleteAdminUserDTO.superAdminUuid
+                }
+            })
+            if (!superAdmin) {
+                return { status: 1, msg: 'super not found' };
+            }
+            let userToDelete = await this.adminRepository.findOne({
+                where: { uuid: deleteAdminUserDTO.adminUuid },
+            });
+
+            if (!userToDelete) {
+                return { status: 2, msg: 'admin not found' };
+            }
+
             userToDelete.isActive = false;
+            //TODO: Cambiar .save por .remove 
+            await this.adminRepository.save(userToDelete);
 
-            await this.userRepository.save(userToDelete);
+            // TODO: Eliminar todas los assets relacionados
 
+
+            return { status: 0 };
+        } catch (err) {
+            console.log("UserService - deleteUser: ", err);
+
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error deleting user",
+                },
+                500
+            );
+        }
+    }
+
+
+
+
+
+    async deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any> {
+        try {
+            const admin = this.adminRepository.findOne({
+                where: {
+                    uuid: deleteUserDTO.adminUuid
+                }
+            })
+            if (!admin) {
+                return { status: 1, msg: 'super not found' };
+            }
+
+            let userToDelete = await this.userRepository.findOne({
+                where: { uuid: deleteUserDTO.userUuid },
+            });
+
+            if (!userToDelete) {
+                return { status: 2, msg: 'user not found' };
+            }
+
+            await this.userRepository.remove(userToDelete);
             return { status: 0 };
         } catch (err) {
             console.log("UserService - deleteUser: ", err);

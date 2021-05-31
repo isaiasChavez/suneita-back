@@ -15,10 +15,7 @@ import { Sesion } from "../sesion/sesion.entity";
 import { v4 as uuid } from "uuid";
 
 @Entity({ schema: "Users" })
-export class User {
-
-
-
+export class Admin {
 
     @PrimaryGeneratedColumn()
     id: string;
