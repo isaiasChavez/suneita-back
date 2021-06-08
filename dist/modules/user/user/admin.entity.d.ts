@@ -1,0 +1,30 @@
+import { Type } from "../type/type.entity";
+import { Role } from "../role/role.entity";
+import { Sesion } from "../sesion/sesion.entity";
+import { SuperAdmin } from "./superadmin.entity";
+import { User } from "./user.entity";
+import { Suscription } from "src/modules/suscription/suscription.entity";
+import { Asset } from "src/modules/asset/asset.entity";
+import { Token } from "../token/token.entity";
+export declare class Admin {
+    id: string;
+    name: string;
+    lastname: string;
+    avatar: string;
+    email: string;
+    password: string;
+    type: Type;
+    role: Role;
+    superadmin: SuperAdmin;
+    users: User[];
+    token: Token[];
+    sesion: Sesion[];
+    suscriptions: Suscription[];
+    assets: Asset[];
+    uuid: string;
+    isDeleted: boolean;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    createUuid(): void;
+}
