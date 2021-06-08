@@ -4,7 +4,6 @@ import {
     PrimaryGeneratedColumn,
     ManyToOne,
     OneToMany,
-    ManyToMany,
     CreateDateColumn,
     UpdateDateColumn,
     BeforeInsert,
@@ -15,6 +14,9 @@ import { Sesion } from "../sesion/sesion.entity";
 import { v4 as uuid } from "uuid";
 import { SuperAdmin } from "./superadmin.entity";
 import { User } from "./user.entity";
+import { Suscription } from "src/modules/suscription/suscription.entity";
+import { Asset } from "src/modules/asset/asset.entity";
+import { Token } from "../token/token.entity";
 
 @Entity({ schema: "Users" })
 export class Admin {
@@ -52,11 +54,19 @@ export class Admin {
     role: Role;
 
 
-    @ManyToOne(() => SuperAdmin, superadmin => superadmin.admins)
+    @ManyToOne((type) => SuperAdmin, superadmin => superadmin.admins)
     superadmin: SuperAdmin;
+
 
     @OneToMany(() => User, user => user.admin)
     users: User[];
+
+
+    @OneToMany(
+        (type) => Token,
+        (token) => token.admin
+    )
+    token: Token[];
 
 
 
@@ -65,6 +75,13 @@ export class Admin {
         (sesion) => sesion.admin
     )
     sesion: Sesion[];
+
+    @OneToMany(() => Suscription, suscription => suscription.admin)
+    suscriptions: Suscription[];
+
+
+    @OneToMany(() => Asset, asset => asset.admin)
+    assets: Asset[];
 
 
     @Column({ type: "uuid", nullable: true })
@@ -89,6 +106,7 @@ export class Admin {
     @BeforeInsert()
     createUuid() {
         this.uuid = uuid();
+        this.email = this.email.toLocaleLowerCase().trim()
     }
 
 

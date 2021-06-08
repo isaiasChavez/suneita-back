@@ -25,12 +25,13 @@ import { validateOrReject } from "class-validator";
 @Controller("user")
 export class UserController {
     constructor(private userService: UserService) {
-
     }
+
     @Post("invite")
     async create(@Body() inviteUserDTO: InviteUserDTO): Promise<any> {
         let newinviteUserDTO = new InviteUserDTO(inviteUserDTO)
         try {
+            console.log("inviteUser:", { inviteUserDTO })
             await validateOrReject(newinviteUserDTO);
             return await this.userService.invite(newinviteUserDTO);
         } catch (errors) {
@@ -41,10 +42,12 @@ export class UserController {
         }
     }
 
-    @Get()
-    async findAllUsers(): Promise<any> {
-        return await this.userService.findAll();
+    @Get("/:udminUuid")
+    async findAllUsers(@Param('udminUuid') udminUuid: number): Promise<any> {
+        return await this.userService.findAllUsers(udminUuid);
     }
+
+
     @Get(":email")
     async findUserDetail(@Param("email") email): Promise<any> {
         return await this.userService.findUserDetail(email);
@@ -77,20 +80,6 @@ export class UserController {
         return await this.userService.requestPasswordReset(email);
     }
 
-    @Post()
-    async createUser(@Body() createUserDTO: CreateUserDTO): Promise<any> {
-        let newCreateUserDTO = new CreateUserDTO(createUserDTO)
-        try {
-            await validateOrReject(newCreateUserDTO);
-            // return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
-            return await this.userService.create(newCreateUserDTO);
-        } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            }
-        }
-    }
 
     @Post("superadmin")
     async createSuperAdmin(@Body() createSuperAdminDTO: CreateSuperAdminDTO): Promise<any> {
@@ -120,6 +109,21 @@ export class UserController {
         }
 
     }
+    @Post()
+    async createUser(@Body() createUserDTO: CreateUserDTO): Promise<any> {
+        let newCreateUserDTO = new CreateUserDTO(createUserDTO)
+        try {
+            await validateOrReject(newCreateUserDTO);
+            // return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
+            return await this.userService.create(newCreateUserDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+
 
     @Put('admin')
     async updateAdminUser(@Body() updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {
@@ -150,9 +154,11 @@ export class UserController {
 
 
 
-    @Put("deleteuser/:email")
+    @Put("deleteuser")
     async deleteUser(@Body() deleteUserDTO: DeleteUserDTO): Promise<any> {
+
         let newdeleteUserDTO = new DeleteUserDTO(deleteUserDTO)
+
         try {
             await validateOrReject(newdeleteUserDTO);
             return await this.userService.deleteUser(newdeleteUserDTO);
@@ -165,12 +171,25 @@ export class UserController {
     }
 
 
-    @Put("deleteadmin/:email")
+    @Put("deleteadmin")
     async deleteAdminUser(@Body() deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
         let newdeleteAdminUserDTO = new DeleteAdminUserDTO(deleteAdminUserDTO)
         try {
             await validateOrReject(newdeleteAdminUserDTO);
             return await this.userService.deleteUserAdmin(newdeleteAdminUserDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+    @Put("suspend")
+    async suspendAdminUser(@Body() suspendAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
+        let newsuspendAdminUserDTO = new DeleteAdminUserDTO(suspendAdminUserDTO)
+        try {
+            await validateOrReject(newsuspendAdminUserDTO);
+            return await this.userService.suspendUserAdmin(newsuspendAdminUserDTO);
         } catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {

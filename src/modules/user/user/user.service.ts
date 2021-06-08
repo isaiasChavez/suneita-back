@@ -21,27 +21,43 @@ import {
     DeleteUserDTO
 } from "./user.dto";
 import { MailerService } from "@nestjs-modules/mailer";
-import * as jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 import * as bcrypt from "bcrypt";
 import * as moment from "moment";
-import { Roles, Types } from "src/types";
+import { ADMIN, USER_NORMAL, Roles, Types, SUPER_ADMIN } from "src/types";
 import { SuperAdmin } from "./superadmin.entity";
 import { Admin } from "./admin.entity";
+import { Suscription } from "src/modules/suscription/suscription.entity";
+// import { SuscriptionService } from "src/modules/suscription/suscription.service";
+import { UpdateSuscriptionDTO } from "src/modules/suscription/suscription.dto";
+import { Asset } from "src/modules/asset/asset.entity";
+
+type UserRes = {
+    name: string;
+    avatar: string;
+    lastname: string;
+    email: string;
+    uuid: string;
+    suscription
+}
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly mailerService: MailerService,
+        // private readonly suscriptionService: SuscriptionService,
         @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(Suscription) private suscripctionRepository: Repository<Suscription>,
         @InjectRepository(SuperAdmin) private superAdminRepository: Repository<SuperAdmin>,
         @InjectRepository(Admin) private adminRepository: Repository<Admin>,
-        // @InjectRepository(Target) private targetRepository: Repository<Target>,
         @InjectRepository(Token) private tokenRepository: Repository<Token>,
         @InjectRepository(Type) private typeRepository: Repository<Type>,
         @InjectRepository(Role) private roleRepository: Repository<Role>,
         @InjectRepository(Sesion) private sesionRepository: Repository<Sesion>,
-        // @InjectRepository(Configuration)
-        // private configurationRepository: Repository<Configuration>
+        @InjectRepository(Suscription) private suscriptionRepository: Repository<Suscription>,
+
+
+
     ) {
         this.roles = {
             SUPERADMIN: "SUPERADMIN",
@@ -58,32 +74,62 @@ export class UserService {
     roles: Roles
     types: Types
 
-    async invite(request: InviteUserDTO): Promise<number> {
+    async invite(request: InviteUserDTO): Promise<any> {
         try {
+            console.log("***", { request }, "***")
             let status = 0;
             let tokenToSign = "";
+            //Verificar que la persona que está invitando tenga permitido hacerlo
+
             // Se verifica si el usuario ya cuenta con una invitacion enviada
             let userExist = await this.userRepository.findOne({
                 where: { email: request.email },
             });
-
             if (!userExist) {
                 // Se verifica si el usuario ya cuenta con una invitacion enviada
                 const token = await this.tokenRepository.findOne({
                     where: { email: request.email },
                 });
-
                 if (!token) {
-                    // Se obtiene el tipo de usuario
-                    const userType = await this.typeRepository.findOne(request.type);
-                    // Se crea nuevo token asociado al email del usuario
+                    // Se obtiene el tipo de usuario de la persona que está solicitando la invitación 
+                    const user: Type = await this.typeRepository.findOne(request.type);
+                    let admin: Admin = null
+                    let superAdmin: SuperAdmin = null
+
+                    let userType: Type
+
+                    if (user.id === ADMIN) {
+                        userType = await this.typeRepository.findOne(USER_NORMAL);
+                        admin = await this.adminRepository.findOne({
+                            where: {
+                                uuid: request.adminUuid
+                            }
+                        });
+                    }
+                    if (user.id === SUPER_ADMIN) {
+                        userType = await this.typeRepository.findOne(ADMIN);
+                        superAdmin = await this.superAdminRepository.findOne({
+                            where: {
+                                uuid: request.superAdminUuid
+                            }
+                        });
+                    }
+                    if (!admin && !superAdmin) {
+                        return {
+                            status: 5
+                        }
+                    }
+                    // Se crea nuevo token asociado al email del nuevo usuario
                     let newToken = this.tokenRepository.create({
                         email: request.email,
                         type: userType,
+                        admin,
+                        superAdmin
                     });
+
+                    console.log({ newToken })
                     // Se registra token
                     const registerToken = await this.tokenRepository.save(newToken);
-
 
                     tokenToSign = registerToken.id;
                 } else {
@@ -99,7 +145,7 @@ export class UserService {
                 // Se envia correo
                 await this.mailerService.sendMail({
                     to: request.email,
-                    subject: "Has sido invitado a Bioderma.",
+                    subject: "Has sido invitado a Ocupath.",
                     template: "./invitacion.hbs",
                     context: {
                         url: jwtToken,
@@ -116,7 +162,6 @@ export class UserService {
                     await this.userRepository.save(userExist);
                 }
             }
-
             return status;
         } catch (err) {
             console.log("UserService - invite: ", err);
@@ -131,14 +176,23 @@ export class UserService {
         }
     }
 
-    async findAll(): Promise<any> {
+    async findAllUsers(uuid: number): Promise<any> {
         try {
-            const usersList = await this.userRepository.find({
+            const admin: Admin = await this.adminRepository.findOne({
+                where: {
+                    uuid
+                }
+            })
+            const users = await this.userRepository.find({
                 select: ["id", "name", "email"],
                 relations: ["type"],
-                where: { isActive: true },
+                where: {
+                    isActive: true,
+                    admin
+                },
             });
-            return { users: usersList };
+
+            return { users };
         } catch (err) {
             console.log("UserService - findAll: ", err);
 
@@ -229,7 +283,8 @@ export class UserService {
         }
         const existSuperAdmin = await this.adminRepository.findOne({
             where: {
-                email: createSuperAdminDTO.email
+                email: createSuperAdminDTO.email,
+                isDeleted: false
             }
         })
         if (existSuperAdmin) {
@@ -277,47 +332,51 @@ export class UserService {
     }
     async createAdmin(createAdminDTO: CreateAdminDTO): Promise<any> {
 
-
-        //Verificar que el superadministrador exista
-
-        const superadmin = await this.superAdminRepository.findOne({
-            where: {
-                uuid: createAdminDTO.superAdminUuid
-            }
-        })
-
-        if (!superadmin) {
-            return {
-                status: 1,
-                error: "No existe el superusuario"
-            }
-        }
-        const existUser = await this.adminRepository.findOne({
-            where: {
-                email: createAdminDTO.email
-            }
-        })
-        if (existUser) {
-            return {
-                status: 2,
-                error: "Este email ya existe",
-                existUser
-            }
-        }
-
-        const adminRole = await this.roleRepository.findOne({
-            where: {
-                name: this.roles.ADMIN
-            }
-        })
-        const adminType = await this.roleRepository.findOne({
-            where: {
-                name: this.types.SUPERADMIN
-            }
-        })
         try {
+
+            //Verificar que el superadministrador exista
+
+            const superadmin = await this.superAdminRepository.findOne({
+                where: {
+                    uuid: createAdminDTO.superAdminUuid
+                }
+            })
+
+            if (!superadmin) {
+                return {
+                    status: 1,
+                    error: "No existe el superusuario"
+                }
+            }
+            const existUser = await this.adminRepository.findOne({
+                where: {
+                    email: createAdminDTO.email,
+                    isDeleted: false
+                }
+            })
+            if (existUser) {
+                return {
+                    status: 2,
+                    error: "Este email ya existe",
+                    existUser
+                }
+            }
+
+            const adminRole = await this.roleRepository.findOne({
+                where: {
+                    name: this.roles.ADMIN
+                }
+            })
+            const adminType = await this.roleRepository.findOne({
+                where: {
+                    name: this.types.ADMIN
+                }
+            })
             const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
-            let newUser = this.adminRepository.create({
+
+
+
+            const admin = this.adminRepository.create({
                 superadmin,
                 role: adminRole,
                 type: adminType,
@@ -326,7 +385,21 @@ export class UserService {
                 email: createAdminDTO.email,
                 password: userPassword,
             });
-            await this.adminRepository.save(newUser);
+            await this.adminRepository.save(admin);
+            let newAdmin = await this.adminRepository.findOne({
+                where: {
+                    email: admin.email
+                }
+            })
+            const userSuscription = this.suscriptionRepository.create({
+                admin: newAdmin,
+                cost: createAdminDTO.cost,
+                startedAt: new Date(createAdminDTO.startedAt),
+                finishedAt: new Date(createAdminDTO.finishedAt),
+            })
+            await this.suscriptionRepository.save(userSuscription)
+
+
 
             return { status: 0 };
         } catch (err) {
@@ -358,7 +431,8 @@ export class UserService {
 
             const existUser = await this.userRepository.findOne({
                 where: {
-                    email: createUserDTO.email
+                    email: createUserDTO.email,
+                    isDeleted: false
                 }
             })
             if (existUser) {
@@ -412,10 +486,26 @@ export class UserService {
     ): Promise<any> {
         try {
             let response = {}
+            const superadmin = await this.superAdminRepository.findOne({
+                where: {
+                    uuid: updateUserAdminDTO.superAdminUuid
+                }
+            })
 
-            let user = await this.userRepository.findOne({
+
+            console.log({ superadmin })
+
+            if (!superadmin) {
+                return { status: 1, msg: 'supadmin not found' };
+            }
+
+            let user = await this.adminRepository.findOne({
+                relations: ["superadmin"],
                 where: { uuid: updateUserAdminDTO.adminUuid },
             });
+
+            console.log({ user })
+
 
             if (!user) {
                 response = { status: 1, msg: 'user not found' };
@@ -426,28 +516,63 @@ export class UserService {
                 if (updateUserAdminDTO.lastname) {
                     user.lastname = updateUserAdminDTO.lastname;
                 }
+                if (updateUserAdminDTO.avatar) {
+                    user.avatar = updateUserAdminDTO.avatar;
+                }
+                let suscription: Suscription
+                if (updateUserAdminDTO.startedAt || updateUserAdminDTO.finishedAt || updateUserAdminDTO.cost || updateUserAdminDTO.business) {
+                    const updateSuscriptionDTO: UpdateSuscriptionDTO = {
+                        business: updateUserAdminDTO.business,
+                        cost: updateUserAdminDTO.cost,
+                        finishedAt: updateUserAdminDTO.finishedAt,
+                        startedAt: updateUserAdminDTO.startedAt,
+                        adminUuid: user.uuid
+                    }
+                    suscription = await this.suscriptionRepository.findOne({
+                        select: ["cost", "startedAt", "finishedAt", "isActive"],
+                        where: {
+                            admin: user
+                        }
+                    })
+                    console.log({ suscription })
+
+                    if (!suscription) {
+                        return {
+                            status: 1
+                        }
+                    }
+                    if (updateSuscriptionDTO.finishedAt) {
+                        suscription.finishedAt = new Date(updateSuscriptionDTO.finishedAt)
+                    }
+                    if (updateSuscriptionDTO.startedAt) {
+                        suscription.startedAt = new Date(updateSuscriptionDTO.startedAt)
+                    }
+                    if (updateSuscriptionDTO.cost && updateSuscriptionDTO.cost > 0) {
+                        suscription.cost = updateSuscriptionDTO.cost;
+                    }
+
+                    this.suscriptionRepository.save(suscription)
+                }
                 user.isActive = true;
 
                 await this.adminRepository.save(user);
 
-                const userToReturn = await this.userRepository.findOne({
+                const userToReturn = await this.adminRepository.findOne({
                     relations: [
                         "type",
                     ],
                     where: { uuid: user.uuid },
                 });
 
-                const loggedUser = await this.sesionRepository.findOne({
-                    where: { user: userToReturn },
-                });
 
                 response = {
                     user: {
-                        token: loggedUser.id,
                         name: userToReturn.name,
+                        avatar: userToReturn.avatar,
                         lastname: userToReturn.lastname,
                         email: userToReturn.email,
-                        type: userToReturn.type.id,
+                        uuid: userToReturn.uuid,
+                        suscription
                     },
                 };
             }
@@ -475,46 +600,54 @@ export class UserService {
                     uuid: updateUserDTO.adminUuid
                 }
             })
+            console.log("pasó", { admin })
 
             if (!admin) {
                 return { status: 1, msg: 'admin not found' };
             }
 
-            let user = await await this.userRepository.findOne({
-                where: { email: updateUserDTO.email },
+            let user = await this.userRepository.findOne({
+                relations: ["admin"],
+                where: { uuid: updateUserDTO.userUuid },
             });
+            console.log({ user })
 
             if (!user) {
                 response = { status: 1, msg: 'user not found' };
             } else {
-                if (updateUserDTO.name) {
+                if (user.admin.id !== admin.id) {
+                    return {
+                        status: 5,
+                        msg: "Unauthorized"
+                    }
+                }
+
+
+                if (updateUserDTO.name.length !== 0) {
                     user.name = updateUserDTO.name;
                 }
-                if (updateUserDTO.lastname) {
+                if (updateUserDTO.lastname.length !== 0) {
                     user.lastname = updateUserDTO.lastname;
                 }
-                user.isActive = true;
 
+                if (updateUserDTO.avatar.length !== 0) {
+                    user.avatar = updateUserDTO.avatar;
+                }
+                console.log({ user })
+                user.isActive = true;
                 await this.userRepository.save(user);
 
                 const userToReturn = await this.userRepository.findOne({
-                    relations: [
-                        "type",
-                    ],
                     where: { uuid: user.uuid },
                 });
 
-                const loggedUser = await this.sesionRepository.findOne({
-                    where: { user: userToReturn },
-                });
 
                 response = {
                     user: {
-                        token: loggedUser.id,
+                        avatar: userToReturn.avatar,
                         name: userToReturn.name,
                         lastname: userToReturn.lastname,
                         email: userToReturn.email,
-                        type: userToReturn.type.id,
                     },
                 };
             }
@@ -536,27 +669,57 @@ export class UserService {
     async deleteUserAdmin(deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
         try {
 
-            const superAdmin = await this.superAdminRepository.findOne({
+            const superAdmin: SuperAdmin = await this.superAdminRepository.findOne({
                 where: {
                     uuid: deleteAdminUserDTO.superAdminUuid
                 }
             })
+
             if (!superAdmin) {
                 return { status: 1, msg: 'super not found' };
             }
-            let userToDelete = await this.adminRepository.findOne({
+
+            const admin: Admin = await this.adminRepository.findOne({
+                relations: ["users", "assets"],
                 where: { uuid: deleteAdminUserDTO.adminUuid },
             });
 
-            if (!userToDelete) {
+            if (!admin) {
                 return { status: 2, msg: 'admin not found' };
             }
+            console.log("admin.users", admin.users)
+            await Promise.all(admin.users.map(async (user) => {
+                console.log({ user })
+                user.isActive = false
+                user.isDeleted = true
+                await this.userRepository.save(user)
+            }))
 
-            userToDelete.isActive = false;
-            //TODO: Cambiar .save por .remove 
-            await this.adminRepository.save(userToDelete);
+            await Promise.all(admin.assets.map(async (asset: Asset) => {
+                asset.isActive = false
+                asset.isDeleted = true
+                await this.userRepository.save(asset)
+            }))
 
-            // TODO: Eliminar todas los assets relacionados
+            const suscription: Suscription = await this.suscriptionRepository.findOne({
+                where: {
+                    admin
+                }
+            })
+            if (suscription) {
+                suscription.isActive = false
+                suscription.isDeleted = true
+                const temtSusp: Suscription = this.suscriptionRepository.create({})
+                suscription.finishedAt = temtSusp.createdAt
+                await this.suscriptionRepository.save(suscription)
+            }
+
+            //TODO: Falta eliminar los assets del sistema de CDN
+
+            admin.isActive = false;
+            admin.isDeleted = true;
+            await this.adminRepository.save(admin);
+
 
 
             return { status: 0 };
@@ -572,11 +735,6 @@ export class UserService {
             );
         }
     }
-
-
-
-
-
     async deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any> {
         try {
             const admin = await this.adminRepository.findOne({
@@ -584,19 +742,25 @@ export class UserService {
                     uuid: deleteUserDTO.adminUuid
                 }
             })
+
             if (!admin) {
-                return { status: 1, msg: 'super not found' };
+                return { status: 1, msg: 'admin not found' };
             }
 
             let userToDelete = await this.userRepository.findOne({
+                relations: ["admin"],
                 where: { uuid: deleteUserDTO.userUuid },
             });
 
             if (!userToDelete) {
                 return { status: 2, msg: 'user not found' };
             }
-
-            await this.userRepository.remove(userToDelete);
+            if (userToDelete.admin.id !== admin.id) {
+                return { status: 5, msg: 'unauthorized' };
+            }
+            userToDelete.isActive = false
+            userToDelete.isDeleted = true
+            await this.userRepository.save(userToDelete);
             return { status: 0 };
         } catch (err) {
             console.log("UserService - deleteUser: ", err);
@@ -610,19 +774,117 @@ export class UserService {
             );
         }
     }
+    async suspendUserAdmin(pauseAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
+        try {
+
+            const superAdmin = await this.superAdminRepository.findOne({
+                where: {
+                    uuid: pauseAdminUserDTO.superAdminUuid
+                }
+            })
+
+            if (!superAdmin) {
+                return { status: 1, msg: 'super not found' };
+            }
+
+            let admin: Admin = await this.adminRepository.findOne({
+                relations: ["users"],
+                where: { uuid: pauseAdminUserDTO.adminUuid },
+            });
+
+            if (!admin) {
+                return { status: 2, msg: 'admin not found' };
+            }
+
+            await Promise.all(admin.users.map(async (user: User) => {
+                if (!user.isDeleted) {
+                    user.isActive = pauseAdminUserDTO.status
+                    await this.userRepository.save(user)
+                }
+            }))
+            const suscription: Suscription = await this.suscriptionRepository.findOne({
+                where: {
+                    admin
+                }
+            })
+            if (suscription) {
+                suscription.isActive = pauseAdminUserDTO.status
+                await this.suscriptionRepository.save(suscription)
+            }
+
+            admin.isActive = pauseAdminUserDTO.status;
+            await this.adminRepository.save(admin);
+            return { status: 0 };
+        } catch (err) {
+            console.log("UserService - pauseUser: ", err);
+
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error pausing user",
+                },
+                500
+            );
+        }
+    }
+    async pauseUser(pauseUserDTO: DeleteUserDTO): Promise<any> {
+        try {
+            const admin = await this.adminRepository.findOne({
+                where: {
+                    uuid: pauseUserDTO.adminUuid
+                }
+            })
+            if (!admin) {
+                return { status: 1, msg: 'admin not found' };
+            }
+            let user = await this.userRepository.findOne({
+                relations: ['admin'],
+                where: { uuid: pauseUserDTO.userUuid },
+            });
+            if (!user) {
+                return { status: 2, msg: 'user not found' };
+            }
+            if (user.admin.id !== admin.id) {
+                return {
+                    status: 5,
+                    msg: "Unauthorized"
+                }
+            }
+
+            user.isActive = false;
+            await this.userRepository.save(user);
+            return { status: 0 };
+        } catch (err) {
+            console.log("UserService - pause user: ", err);
+
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error pausing user",
+                },
+                500
+            );
+        }
+    }
+
+
+
+
+
 
     async requestPasswordReset(requestEmail: string): Promise<any> {
         try {
-
+            console.log("***", { requestEmail }, "***")
             let response = { status: 0 };
             const user = await this.userRepository.findOne({
                 where: { email: requestEmail },
             });
+
             const admin = await this.adminRepository.findOne({
                 where: { email: requestEmail },
             });
-
             if (user || admin) {
+
                 let newToken = this.tokenRepository.create({
                     email: requestEmail,
                 });
@@ -663,7 +925,7 @@ export class UserService {
         try {
             let response = { status: 0 };
 
-            const jwtDecoded = await jwt.verify(
+            const jwtDecoded = jwt.verify(
                 requestDTO.token,
                 process.env.TOKEN_SECRET
             );

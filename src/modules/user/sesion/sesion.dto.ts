@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsString, MaxLength } from "class-validator";
+import { IsEmail, IsNotEmpty, isNumber, IsNumber, IsString, IsUUID, MaxLength } from "class-validator";
 
 export class ReuestSesionDTO {
     constructor({ email, password, type }) {
@@ -19,11 +19,14 @@ export class ReuestSesionDTO {
     type: number;
 }
 
-export class UpdatePlayerID {
-    readonly email: string;
-    readonly playerId: string;
-}
 
 export class ReuestSesionLogOutDTO {
     readonly email: string;
+}
+
+export class SesionTokenDTO {
+    usuario: {
+        uuid: string;
+        type: number;
+    }
 }

@@ -17,10 +17,6 @@ import { Admin } from "./admin.entity";
 
 @Entity({ schema: "Users" })
 export class User {
-
-
-
-
     @PrimaryGeneratedColumn()
     id: string;
 
@@ -53,15 +49,9 @@ export class User {
     )
     role: Role;
 
+
     @ManyToOne(() => Admin, admin => admin.users)
     admin: Admin;
-
-
-    // @OneToMany(
-    //     (type) => Sesion,
-    //     (sesion) => sesion.user
-    // )
-    // sesion: Sesion[];
 
 
     @Column({ type: "uuid", nullable: true })

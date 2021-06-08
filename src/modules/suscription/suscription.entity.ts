@@ -12,23 +12,46 @@ import {
 import { v4 as uuid } from "uuid";
 import { Admin } from "../user/user/admin.entity";
 
-@Entity({ schema: "Assets" })
-export class Asset {
+@Entity({ schema: "Users" })
+export class Suscription {
 
     @PrimaryGeneratedColumn()
     id: string;
 
-    @Column({ length: 300, nullable: false })
-    url: string;
+    @ManyToOne(() => Admin, admin => admin.suscriptions)
+    admin: Admin;
+
+    @Column({
+        type: "timestamp without time zone",
+        nullable: false,
+        default: () => "CURRENT_TIMESTAMP",
+    })
+    startedAt: Date;
+
+    @Column({
+        type: "timestamp without time zone",
+        nullable: false,
+        default: () => "CURRENT_TIMESTAMP",
+    })
+    finishedAt: Date;
+
+    @Column({ type: "numeric", precision: 4, nullable: false, default: 0 })
+    cost: number;
 
 
     @Column({ type: "uuid", nullable: false })
     uuid: string;
 
-    @Column({ nullable: false, default: true })
-    isActive: boolean;
+
+
+
     @Column({ nullable: false, default: false })
     isDeleted: boolean;
+
+    @Column({ nullable: false, default: true })
+    isActive: boolean;
+
+
     @CreateDateColumn()
     createdAt: Date;
 
@@ -39,9 +62,4 @@ export class Asset {
     createUuid() {
         this.uuid = uuid();
     }
-
-    @ManyToOne(() => Admin, admin => admin.assets)
-    admin: Admin;
-
-
 }

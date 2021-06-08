@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
 import { SesionService } from './sesion.service';
-import { ReuestSesionDTO, UpdatePlayerID, ReuestSesionLogOutDTO } from './sesion.dto';
+import { ReuestSesionDTO, ReuestSesionLogOutDTO } from './sesion.dto';
 import { validateOrReject } from 'class-validator';
 
 @Controller('sesion')

@@ -9,14 +9,14 @@ import { Role } from "../role/role.entity";
 import { Sesion } from "../sesion/sesion.entity";
 import { SuperAdmin } from "./superadmin.entity";
 import { Admin } from "./admin.entity";
-// import { Target } from "../../trivia/target/target.entity";
+import { Suscription } from "src/modules/suscription/suscription.entity";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([SuperAdmin]),
     TypeOrmModule.forFeature([Admin]),
-    // TypeOrmModule.forFeature([Target]),
+    TypeOrmModule.forFeature([Suscription]),
     TypeOrmModule.forFeature([Token]),
     TypeOrmModule.forFeature([Type]),
     TypeOrmModule.forFeature([Role]),

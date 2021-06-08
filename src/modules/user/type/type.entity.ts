@@ -22,12 +22,4 @@ export class Type {
         (user) => user.type
     )
     user: User[];
-
-    //   @OneToMany(
-    //     (type) => Target,
-    //     (target) => target.type
-    //   )
-    //   target: Target[];
-
-
 }

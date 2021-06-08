@@ -1,7 +1,7 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailerModule } from "@nestjs-modules/mailer";
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Configuration } from './config/config.keys';
@@ -16,6 +16,7 @@ import { RoleModule } from './modules/user/role/role.module';
 import { UploadModule } from './upload/upload.module';
 import { TargetModule } from './modules/target/target.module';
 import { SuscriptionModule } from './modules/suscription/suscription.module';
+import { UserMiddleware } from './modules/user/user.middleware';
 
 
 @Module({
@@ -52,10 +53,19 @@ import { SuscriptionModule } from './modules/suscription/suscription.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
+export class AppModule implements NestModule {
+
+
   static port: number | string;
   constructor(private readonly _configService: ConfigService) {
     AppModule.port = this._configService.get(Configuration.PORT)
   }
+
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(UserMiddleware)
+      .forRoutes('user', 'asset');
+  }
+
 
 }

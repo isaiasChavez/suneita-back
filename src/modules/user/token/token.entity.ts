@@ -1,5 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Type } from '../type/type.entity';
+import { Admin } from '../user/admin.entity';
+import { SuperAdmin } from '../user/superadmin.entity';
 
 @Entity({ schema: 'Users' })
 export class Token {
@@ -13,4 +15,8 @@ export class Token {
     @ManyToOne(type => Type, tyype => tyype.token)
     type: Type;
 
+    @ManyToOne(admin => Admin, admin => admin.token)
+    admin: Admin;
+    @ManyToOne(superAdmin => SuperAdmin, superAdmin => superAdmin.token)
+    superAdmin: SuperAdmin;
 }
