@@ -5,8 +5,8 @@ const app_module_1 = require("./app.module");
 const fs = require("fs");
 const body_parser_1 = require("body-parser");
 const helmet = require("helmet");
-const crPath = '/etc/letsencrypt/live/testapi.leiva.io/fullchain.pem';
-const pkPath = '/etc/letsencrypt/live/testapi.leiva.io/privkey.pem';
+const crPath = '/etc/letsencrypt/live/bioderma.inmersys.xyz/fullchain.pem';
+const pkPath = '/etc/letsencrypt/live/bioderma.inmersys.xyz/privkey.pem';
 const options = {};
 if (fs.existsSync(crPath) && fs.existsSync(pkPath)) {
     options.httpsOptions = {

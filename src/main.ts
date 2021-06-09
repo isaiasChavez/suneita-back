@@ -3,8 +3,8 @@ import { AppModule } from './app.module';
 import * as fs from 'fs';
 import { json } from 'body-parser';
 import * as helmet from 'helmet';
-const crPath = '/etc/letsencrypt/live/testapi.leiva.io/fullchain.pem';
-const pkPath = '/etc/letsencrypt/live/testapi.leiva.io/privkey.pem';
+const crPath = '/etc/letsencrypt/live/bioderma.inmersys.xyz/fullchain.pem';
+const pkPath = '/etc/letsencrypt/live/bioderma.inmersys.xyz/privkey.pem';
 const options: any = {};
 
 if (fs.existsSync(crPath) && fs.existsSync(pkPath)) {
