@@ -38,10 +38,10 @@ import { UserMiddleware } from './modules/user/user.middleware';
           },
         },
         defaults: {
-          from: '"Ocupath" <noreplay@ocupath.mx>',
+          from: '"Bioderma" <noreplay@bioderma.mx>',
         },
         template: {
-          dir: "./templates",
+          dir: __dirname + "/templates",
           adapter: new HandlebarsAdapter(), // or new PugAdapter()
           options: {
             strict: true,
