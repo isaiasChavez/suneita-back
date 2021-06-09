@@ -61,10 +61,10 @@ AppModule = AppModule_1 = __decorate([
                         },
                     },
                     defaults: {
-                        from: '"Ocupath" <noreplay@ocupath.mx>',
+                        from: '"Bioderma" <noreplay@bioderma.mx>',
                     },
                     template: {
-                        dir: "./templates",
+                        dir: __dirname + "/templates",
                         adapter: new handlebars_adapter_1.HandlebarsAdapter(),
                         options: {
                             strict: true,
