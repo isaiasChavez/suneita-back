@@ -41,7 +41,7 @@ import { UserMiddleware } from './modules/user/user.middleware';
           from: '"Bioderma" <noreplay@bioderma.mx>',
         },
         template: {
-          dir: __dirname + "/templates",
+          dir: "./templates",
           adapter: new HandlebarsAdapter(), // or new PugAdapter()
           options: {
             strict: true,
