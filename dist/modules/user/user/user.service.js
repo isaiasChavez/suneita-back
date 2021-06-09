@@ -112,7 +112,7 @@ let UserService = class UserService {
                 await this.mailerService.sendMail({
                     to: request.email,
                     subject: "Has sido invitado a Ocupath.",
-                    template: "invitacion.hbs",
+                    template: __dirname + "/invitacion.hbs",
                     context: {
                         url: jwtToken,
                         type: request.type,
