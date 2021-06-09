@@ -38,7 +38,7 @@ import { UserMiddleware } from './modules/user/user.middleware';
           },
         },
         defaults: {
-          from: '"Bioderma" <noreplay@bioderma.mx>',
+          from: '"Ocupath" <noreplay@ocupath.mx>',
         },
         template: {
           dir: "./templates",

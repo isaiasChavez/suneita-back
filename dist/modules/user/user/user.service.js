@@ -61,7 +61,10 @@ let UserService = class UserService {
             let userExist = await this.userRepository.findOne({
                 where: { email: request.email },
             });
-            if (!userExist) {
+            let adminExist = await this.adminRepository.findOne({
+                where: { email: request.email },
+            });
+            if (!userExist && !adminExist) {
                 const token = await this.tokenRepository.findOne({
                     where: { email: request.email },
                 });
@@ -118,13 +121,19 @@ let UserService = class UserService {
                 });
             }
             else {
-                if (userExist.isActive) {
+                if (userExist.isActive || adminExist.isActive) {
                     status = 9;
                 }
                 else {
                     status = 8;
-                    userExist.isActive = true;
-                    await this.userRepository.save(userExist);
+                    if (userExist) {
+                        userExist.isActive = true;
+                        await this.userRepository.save(userExist);
+                    }
+                    if (adminExist) {
+                        adminExist.isActive = true;
+                        await this.adminRepository.save(adminExist);
+                    }
                 }
             }
             return status;
@@ -265,6 +274,17 @@ let UserService = class UserService {
     }
     async createAdmin(createAdminDTO) {
         try {
+            const token = await this.tokenRepository.findOne({
+                where: {
+                    email: createAdminDTO.email
+                }
+            });
+            if (!token) {
+                return {
+                    status: 10,
+                    error: "No hay un token para este usuario",
+                };
+            }
             const superadmin = await this.superAdminRepository.findOne({
                 where: {
                     uuid: createAdminDTO.superAdminUuid
