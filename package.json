@@ -80,7 +80,8 @@
     "moduleFileExtensions": [
       "js",
       "json",
-      "ts"
+      "ts",
+      "hbs"
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",

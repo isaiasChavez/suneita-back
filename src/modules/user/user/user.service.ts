@@ -151,7 +151,7 @@ export class UserService {
                 await this.mailerService.sendMail({
                     to: request.email,
                     subject: "Has sido invitado a Ocupath.",
-                    template: __dirname + "/invitacion.hbs",
+                    template: 'https://bioderma-space.sfo2.digitaloceanspaces.com/assetsapp/templates/invitacion.hbs',
                     context: {
                         url: jwtToken,
                         type: request.type,
