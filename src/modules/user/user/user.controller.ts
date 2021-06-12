@@ -12,7 +12,6 @@ import {
     InviteUserDTO,
     CreateUserDTO,
     ConfirmUserPassword,
-    PasswordRecovery,
     CreateSuperAdminDTO,
     UpdateUserDTO,
     UpdateUserAdminDTO,
@@ -75,10 +74,6 @@ export class UserController {
         }
     }
 
-    @Get("requestreset/:email")
-    async requestPasswordReset(@Param("email") email): Promise<any> {
-        return await this.userService.requestPasswordReset(email);
-    }
 
 
     @Post("superadmin")
@@ -198,22 +193,7 @@ export class UserController {
         }
     }
 
-    @Put("recovery")
-    async recoveryPassword(
-        @Body() passwordRecovery: PasswordRecovery
-    ): Promise<any> {
 
-        let newPasswordRecovery = new PasswordRecovery(passwordRecovery)
-        try {
-            await validateOrReject(newPasswordRecovery);
-            return await this.userService.passwordRecovery(newPasswordRecovery);
-        } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            }
-        }
-    }
 
 
 

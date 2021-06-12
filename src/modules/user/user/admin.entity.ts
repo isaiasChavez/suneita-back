@@ -40,6 +40,9 @@ export class Admin {
     @Column({ length: 100 })
     password: string;
 
+    @Column({ length: 100, nullable: true })
+    business: string;
+
     @ManyToOne(
         (type) => Type,
         (tyype) => tyype.user

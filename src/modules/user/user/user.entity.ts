@@ -14,6 +14,7 @@ import { Role } from "../role/role.entity";
 import { Sesion } from "../sesion/sesion.entity";
 import { v4 as uuid } from "uuid";
 import { Admin } from "./admin.entity";
+import { Token } from "../token/token.entity";
 
 @Entity({ schema: "Users" })
 export class User {
@@ -63,6 +64,12 @@ export class User {
 
     @Column({ nullable: false, default: true })
     isActive: boolean;
+
+    @OneToMany(
+        (type) => Token,
+        (token) => token.user
+    )
+    token: Token[];
 
 
     @CreateDateColumn()

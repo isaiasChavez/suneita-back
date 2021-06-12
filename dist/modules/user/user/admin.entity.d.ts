@@ -13,6 +13,7 @@ export declare class Admin {
     avatar: string;
     email: string;
     password: string;
+    business: string;
     type: Type;
     role: Role;
     superadmin: SuperAdmin;

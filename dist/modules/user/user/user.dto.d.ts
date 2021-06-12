@@ -19,12 +19,6 @@ export declare class InviteUserDTO {
     email: string;
     type: number;
 }
-export declare class ResetPassword {
-    constructor({ email }: {
-        email: any;
-    });
-    email: string;
-}
 export declare class ConfirmUserPassword {
     constructor({ email, password }: {
         email: any;
@@ -32,16 +26,6 @@ export declare class ConfirmUserPassword {
     });
     email: string;
     password: string;
-}
-export declare class PasswordRecovery {
-    constructor({ email, password, token }: {
-        email: any;
-        password: any;
-        token: any;
-    });
-    email: string;
-    password: string;
-    token: string;
 }
 export declare class CreateSuperAdminDTO {
     constructor({ name, lastname, email, password, passwordmaster }: {

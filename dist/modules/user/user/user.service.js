@@ -58,6 +58,7 @@ let UserService = class UserService {
             console.log("***", { request }, "***");
             let status = 0;
             let tokenToSign = "";
+            let jwtToken = null;
             let userExist = await this.userRepository.findOne({
                 where: { email: request.email },
             });
@@ -107,8 +108,7 @@ let UserService = class UserService {
                 else {
                     tokenToSign = token.id;
                 }
-                const jwtToken = await jwt.sign({ token: tokenToSign }, process.env.TOKEN_SECRET);
-                console.log({ jwtToken });
+                jwtToken = await jwt.sign({ token: tokenToSign }, process.env.TOKEN_SECRET);
                 await this.mailerService.sendMail({
                     to: request.email,
                     subject: "Has sido invitado a Ocupath.",
@@ -136,7 +136,7 @@ let UserService = class UserService {
                     }
                 }
             }
-            return status;
+            return { status, token: jwtToken };
         }
         catch (err) {
             console.log("UserService - invite: ", err);
@@ -723,77 +723,6 @@ let UserService = class UserService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: "Error pausing user",
-            }, 500);
-        }
-    }
-    async requestPasswordReset(requestEmail) {
-        try {
-            console.log("***", { requestEmail }, "***");
-            let response = { status: 0 };
-            const user = await this.userRepository.findOne({
-                where: { email: requestEmail },
-            });
-            const admin = await this.adminRepository.findOne({
-                where: { email: requestEmail },
-            });
-            if (user || admin) {
-                let newToken = this.tokenRepository.create({
-                    email: requestEmail,
-                });
-                const registerToken = await this.tokenRepository.save(newToken);
-                const jwtToken = await jwt.sign({ token: registerToken.id }, "Bi0d3rmaTokenJWT.");
-                await this.mailerService.sendMail({
-                    to: requestEmail,
-                    subject: "Recuperacion de contraseña.",
-                    template: "./recovery.hbs",
-                    context: {
-                        url: jwtToken,
-                        email: requestEmail,
-                    },
-                });
-            }
-            else {
-                response = { status: 1 };
-            }
-            return response;
-        }
-        catch (err) {
-            console.log("UserService - requestPasswordReset: ", err);
-            throw new common_1.HttpException({
-                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: "Error requesting password reset",
-            }, 500);
-        }
-    }
-    async passwordRecovery(requestDTO) {
-        try {
-            let response = { status: 0 };
-            const jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
-            if (!jwtDecoded.token) {
-                response = { status: 10 };
-            }
-            else {
-                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.token);
-                if (tokenExist) {
-                    const passwordHashed = await bcrypt.hash(requestDTO.password, 12);
-                    let userToUpdate = await this.userRepository.findOne({
-                        where: { email: requestDTO.email },
-                    });
-                    userToUpdate.password = passwordHashed;
-                    await this.userRepository.save(userToUpdate);
-                    await this.tokenRepository.remove(tokenExist);
-                }
-                else {
-                    response = { status: 10 };
-                }
-            }
-            return response;
-        }
-        catch (err) {
-            console.log("UserService - passwordRecovery: ", err);
-            throw new common_1.HttpException({
-                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: "Error ressetign password",
             }, 500);
         }
     }

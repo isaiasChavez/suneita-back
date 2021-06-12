@@ -7,6 +7,7 @@ import { User } from "../user/user.entity";
 import { Admin } from "../user/admin.entity";
 import { SuperAdmin } from "../user/superadmin.entity";
 import { Type } from "../type/type.entity";
+import { Token } from "../token/token.entity";
 
 @Module({
   imports: [
@@ -15,6 +16,8 @@ import { Type } from "../type/type.entity";
     TypeOrmModule.forFeature([Admin]),
     TypeOrmModule.forFeature([SuperAdmin]),
     TypeOrmModule.forFeature([Type]),
+    TypeOrmModule.forFeature([Token]),
+
   ],
   controllers: [SesionController],
   providers: [SesionService],

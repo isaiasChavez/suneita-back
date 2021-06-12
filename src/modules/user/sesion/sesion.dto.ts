@@ -18,7 +18,31 @@ export class ReuestSesionDTO {
     @IsNotEmpty()
     type: number;
 }
+export class ResetPassword {
+    constructor({ email }) {
+        this.email = email
+    }
+    @IsString()
+    @IsNotEmpty()
+    @IsEmail()
+    email: string;
+}
 
+export class PasswordRecovery {
+    constructor({ password, token }) {
+        this.password = password
+        this.token = token
+    }
+
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(100)
+    password: string;
+    @IsString()
+    @IsNotEmpty()
+    token: string;
+
+}
 
 export class ReuestSesionLogOutDTO {
     readonly email: string;

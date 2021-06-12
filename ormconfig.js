@@ -20,5 +20,5 @@ module.exports = {
   cli: {
     migrationsDir: 'dist/database/migrations',
   },
-  synchronize: true,
+  // synchronize: true,
 };

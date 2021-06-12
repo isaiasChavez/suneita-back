@@ -54,9 +54,6 @@ let UserController = class UserController {
             };
         }
     }
-    async requestPasswordReset(email) {
-        return await this.userService.requestPasswordReset(email);
-    }
     async createSuperAdmin(createSuperAdminDTO) {
         let newcreateSuperAdminDTO = new user_dto_1.CreateSuperAdminDTO(createSuperAdminDTO);
         try {
@@ -161,19 +158,6 @@ let UserController = class UserController {
             };
         }
     }
-    async recoveryPassword(passwordRecovery) {
-        let newPasswordRecovery = new user_dto_1.PasswordRecovery(passwordRecovery);
-        try {
-            await class_validator_1.validateOrReject(newPasswordRecovery);
-            return await this.userService.passwordRecovery(newPasswordRecovery);
-        }
-        catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            };
-        }
-    }
 };
 __decorate([
     common_1.Post("invite"),
@@ -203,13 +187,6 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.ConfirmUserPassword]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "confirmUserPassword", null);
-__decorate([
-    common_1.Get("requestreset/:email"),
-    __param(0, common_1.Param("email")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "requestPasswordReset", null);
 __decorate([
     common_1.Post("superadmin"),
     __param(0, common_1.Body()),
@@ -266,13 +243,6 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.DeleteAdminUserDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "suspendAdminUser", null);
-__decorate([
-    common_1.Put("recovery"),
-    __param(0, common_1.Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.PasswordRecovery]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "recoveryPassword", null);
 UserController = __decorate([
     common_1.Controller("user"),
     __metadata("design:paramtypes", [user_service_1.UserService])

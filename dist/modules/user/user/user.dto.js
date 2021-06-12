@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeleteUserDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateUserAdminDTO = exports.CreateUserDTO = exports.CreateAdminDTO = exports.CreateSuperAdminDTO = exports.PasswordRecovery = exports.ConfirmUserPassword = exports.ResetPassword = exports.InviteUserDTO = exports.InviteAdminDTO = void 0;
+exports.DeleteUserDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateUserAdminDTO = exports.CreateUserDTO = exports.CreateAdminDTO = exports.CreateSuperAdminDTO = exports.ConfirmUserPassword = exports.InviteUserDTO = exports.InviteAdminDTO = void 0;
 const class_validator_1 = require("class-validator");
 class InviteAdminDTO {
     constructor({ email, type }) {
@@ -66,18 +66,6 @@ __decorate([
     __metadata("design:type", Number)
 ], InviteUserDTO.prototype, "type", void 0);
 exports.InviteUserDTO = InviteUserDTO;
-class ResetPassword {
-    constructor({ email }) {
-        this.email = email;
-    }
-}
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsEmail(),
-    __metadata("design:type", String)
-], ResetPassword.prototype, "email", void 0);
-exports.ResetPassword = ResetPassword;
 class ConfirmUserPassword {
     constructor({ email, password }) {
         this.email = email;
@@ -97,32 +85,6 @@ __decorate([
     __metadata("design:type", String)
 ], ConfirmUserPassword.prototype, "password", void 0);
 exports.ConfirmUserPassword = ConfirmUserPassword;
-class PasswordRecovery {
-    constructor({ email, password, token }) {
-        this.email = email;
-        this.password = password;
-        this.token = token;
-    }
-}
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.MaxLength(100),
-    class_validator_1.IsEmail(),
-    __metadata("design:type", String)
-], PasswordRecovery.prototype, "email", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], PasswordRecovery.prototype, "password", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", String)
-], PasswordRecovery.prototype, "token", void 0);
-exports.PasswordRecovery = PasswordRecovery;
 class CreateSuperAdminDTO {
     constructor({ name, lastname, email, password, passwordmaster }) {
         this.name = name;

@@ -12,7 +12,7 @@ import {
     InviteUserDTO,
     CreateUserDTO,
     ConfirmUserPassword,
-    PasswordRecovery,
+
     CreateSuperAdminDTO,
     UpdateUserDTO,
     CreateAdminDTO,
@@ -73,12 +73,12 @@ export class UserService {
     }
     roles: Roles
     types: Types
-
     async invite(request: InviteUserDTO): Promise<any> {
         try {
             console.log("***", { request }, "***")
             let status = 0;
             let tokenToSign = "";
+            let jwtToken = null
             //Verificar que la persona que está invitando tenga permitido hacerlo
 
             // Se verifica si el usuario ya cuenta con una invitacion enviada
@@ -142,11 +142,10 @@ export class UserService {
                 }
 
                 // Se genera jwt para enviar por correo
-                const jwtToken = await jwt.sign(
+                jwtToken = await jwt.sign(
                     { token: tokenToSign },
                     process.env.TOKEN_SECRET
                 );
-                console.log({ jwtToken });
                 // Se envia correo
                 await this.mailerService.sendMail({
                     to: request.email,
@@ -158,6 +157,7 @@ export class UserService {
                         email: request.email,
                     },
                 });
+
             } else {
                 if (userExist.isActive || adminExist.isActive) {
                     status = 9;
@@ -173,7 +173,7 @@ export class UserService {
                     }
                 }
             }
-            return status;
+            return { status, token: jwtToken };
         } catch (err) {
             console.log("UserService - invite: ", err);
 
@@ -900,99 +900,8 @@ export class UserService {
 
 
 
-    async requestPasswordReset(requestEmail: string): Promise<any> {
-        try {
-            console.log("***", { requestEmail }, "***")
-            let response = { status: 0 };
-            const user = await this.userRepository.findOne({
-                where: { email: requestEmail },
-            });
 
-            const admin = await this.adminRepository.findOne({
-                where: { email: requestEmail },
-            });
-            if (user || admin) {
 
-                let newToken = this.tokenRepository.create({
-                    email: requestEmail,
-                });
-
-                const registerToken = await this.tokenRepository.save(newToken);
-                const jwtToken = await jwt.sign(
-                    { token: registerToken.id },
-                    "Bi0d3rmaTokenJWT."
-                );
-                // Se envia correo
-                await this.mailerService.sendMail({
-                    to: requestEmail,
-                    subject: "Recuperacion de contraseña.",
-                    template: "./recovery.hbs",
-                    context: {
-                        url: jwtToken,
-                        email: requestEmail,
-                    },
-                });
-            } else {
-                response = { status: 1 };
-            }
-            return response;
-        } catch (err) {
-            console.log("UserService - requestPasswordReset: ", err);
-
-            throw new HttpException(
-                {
-                    status: HttpStatus.INTERNAL_SERVER_ERROR,
-                    error: "Error requesting password reset",
-                },
-                500
-            );
-        }
-    }
-
-    async passwordRecovery(requestDTO: PasswordRecovery): Promise<any> {
-        try {
-            let response = { status: 0 };
-
-            const jwtDecoded = jwt.verify(
-                requestDTO.token,
-                process.env.TOKEN_SECRET
-            );
-
-            if (!jwtDecoded.token) {
-                response = { status: 10 };
-            } else {
-
-                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.token);
-                if (tokenExist) {
-                    const passwordHashed = await bcrypt.hash(requestDTO.password, 12);
-
-                    let userToUpdate = await this.userRepository.findOne({
-                        where: { email: requestDTO.email },
-                    });
-
-                    userToUpdate.password = passwordHashed;
-                    // Se actualiza password del usuario
-                    await this.userRepository.save(userToUpdate);
-                    // Se elimina el token de la base de datos
-                    await this.tokenRepository.remove(tokenExist);
-                } else {
-                    response = { status: 10 };
-                }
-            }
-
-            return response;
-        } catch (err) {
-            console.log("UserService - passwordRecovery: ", err);
-
-            throw new HttpException(
-                {
-                    status: HttpStatus.INTERNAL_SERVER_ERROR,
-                    error: "Error ressetign password",
-                },
-                500
-            );
-        }
-    }
 
 
 }

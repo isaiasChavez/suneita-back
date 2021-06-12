@@ -15,6 +15,7 @@ const type_entity_1 = require("../type/type.entity");
 const role_entity_1 = require("../role/role.entity");
 const uuid_1 = require("uuid");
 const admin_entity_1 = require("./admin.entity");
+const token_entity_1 = require("../token/token.entity");
 let User = class User {
     createUuid() {
         this.uuid = uuid_1.v4();
@@ -68,6 +69,10 @@ __decorate([
     typeorm_1.Column({ nullable: false, default: true }),
     __metadata("design:type", Boolean)
 ], User.prototype, "isActive", void 0);
+__decorate([
+    typeorm_1.OneToMany((type) => token_entity_1.Token, (token) => token.user),
+    __metadata("design:type", Array)
+], User.prototype, "token", void 0);
 __decorate([
     typeorm_1.CreateDateColumn(),
     __metadata("design:type", Date)

@@ -35,8 +35,27 @@ let SesionController = class SesionController {
             };
         }
     }
+    async recoveryPassword(passwordRecovery) {
+        let newPasswordRecovery = new sesion_dto_1.PasswordRecovery(passwordRecovery);
+        try {
+            await class_validator_1.validateOrReject(newPasswordRecovery);
+            return await this.sesionService.passwordRecovery(newPasswordRecovery);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async requestPasswordReset(email) {
+        return await this.sesionService.requestPasswordReset(email);
+    }
     async Logout(requestSesionLogOutDTO) {
         return await this.sesionService.RequesLogout(requestSesionLogOutDTO);
+    }
+    async Decifring(token) {
+        return await this.sesionService.decifreToken(token);
     }
 };
 __decorate([
@@ -47,12 +66,33 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "Login", null);
 __decorate([
+    common_1.Put("recovery"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [sesion_dto_1.PasswordRecovery]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "recoveryPassword", null);
+__decorate([
+    common_1.Get("requestreset/:email"),
+    __param(0, common_1.Param("email")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "requestPasswordReset", null);
+__decorate([
     common_1.Post('logout'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [sesion_dto_1.ReuestSesionLogOutDTO]),
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "Logout", null);
+__decorate([
+    common_1.Post('des/:token'),
+    __param(0, common_1.Param("token")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "Decifring", null);
 SesionController = __decorate([
     common_1.Controller('sesion'),
     __metadata("design:paramtypes", [sesion_service_1.SesionService])

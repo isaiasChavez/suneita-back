@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SesionTokenDTO = exports.ReuestSesionLogOutDTO = exports.ReuestSesionDTO = void 0;
+exports.SesionTokenDTO = exports.ReuestSesionLogOutDTO = exports.PasswordRecovery = exports.ResetPassword = exports.ReuestSesionDTO = void 0;
 const class_validator_1 = require("class-validator");
 class ReuestSesionDTO {
     constructor({ email, password, type }) {
@@ -36,6 +36,36 @@ __decorate([
     __metadata("design:type", Number)
 ], ReuestSesionDTO.prototype, "type", void 0);
 exports.ReuestSesionDTO = ReuestSesionDTO;
+class ResetPassword {
+    constructor({ email }) {
+        this.email = email;
+    }
+}
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsEmail(),
+    __metadata("design:type", String)
+], ResetPassword.prototype, "email", void 0);
+exports.ResetPassword = ResetPassword;
+class PasswordRecovery {
+    constructor({ password, token }) {
+        this.password = password;
+        this.token = token;
+    }
+}
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.MaxLength(100),
+    __metadata("design:type", String)
+], PasswordRecovery.prototype, "password", void 0);
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], PasswordRecovery.prototype, "token", void 0);
+exports.PasswordRecovery = PasswordRecovery;
 class ReuestSesionLogOutDTO {
 }
 exports.ReuestSesionLogOutDTO = ReuestSesionLogOutDTO;

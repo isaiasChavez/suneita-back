@@ -8,6 +8,20 @@ export declare class ReuestSesionDTO {
     password: string;
     type: number;
 }
+export declare class ResetPassword {
+    constructor({ email }: {
+        email: any;
+    });
+    email: string;
+}
+export declare class PasswordRecovery {
+    constructor({ password, token }: {
+        password: any;
+        token: any;
+    });
+    password: string;
+    token: string;
+}
 export declare class ReuestSesionLogOutDTO {
     readonly email: string;
 }

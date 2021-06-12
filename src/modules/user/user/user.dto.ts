@@ -44,15 +44,6 @@ export class InviteUserDTO {
 }
 
 
-export class ResetPassword {
-    constructor({ email }) {
-        this.email = email
-    }
-    @IsString()
-    @IsNotEmpty()
-    @IsEmail()
-    email: string;
-}
 
 export class ConfirmUserPassword {
     constructor({ email, password }) {
@@ -69,26 +60,7 @@ export class ConfirmUserPassword {
     password: string;
 }
 
-export class PasswordRecovery {
-    constructor({ email, password, token }) {
-        this.email = email
-        this.password = password
-        this.token = token
-    }
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(100)
-    @IsEmail()
-    email: string;
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(100)
-    password: string;
-    @IsString()
-    @IsNotEmpty()
-    token: string;
 
-}
 export class CreateSuperAdminDTO {
     constructor({ name, lastname, email, password, passwordmaster }) {
         this.name = name;

@@ -51,6 +51,10 @@ __decorate([
     __metadata("design:type", String)
 ], Admin.prototype, "password", void 0);
 __decorate([
+    typeorm_1.Column({ length: 100, nullable: true }),
+    __metadata("design:type", String)
+], Admin.prototype, "business", void 0);
+__decorate([
     typeorm_1.ManyToOne((type) => type_entity_1.Type, (tyype) => tyype.user),
     __metadata("design:type", type_entity_1.Type)
 ], Admin.prototype, "type", void 0);
