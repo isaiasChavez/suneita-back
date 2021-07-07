@@ -1,5 +1,5 @@
 import { UserService } from "./user.service";
-import { InviteUserDTO, CreateUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, CreateAdminDTO } from "./user.dto";
+import { InviteUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO } from "./user.dto";
 export declare class UserController {
     private userService;
     constructor(userService: UserService);
@@ -8,8 +8,6 @@ export declare class UserController {
     findUserDetail(email: any): Promise<any>;
     confirmUserPassword(confirmUserPassword: ConfirmUserPassword): Promise<any>;
     createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any>;
-    createAdmin(createAdminDTO: CreateAdminDTO): Promise<any>;
-    createUser(createUserDTO: CreateUserDTO): Promise<any>;
     updateAdminUser(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any>;
     updateUser(updateUserDTO: UpdateUserDTO): Promise<any>;
     deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any>;

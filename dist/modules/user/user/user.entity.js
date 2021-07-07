@@ -13,9 +13,13 @@ exports.User = void 0;
 const typeorm_1 = require("typeorm");
 const type_entity_1 = require("../type/type.entity");
 const role_entity_1 = require("../role/role.entity");
+const sesion_entity_1 = require("../sesion/sesion.entity");
 const uuid_1 = require("uuid");
 const admin_entity_1 = require("./admin.entity");
 const token_entity_1 = require("../token/token.entity");
+const superadmin_entity_1 = require("./superadmin.entity");
+const suscription_entity_1 = require("../../suscription/suscription.entity");
+const asset_entity_1 = require("../../asset/asset.entity");
 let User = class User {
     createUuid() {
         this.uuid = uuid_1.v4();
@@ -34,7 +38,10 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "lastname", void 0);
 __decorate([
-    typeorm_1.Column({ type: "text", default: "https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb" }),
+    typeorm_1.Column({
+        type: 'text',
+        default: 'https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb',
+    }),
     __metadata("design:type", String)
 ], User.prototype, "avatar", void 0);
 __decorate([
@@ -54,11 +61,15 @@ __decorate([
     __metadata("design:type", role_entity_1.Role)
 ], User.prototype, "role", void 0);
 __decorate([
-    typeorm_1.ManyToOne(() => admin_entity_1.Admin, admin => admin.users),
+    typeorm_1.ManyToOne(() => admin_entity_1.Admin, (admin) => admin.users),
     __metadata("design:type", admin_entity_1.Admin)
 ], User.prototype, "admin", void 0);
 __decorate([
-    typeorm_1.Column({ type: "uuid", nullable: true }),
+    typeorm_1.ManyToOne((type) => superadmin_entity_1.SuperAdmin, superadmin => superadmin.users),
+    __metadata("design:type", superadmin_entity_1.SuperAdmin)
+], User.prototype, "superadmin", void 0);
+__decorate([
+    typeorm_1.Column({ type: 'uuid', nullable: true }),
     __metadata("design:type", String)
 ], User.prototype, "uuid", void 0);
 __decorate([
@@ -74,6 +85,18 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "token", void 0);
 __decorate([
+    typeorm_1.OneToMany((type) => sesion_entity_1.Sesion, (sesion) => sesion.user),
+    __metadata("design:type", Array)
+], User.prototype, "sesion", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => suscription_entity_1.Suscription, suscription => suscription.user),
+    __metadata("design:type", Array)
+], User.prototype, "suscriptions", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => asset_entity_1.Asset, asset => asset.user),
+    __metadata("design:type", Array)
+], User.prototype, "assets", void 0);
+__decorate([
     typeorm_1.CreateDateColumn(),
     __metadata("design:type", Date)
 ], User.prototype, "createdAt", void 0);
@@ -88,7 +111,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], User.prototype, "createUuid", null);
 User = __decorate([
-    typeorm_1.Entity({ schema: "Users" })
+    typeorm_1.Entity({ schema: 'Users' })
 ], User);
 exports.User = User;
 //# sourceMappingURL=user.entity.js.map

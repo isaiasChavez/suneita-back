@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeleteUserDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateUserAdminDTO = exports.CreateUserDTO = exports.CreateAdminDTO = exports.CreateSuperAdminDTO = exports.ConfirmUserPassword = exports.InviteUserDTO = exports.InviteAdminDTO = void 0;
+exports.DeleteUserDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.ConfirmUserPassword = exports.InviteUserDTO = exports.InviteAdminDTO = void 0;
 const class_validator_1 = require("class-validator");
 class InviteAdminDTO {
     constructor({ email, type }) {
@@ -35,11 +35,18 @@ __decorate([
 ], InviteAdminDTO.prototype, "type", void 0);
 exports.InviteAdminDTO = InviteAdminDTO;
 class InviteUserDTO {
-    constructor({ adminUuid, superAdminUuid, email, type }) {
+    constructor({ adminUuid, superAdminUuid, company, name, invitations, cost, startedAt, finishedAt, email, type, typeToInvite, }) {
         this.adminUuid = adminUuid;
+        this.company = company;
         this.superAdminUuid = superAdminUuid;
         this.email = email;
         this.type = type;
+        this.name = name;
+        this.invitations = parseInt(invitations);
+        this.cost = parseFloat(cost);
+        this.startedAt = startedAt;
+        this.finishedAt = finishedAt;
+        this.typeToInvite = typeToInvite;
     }
 }
 __decorate([
@@ -61,10 +68,50 @@ __decorate([
     __metadata("design:type", String)
 ], InviteUserDTO.prototype, "email", void 0);
 __decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    class_validator_1.MaxLength(250),
+    __metadata("design:type", String)
+], InviteUserDTO.prototype, "company", void 0);
+__decorate([
+    class_validator_1.MaxLength(250),
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], InviteUserDTO.prototype, "name", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber(),
+    __metadata("design:type", Number)
+], InviteUserDTO.prototype, "invitations", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber(),
+    class_validator_1.IsPositive(),
+    __metadata("design:type", Number)
+], InviteUserDTO.prototype, "cost", void 0);
+__decorate([
+    class_validator_1.IsDateString(),
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], InviteUserDTO.prototype, "startedAt", void 0);
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsDateString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], InviteUserDTO.prototype, "finishedAt", void 0);
+__decorate([
     class_validator_1.IsNumber(),
     class_validator_1.IsNotEmpty(),
     __metadata("design:type", Number)
 ], InviteUserDTO.prototype, "type", void 0);
+__decorate([
+    class_validator_1.IsNumber(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", Number)
+], InviteUserDTO.prototype, "typeToInvite", void 0);
 exports.InviteUserDTO = InviteUserDTO;
 class ConfirmUserPassword {
     constructor({ email, password }) {
@@ -125,115 +172,8 @@ __decorate([
     __metadata("design:type", String)
 ], CreateSuperAdminDTO.prototype, "password", void 0);
 exports.CreateSuperAdminDTO = CreateSuperAdminDTO;
-class CreateAdminDTO {
-    constructor({ superAdminUuid, name, lastname, email, password, startedAt, finishedAt, business, cost }) {
-        this.superAdminUuid = superAdminUuid;
-        this.name = name;
-        this.lastname = lastname;
-        this.email = email;
-        this.password = password;
-        this.startedAt = startedAt;
-        this.finishedAt = finishedAt;
-        this.business = business;
-        this.cost = cost;
-    }
-}
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", Number)
-], CreateAdminDTO.prototype, "superAdminUuid", void 0);
-__decorate([
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsString(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "name", void 0);
-__decorate([
-    class_validator_1.MaxLength(100),
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "lastname", void 0);
-__decorate([
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsEmail(),
-    class_validator_1.IsString(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "email", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "password", void 0);
-__decorate([
-    class_validator_1.IsDateString(),
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "startedAt", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsDateString(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "finishedAt", void 0);
-__decorate([
-    class_validator_1.IsNumber(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", Number)
-], CreateAdminDTO.prototype, "cost", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.MaxLength(200),
-    __metadata("design:type", String)
-], CreateAdminDTO.prototype, "business", void 0);
-exports.CreateAdminDTO = CreateAdminDTO;
-class CreateUserDTO {
-    constructor({ adminUuid, name, lastname, email, password }) {
-        this.adminUuid = adminUuid;
-        this.name = name;
-        this.lastname = lastname;
-        this.email = email;
-        this.password = password;
-    }
-}
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", Number)
-], CreateUserDTO.prototype, "adminUuid", void 0);
-__decorate([
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsString(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], CreateUserDTO.prototype, "name", void 0);
-__decorate([
-    class_validator_1.MaxLength(100),
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", String)
-], CreateUserDTO.prototype, "lastname", void 0);
-__decorate([
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsEmail(),
-    class_validator_1.IsString(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], CreateUserDTO.prototype, "email", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.MaxLength(100),
-    __metadata("design:type", String)
-], CreateUserDTO.prototype, "password", void 0);
-exports.CreateUserDTO = CreateUserDTO;
 class UpdateUserAdminDTO {
-    constructor({ superAdminUuid, adminUuid, name, lastname, avatar, startedAt, finishedAt, cost, business }) {
+    constructor({ superAdminUuid, adminUuid, name, lastname, avatar, startedAt, finishedAt, cost, business, }) {
         this.superAdminUuid = superAdminUuid;
         this.adminUuid = adminUuid;
         this.name = name;

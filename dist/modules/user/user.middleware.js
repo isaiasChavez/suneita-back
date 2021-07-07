@@ -9,16 +9,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserMiddleware = void 0;
 const common_1 = require("@nestjs/common");
 const types_1 = require("../../types");
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 let UserMiddleware = class UserMiddleware {
     use(req, res, next) {
-        const token = req.header("x-auth-token");
+        const token = req.header('x-auth-token');
         if (!token) {
-            return res.status(401).json({ msg: "No hay token, permiso no valido" });
+            return res.status(401).json({ msg: 'No hay token, permiso no valido' });
         }
         try {
             const cifrado = jwt.verify(token, process.env.SECRETA);
-            console.log({ cifrado });
+            req.body.adminUuid = null;
+            req.body.superAdminUuid = null;
             if (cifrado.usuario.type === types_1.ADMIN) {
                 req.body.adminUuid = cifrado.usuario.uuid;
             }
@@ -29,7 +30,7 @@ let UserMiddleware = class UserMiddleware {
             next();
         }
         catch (error) {
-            res.status(401).json({ msg: "token no valido" });
+            res.status(401).json({ msg: 'token no valido' });
         }
     }
 };

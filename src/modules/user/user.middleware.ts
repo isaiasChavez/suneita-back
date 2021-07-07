@@ -1,18 +1,19 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ADMIN, SUPER_ADMIN } from 'src/types';
 import { SesionTokenDTO } from './sesion/sesion.dto';
-const jwt = require("jsonwebtoken")
+const jwt = require('jsonwebtoken');
 
 @Injectable()
 export class UserMiddleware implements NestMiddleware {
   use(req: any, res: any, next: () => void) {
-    const token = req.header("x-auth-token");
+    const token = req.header('x-auth-token');
     if (!token) {
-      return res.status(401).json({ msg: "No hay token, permiso no valido" });
+      return res.status(401).json({ msg: 'No hay token, permiso no valido' });
     }
     try {
       const cifrado: SesionTokenDTO = jwt.verify(token, process.env.SECRETA);
-      console.log({ cifrado })
+      req.body.adminUuid = null;
+      req.body.superAdminUuid = null;
       if (cifrado.usuario.type === ADMIN) {
         req.body.adminUuid = cifrado.usuario.uuid;
       }
@@ -20,9 +21,9 @@ export class UserMiddleware implements NestMiddleware {
         req.body.superAdminUuid = cifrado.usuario.uuid;
       }
       req.body.type = cifrado.usuario.type;
-      next()
+      next();
     } catch (error) {
-      res.status(401).json({ msg: "token no valido" });
+      res.status(401).json({ msg: 'token no valido' });
     }
   }
 }

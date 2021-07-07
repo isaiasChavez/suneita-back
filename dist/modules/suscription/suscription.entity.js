@@ -13,6 +13,7 @@ exports.Suscription = void 0;
 const typeorm_1 = require("typeorm");
 const uuid_1 = require("uuid");
 const admin_entity_1 = require("../user/user/admin.entity");
+const user_entity_1 = require("../user/user/user.entity");
 let Suscription = class Suscription {
     createUuid() {
         this.uuid = uuid_1.v4();
@@ -26,6 +27,10 @@ __decorate([
     typeorm_1.ManyToOne(() => admin_entity_1.Admin, admin => admin.suscriptions),
     __metadata("design:type", admin_entity_1.Admin)
 ], Suscription.prototype, "admin", void 0);
+__decorate([
+    typeorm_1.ManyToOne(() => user_entity_1.User, user => user.suscriptions),
+    __metadata("design:type", user_entity_1.User)
+], Suscription.prototype, "user", void 0);
 __decorate([
     typeorm_1.Column({
         type: "timestamp without time zone",
@@ -50,6 +55,10 @@ __decorate([
     typeorm_1.Column({ type: "uuid", nullable: false }),
     __metadata("design:type", String)
 ], Suscription.prototype, "uuid", void 0);
+__decorate([
+    typeorm_1.Column({ nullable: true, default: 0 }),
+    __metadata("design:type", Number)
+], Suscription.prototype, "invitations", void 0);
 __decorate([
     typeorm_1.Column({ nullable: false, default: false }),
     __metadata("design:type", Boolean)

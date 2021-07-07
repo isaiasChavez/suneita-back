@@ -8,16 +8,30 @@ export declare class InviteAdminDTO {
     type: number;
 }
 export declare class InviteUserDTO {
-    constructor({ adminUuid, superAdminUuid, email, type }: {
+    constructor({ adminUuid, superAdminUuid, company, name, invitations, cost, startedAt, finishedAt, email, type, typeToInvite, }: {
         adminUuid: any;
         superAdminUuid: any;
+        company: any;
+        name: any;
+        invitations: any;
+        cost: any;
+        startedAt: any;
+        finishedAt: any;
         email: any;
         type: any;
+        typeToInvite: any;
     });
     adminUuid: string;
     superAdminUuid: string;
     email: string;
+    company: string;
+    name: string;
+    invitations: number;
+    cost: number;
+    startedAt: string;
+    finishedAt: string;
     type: number;
+    typeToInvite: number;
 }
 export declare class ConfirmUserPassword {
     constructor({ email, password }: {
@@ -41,44 +55,8 @@ export declare class CreateSuperAdminDTO {
     email: string;
     password: string;
 }
-export declare class CreateAdminDTO {
-    constructor({ superAdminUuid, name, lastname, email, password, startedAt, finishedAt, business, cost }: {
-        superAdminUuid: any;
-        name: any;
-        lastname: any;
-        email: any;
-        password: any;
-        startedAt: any;
-        finishedAt: any;
-        business: any;
-        cost: any;
-    });
-    superAdminUuid: number;
-    name: string;
-    lastname: string;
-    email: string;
-    password: string;
-    startedAt: string;
-    finishedAt: string;
-    cost: number;
-    business: string;
-}
-export declare class CreateUserDTO {
-    constructor({ adminUuid, name, lastname, email, password }: {
-        adminUuid: any;
-        name: any;
-        lastname: any;
-        email: any;
-        password: any;
-    });
-    adminUuid: number;
-    name: string;
-    lastname: string;
-    email: string;
-    password: string;
-}
 export declare class UpdateUserAdminDTO {
-    constructor({ superAdminUuid, adminUuid, name, lastname, avatar, startedAt, finishedAt, cost, business }: {
+    constructor({ superAdminUuid, adminUuid, name, lastname, avatar, startedAt, finishedAt, cost, business, }: {
         superAdminUuid: any;
         adminUuid: any;
         name: any;

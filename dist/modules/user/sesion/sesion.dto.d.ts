@@ -1,12 +1,10 @@
 export declare class ReuestSesionDTO {
-    constructor({ email, password, type }: {
+    constructor({ email, password }: {
         email: any;
         password: any;
-        type: any;
     });
     email: string;
     password: string;
-    type: number;
 }
 export declare class ResetPassword {
     constructor({ email }: {
@@ -30,4 +28,28 @@ export declare class SesionTokenDTO {
         uuid: string;
         type: number;
     };
+}
+export declare class CreateAdminDTO {
+    constructor({ name, lastname, email, password, }: {
+        name: any;
+        lastname: any;
+        email: any;
+        password: any;
+    });
+    name: string;
+    lastname: string;
+    email: string;
+    password: string;
+}
+export declare class CreateUserDTO {
+    constructor({ name, lastname, email, password }: {
+        name: any;
+        lastname: any;
+        email: any;
+        password: any;
+    });
+    name: string;
+    lastname: string;
+    email: string;
+    password: string;
 }

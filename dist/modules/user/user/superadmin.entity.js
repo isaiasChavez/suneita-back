@@ -17,6 +17,7 @@ const sesion_entity_1 = require("../sesion/sesion.entity");
 const uuid_1 = require("uuid");
 const admin_entity_1 = require("./admin.entity");
 const token_entity_1 = require("../token/token.entity");
+const user_entity_1 = require("./user.entity");
 let SuperAdmin = class SuperAdmin {
     createUuid() {
         this.uuid = uuid_1.v4();
@@ -35,7 +36,10 @@ __decorate([
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "lastname", void 0);
 __decorate([
-    typeorm_1.Column({ type: "text", default: "https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb" }),
+    typeorm_1.Column({
+        type: 'text',
+        default: 'https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb',
+    }),
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "avatar", void 0);
 __decorate([
@@ -59,15 +63,19 @@ __decorate([
     __metadata("design:type", role_entity_1.Role)
 ], SuperAdmin.prototype, "role", void 0);
 __decorate([
-    typeorm_1.OneToMany(() => admin_entity_1.Admin, admin => admin.superadmin),
+    typeorm_1.OneToMany(() => admin_entity_1.Admin, (admin) => admin.superadmin),
     __metadata("design:type", Array)
 ], SuperAdmin.prototype, "admins", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => user_entity_1.User, (user) => user.superadmin),
+    __metadata("design:type", Array)
+], SuperAdmin.prototype, "users", void 0);
 __decorate([
     typeorm_1.OneToMany((type) => sesion_entity_1.Sesion, (sesion) => sesion.superadmin),
     __metadata("design:type", Array)
 ], SuperAdmin.prototype, "sesion", void 0);
 __decorate([
-    typeorm_1.Column({ type: "uuid", nullable: true }),
+    typeorm_1.Column({ type: 'uuid', nullable: true }),
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "uuid", void 0);
 __decorate([
@@ -93,7 +101,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SuperAdmin.prototype, "createUuid", null);
 SuperAdmin = __decorate([
-    typeorm_1.Entity({ schema: "Users" })
+    typeorm_1.Entity({ schema: 'Users' })
 ], SuperAdmin);
 exports.SuperAdmin = SuperAdmin;
 //# sourceMappingURL=superadmin.entity.js.map

@@ -23,20 +23,35 @@ let SesionController = class SesionController {
     }
     async Login(reuestSesionDTO) {
         console.log({ reuestSesionDTO });
-        let newreuestSesionDTO = new sesion_dto_1.ReuestSesionDTO(reuestSesionDTO);
+        const newreuestSesionDTO = new sesion_dto_1.ReuestSesionDTO(reuestSesionDTO);
         try {
             await class_validator_1.validateOrReject(newreuestSesionDTO);
+            console.log('Validado');
             return await this.sesionService.RequesLogin(reuestSesionDTO);
         }
         catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {
-                errors
+                errors,
+            };
+        }
+    }
+    async LoginFromApp(reuestSesionDTO) {
+        console.log({ reuestSesionDTO });
+        const newreuestSesionDTO = new sesion_dto_1.ReuestSesionDTO(reuestSesionDTO);
+        try {
+            await class_validator_1.validateOrReject(newreuestSesionDTO);
+            return await this.sesionService.RequesLoginFromApp(reuestSesionDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors,
             };
         }
     }
     async recoveryPassword(passwordRecovery) {
-        let newPasswordRecovery = new sesion_dto_1.PasswordRecovery(passwordRecovery);
+        const newPasswordRecovery = new sesion_dto_1.PasswordRecovery(passwordRecovery);
         try {
             await class_validator_1.validateOrReject(newPasswordRecovery);
             return await this.sesionService.passwordRecovery(newPasswordRecovery);
@@ -44,7 +59,7 @@ let SesionController = class SesionController {
         catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {
-                errors
+                errors,
             };
         }
     }
@@ -54,8 +69,34 @@ let SesionController = class SesionController {
     async Logout(requestSesionLogOutDTO) {
         return await this.sesionService.RequesLogout(requestSesionLogOutDTO);
     }
-    async Decifring(token) {
-        return await this.sesionService.decifreToken(token);
+    async Decifring(email) {
+        return await this.sesionService.decifreToken(email);
+    }
+    async createAdmin(createAdminDTO) {
+        let newcreateAdminDTO = new sesion_dto_1.CreateAdminDTO(createAdminDTO);
+        try {
+            await class_validator_1.validateOrReject(newcreateAdminDTO);
+            return await this.sesionService.createAdmin(newcreateAdminDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async createUser(createUserDTO) {
+        let newCreateUserDTO = new sesion_dto_1.CreateUserDTO(createUserDTO);
+        try {
+            await class_validator_1.validateOrReject(newCreateUserDTO);
+            return await this.sesionService.create(newCreateUserDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            };
+        }
     }
 };
 __decorate([
@@ -66,15 +107,22 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "Login", null);
 __decorate([
-    common_1.Put("recovery"),
+    common_1.Post('login'),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [sesion_dto_1.ReuestSesionDTO]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "LoginFromApp", null);
+__decorate([
+    common_1.Put('recovery'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [sesion_dto_1.PasswordRecovery]),
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "recoveryPassword", null);
 __decorate([
-    common_1.Get("requestreset/:email"),
-    __param(0, common_1.Param("email")),
+    common_1.Get('requestreset/:email'),
+    __param(0, common_1.Param('email')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
@@ -87,12 +135,26 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "Logout", null);
 __decorate([
-    common_1.Post('des/:token'),
-    __param(0, common_1.Param("token")),
+    common_1.Get('des/:email'),
+    __param(0, common_1.Param('email')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "Decifring", null);
+__decorate([
+    common_1.Post("admin"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [sesion_dto_1.CreateAdminDTO]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "createAdmin", null);
+__decorate([
+    common_1.Post("user"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [sesion_dto_1.CreateUserDTO]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "createUser", null);
 SesionController = __decorate([
     common_1.Controller('sesion'),
     __metadata("design:paramtypes", [sesion_service_1.SesionService])

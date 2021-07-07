@@ -1,8 +1,8 @@
-import { Type } from "../type/type.entity";
-import { Role } from "../role/role.entity";
-import { Sesion } from "../sesion/sesion.entity";
-import { Admin } from "./admin.entity";
-import { Token } from "../token/token.entity";
+import { Type } from '../type/type.entity';
+import { Role } from '../role/role.entity';
+import { Sesion } from '../sesion/sesion.entity';
+import { Admin } from './admin.entity';
+import { Token } from '../token/token.entity';
 export declare class SuperAdmin {
     id: string;
     name: string;
@@ -14,6 +14,7 @@ export declare class SuperAdmin {
     token: Token[];
     role: Role;
     admins: Admin[];
+    users: Admin[];
     sesion: Sesion[];
     uuid: string;
     isDeleted: boolean;

@@ -36,6 +36,7 @@ export class Admin {
 
     @Column({ length: 250 })
     email: string;
+    
 
     @Column({ length: 100 })
     password: string;

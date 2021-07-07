@@ -1,7 +1,11 @@
-import { Type } from "../type/type.entity";
-import { Role } from "../role/role.entity";
-import { Admin } from "./admin.entity";
-import { Token } from "../token/token.entity";
+import { Type } from '../type/type.entity';
+import { Role } from '../role/role.entity';
+import { Sesion } from '../sesion/sesion.entity';
+import { Admin } from './admin.entity';
+import { Token } from '../token/token.entity';
+import { SuperAdmin } from './superadmin.entity';
+import { Suscription } from 'src/modules/suscription/suscription.entity';
+import { Asset } from 'src/modules/asset/asset.entity';
 export declare class User {
     id: string;
     name: string;
@@ -12,10 +16,14 @@ export declare class User {
     type: Type;
     role: Role;
     admin: Admin;
+    superadmin: SuperAdmin;
     uuid: string;
     isDeleted: boolean;
     isActive: boolean;
     token: Token[];
+    sesion: Sesion[];
+    suscriptions: Suscription[];
+    assets: Asset[];
     createdAt: Date;
     updatedAt: Date;
     createUuid(): void;

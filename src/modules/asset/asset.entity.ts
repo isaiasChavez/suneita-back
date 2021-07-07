@@ -11,6 +11,7 @@ import {
 } from "typeorm";
 import { v4 as uuid } from "uuid";
 import { Admin } from "../user/user/admin.entity";
+import { User } from "../user/user/user.entity";
 
 @Entity({ schema: "Assets" })
 export class Asset {
@@ -21,14 +22,15 @@ export class Asset {
     @Column({ length: 300, nullable: false })
     url: string;
 
-
     @Column({ type: "uuid", nullable: false })
     uuid: string;
 
     @Column({ nullable: false, default: true })
     isActive: boolean;
+
     @Column({ nullable: false, default: false })
     isDeleted: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 
@@ -42,6 +44,9 @@ export class Asset {
 
     @ManyToOne(() => Admin, admin => admin.assets)
     admin: Admin;
+
+    @ManyToOne(() => User, user => user.assets)
+    user: User;
 
 
 }

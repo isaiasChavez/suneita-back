@@ -11,6 +11,7 @@ import {
 } from "typeorm";
 import { v4 as uuid } from "uuid";
 import { Admin } from "../user/user/admin.entity";
+import { User } from "../user/user/user.entity";
 
 @Entity({ schema: "Users" })
 export class Suscription {
@@ -20,6 +21,9 @@ export class Suscription {
 
     @ManyToOne(() => Admin, admin => admin.suscriptions)
     admin: Admin;
+
+    @ManyToOne(() => User, user => user.suscriptions)
+    user: User;
 
     @Column({
         type: "timestamp without time zone",
@@ -42,7 +46,8 @@ export class Suscription {
     @Column({ type: "uuid", nullable: false })
     uuid: string;
 
-
+    @Column({ nullable: true, default: 0 })
+    invitations: number;
 
 
     @Column({ nullable: false, default: false })

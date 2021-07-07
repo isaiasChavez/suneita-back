@@ -67,32 +67,6 @@ let UserController = class UserController {
             };
         }
     }
-    async createAdmin(createAdminDTO) {
-        let newcreateAdminDTO = new user_dto_1.CreateAdminDTO(createAdminDTO);
-        try {
-            await class_validator_1.validateOrReject(newcreateAdminDTO);
-            return await this.userService.createAdmin(newcreateAdminDTO);
-        }
-        catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            };
-        }
-    }
-    async createUser(createUserDTO) {
-        let newCreateUserDTO = new user_dto_1.CreateUserDTO(createUserDTO);
-        try {
-            await class_validator_1.validateOrReject(newCreateUserDTO);
-            return await this.userService.create(newCreateUserDTO);
-        }
-        catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            };
-        }
-    }
     async updateAdminUser(updateUserAdminDTO) {
         let newupdateUserDTO = new user_dto_1.UpdateUserAdminDTO(updateUserAdminDTO);
         try {
@@ -194,20 +168,6 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.CreateSuperAdminDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "createSuperAdmin", null);
-__decorate([
-    common_1.Post("admin"),
-    __param(0, common_1.Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.CreateAdminDTO]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "createAdmin", null);
-__decorate([
-    common_1.Post(),
-    __param(0, common_1.Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.CreateUserDTO]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "createUser", null);
 __decorate([
     common_1.Put('admin'),
     __param(0, common_1.Body()),
