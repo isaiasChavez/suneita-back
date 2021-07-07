@@ -385,11 +385,11 @@ export class SesionService {
                 type:2
               },
               {
-                url: '',
+                url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/video%20del%20mar%20congelado-sin%20copyright-%5Bvisual%20freedom%5D.mp4',
                 type:3
               },
               {
-                url: '',
+                url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/Ayutthaya%20-%20Easy%20Tripod%20Paint%20_%20360_VR%20Master%20Series%20_%20Free%20Download.mp4',
                 type:4
               }
             ],
