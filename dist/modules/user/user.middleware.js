@@ -20,12 +20,17 @@ let UserMiddleware = class UserMiddleware {
             const cifrado = jwt.verify(token, process.env.SECRETA);
             req.body.adminUuid = null;
             req.body.superAdminUuid = null;
+            req.body.userUuid = null;
             if (cifrado.usuario.type === types_1.ADMIN) {
                 req.body.adminUuid = cifrado.usuario.uuid;
             }
             if (cifrado.usuario.type === types_1.SUPER_ADMIN) {
                 req.body.superAdminUuid = cifrado.usuario.uuid;
             }
+            if (cifrado.usuario.type === types_1.USER_NORMAL) {
+                req.body.userUuid = cifrado.usuario.uuid;
+            }
+            console.log(req.body);
             req.body.type = cifrado.usuario.type;
             next();
         }

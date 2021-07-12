@@ -1,5 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { ADMIN, SUPER_ADMIN } from 'src/types';
+import { ADMIN, SUPER_ADMIN,USER_NORMAL } from 'src/types';
 import { SesionTokenDTO } from './sesion/sesion.dto';
 const jwt = require('jsonwebtoken');
 
@@ -14,12 +14,17 @@ export class UserMiddleware implements NestMiddleware {
       const cifrado: SesionTokenDTO = jwt.verify(token, process.env.SECRETA);
       req.body.adminUuid = null;
       req.body.superAdminUuid = null;
+      req.body.userUuid = null;
       if (cifrado.usuario.type === ADMIN) {
         req.body.adminUuid = cifrado.usuario.uuid;
       }
       if (cifrado.usuario.type === SUPER_ADMIN) {
         req.body.superAdminUuid = cifrado.usuario.uuid;
       }
+      if (cifrado.usuario.type === USER_NORMAL) {
+        req.body.userUuid = cifrado.usuario.uuid;
+      }
+      console.log(req.body)
       req.body.type = cifrado.usuario.type;
       next();
     } catch (error) {

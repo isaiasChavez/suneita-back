@@ -12,6 +12,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { Admin } from "../user/user/admin.entity";
 import { User } from "../user/user/user.entity";
+import { TypeAsset } from "./type-asset/type-asset.entity";
 
 @Entity({ schema: "Assets" })
 export class Asset {
@@ -47,6 +48,7 @@ export class Asset {
 
     @ManyToOne(() => User, user => user.assets)
     user: User;
-
+    @ManyToOne((typeAsset) => TypeAsset, (typeAsset) => typeAsset.asset)
+    typeAsset: TypeAsset;
 
 }

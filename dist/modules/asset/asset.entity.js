@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const uuid_1 = require("uuid");
 const admin_entity_1 = require("../user/user/admin.entity");
 const user_entity_1 = require("../user/user/user.entity");
+const type_asset_entity_1 = require("./type-asset/type-asset.entity");
 let Asset = class Asset {
     createUuid() {
         this.uuid = uuid_1.v4();
@@ -61,6 +62,10 @@ __decorate([
     typeorm_1.ManyToOne(() => user_entity_1.User, user => user.assets),
     __metadata("design:type", user_entity_1.User)
 ], Asset.prototype, "user", void 0);
+__decorate([
+    typeorm_1.ManyToOne((typeAsset) => type_asset_entity_1.TypeAsset, (typeAsset) => typeAsset.asset),
+    __metadata("design:type", type_asset_entity_1.TypeAsset)
+], Asset.prototype, "typeAsset", void 0);
 Asset = __decorate([
     typeorm_1.Entity({ schema: "Assets" })
 ], Asset);

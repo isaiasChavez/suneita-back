@@ -18,39 +18,70 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const admin_entity_1 = require("../user/user/admin.entity");
 const asset_entity_1 = require("./asset.entity");
+const types_1 = require("../../types");
+const user_entity_1 = require("../user/user/user.entity");
+const type_asset_entity_1 = require("./type-asset/type-asset.entity");
 let AssetService = class AssetService {
-    constructor(adminRepository, assetRepository) {
+    constructor(adminRepository, userRepository, assetRepository, typeAssetRepository) {
         this.adminRepository = adminRepository;
+        this.userRepository = userRepository;
         this.assetRepository = assetRepository;
+        this.typeAssetRepository = typeAssetRepository;
     }
-    async getAllAssetsByAdmin(uuid) {
+    async getAllAssetsByUser(getAssetDTO) {
         try {
-            console.log({ uuid });
-            console.log(uuid.uuid);
-            const admin = await this.adminRepository.findOne({
-                relations: ["assets"],
-                where: {
-                    uuid: uuid.uuid
-                }
-            });
-            console.log({ admin });
-            if (!admin) {
+            if (!getAssetDTO.adminUuid && !getAssetDTO.userUuid) {
+                return {
+                    status: 5,
+                    error: "No permitido"
+                };
+            }
+            let user;
+            if (getAssetDTO.type === types_1.ADMIN) {
+                user = await this.adminRepository.findOne({
+                    relations: ["type"],
+                    where: {
+                        uuid: getAssetDTO.adminUuid
+                    }
+                });
+            }
+            if (getAssetDTO.type === types_1.USER_NORMAL) {
+                user = await this.userRepository.findOne({
+                    relations: ["type"],
+                    where: {
+                        uuid: getAssetDTO.userUuid,
+                        isActive: true
+                    }
+                });
+            }
+            if (!user) {
                 return {
                     status: 1,
                     error: "No existe el administrador"
                 };
             }
-            const assets = admin.assets.filter(asset => {
-                if (asset.isActive) {
-                    return {
-                        uuid: asset.uuid,
-                        url: asset.url,
-                        s: asset.isActive
-                    };
-                }
-            });
+            let assets;
+            if (user.type.id === types_1.USER_NORMAL) {
+                assets = await this.assetRepository.find({
+                    select: ["url"],
+                    relations: ["typeAsset"],
+                    where: {
+                        user
+                    }
+                });
+            }
+            if (user.type.id === types_1.ADMIN) {
+                assets = await this.assetRepository.find({
+                    select: ["url"],
+                    relations: ["typeAsset"],
+                    where: {
+                        admin: user
+                    }
+                });
+            }
             return {
-                assets
+                assets,
+                status: 0
             };
         }
         catch (err) {
@@ -63,23 +94,65 @@ let AssetService = class AssetService {
     }
     async create(createAssetDTO) {
         try {
-            const admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: createAssetDTO.adminUuid
-                }
-            });
-            if (!admin) {
+            if (!createAssetDTO.adminUuid && !createAssetDTO.userUuid) {
                 return {
-                    status: 1,
-                    error: "No existe el administrador"
+                    status: 5,
+                    error: "No existe usuario"
                 };
             }
-            const asset = this.assetRepository.create({
-                admin,
-                url: createAssetDTO.url
-            });
+            let user;
+            if (createAssetDTO.type === types_1.ADMIN) {
+                user = await this.adminRepository.findOne({
+                    relations: ["assets"],
+                    where: {
+                        uuid: createAssetDTO.adminUuid
+                    }
+                });
+            }
+            if (createAssetDTO.type === types_1.USER_NORMAL) {
+                user = await this.userRepository.findOne({
+                    relations: ["assets"],
+                    where: {
+                        uuid: createAssetDTO.userUuid,
+                        isActive: true
+                    }
+                });
+            }
+            if (!user) {
+                return {
+                    status: 1,
+                    error: "No existe el usuario"
+                };
+            }
+            const typeAsset = await this.typeAssetRepository.findOne(createAssetDTO.typeAsset);
+            if (!typeAsset) {
+                throw new common_1.HttpException({
+                    status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "No permitido",
+                }, 403);
+            }
+            let asset;
+            if (createAssetDTO.type === types_1.ADMIN) {
+                asset = this.assetRepository.create({
+                    user: null,
+                    admin: user,
+                    url: createAssetDTO.url,
+                    typeAsset
+                });
+            }
+            if (createAssetDTO.type === types_1.USER_NORMAL) {
+                asset = this.assetRepository.create({
+                    user,
+                    admin: null,
+                    url: createAssetDTO.url,
+                    typeAsset
+                });
+            }
             await this.assetRepository.save(asset);
             return {
+                asset: {
+                    url: asset.url
+                },
                 status: 0
             };
         }
@@ -131,8 +204,12 @@ let AssetService = class AssetService {
 AssetService = __decorate([
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(1, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(1, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(2, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(3, typeorm_1.InjectRepository(type_asset_entity_1.TypeAsset)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], AssetService);
 exports.AssetService = AssetService;

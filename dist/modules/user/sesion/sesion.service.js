@@ -254,10 +254,16 @@ let SesionService = class SesionService {
             let response = null;
             let user;
             let type;
-            user = await this.superAdminRepository.findOne({
-                relations: ['type', 'admins'],
+            user = await this.adminRepository.findOne({
+                relations: ['type', 'users'],
                 where: { email: requestDTO.email, isActive: true },
             });
+            if (!user) {
+                user = await this.userRepository.findOne({
+                    relations: ['type'],
+                    where: { email: requestDTO.email, isActive: true },
+                });
+            }
             const payload = {
                 usuario: {
                     uuid: user.uuid,
@@ -284,11 +290,11 @@ let SesionService = class SesionService {
                             type: 2
                         },
                         {
-                            url: '',
+                            url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/video%20del%20mar%20congelado-sin%20copyright-%5Bvisual%20freedom%5D.mp4',
                             type: 3
                         },
                         {
-                            url: '',
+                            url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/Ayutthaya%20-%20Easy%20Tripod%20Paint%20_%20360_VR%20Master%20Series%20_%20Free%20Download.mp4',
                             type: 4
                         }
                     ],

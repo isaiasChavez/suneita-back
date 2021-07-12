@@ -275,23 +275,21 @@ export class SesionService {
       let user: Admin | SuperAdmin | User;
       let type: Type;
 
-      user = await this.superAdminRepository.findOne({
-        relations: ['type', 'admins'],
-        where: { email: requestDTO.email, isActive: true },
-      });
+      // user = await this.superAdminRepository.findOne({
+      //   relations: ['type', 'admins'],
+      //   where: { email: requestDTO.email, isActive: true },
+      // });
 
-      // if (!user) {
-      //   user = await this.adminRepository.findOne({
-      //     relations: ['type', 'users'],
-      //     where: { email: requestDTO.email, isActive: true },
-      //   });
-      // }
-      // if (!user) {
-      //   user = await this.userRepository.findOne({
-      //     relations: ['type'],
-      //     where: { email: requestDTO.email, isActive: true },
-      //   });
-      // }
+        user = await this.adminRepository.findOne({
+          relations: ['type', 'users'],
+          where: { email: requestDTO.email, isActive: true },
+        });
+      if (!user) {
+        user = await this.userRepository.findOne({
+          relations: ['type'],
+          where: { email: requestDTO.email, isActive: true },
+        });
+      }
       // if (!user) {
       //   return {
       //     status: 1,

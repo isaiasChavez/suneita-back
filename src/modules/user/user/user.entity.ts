@@ -8,6 +8,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
+  PrimaryColumn,
 } from 'typeorm';
 import { Type } from '../type/type.entity';
 import { Role } from '../role/role.entity';
@@ -21,7 +22,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 
 @Entity({ schema: 'Users' })
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: string;
 
   @Column({ length: 50 })

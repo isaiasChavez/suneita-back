@@ -21,16 +21,9 @@ let AssetController = class AssetController {
     constructor(assetService) {
         this.assetService = assetService;
     }
-    async getAllAssetsByAdmin(uuid) {
-        console.log({ uuid });
+    async getAllAssetsByUser(getAssetDTO) {
         try {
-            if (uuid.uuid.length < 20) {
-                console.log("no se puede");
-                return {
-                    status: 5
-                };
-            }
-            return await this.assetService.getAllAssetsByAdmin(uuid);
+            return await this.assetService.getAllAssetsByUser(getAssetDTO);
         }
         catch (error) {
             return error;
@@ -64,12 +57,12 @@ let AssetController = class AssetController {
     }
 };
 __decorate([
-    common_1.Get(':uuid'),
-    __param(0, common_1.Param()),
+    common_1.Get(),
+    __param(0, common_1.Body()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [asset_dto_1.GetAssetDTO]),
     __metadata("design:returntype", Promise)
-], AssetController.prototype, "getAllAssetsByAdmin", null);
+], AssetController.prototype, "getAllAssetsByUser", null);
 __decorate([
     common_1.Post(),
     __param(0, common_1.Body()),

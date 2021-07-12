@@ -10,9 +10,12 @@ exports.AssetModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const admin_entity_1 = require("../user/user/admin.entity");
+const user_entity_1 = require("../user/user/user.entity");
 const asset_controller_1 = require("./asset.controller");
 const asset_entity_1 = require("./asset.entity");
 const asset_service_1 = require("./asset.service");
+const type_asset_entity_1 = require("./type-asset/type-asset.entity");
+const type_asset_module_1 = require("./type-asset/type-asset.module");
 let AssetModule = class AssetModule {
 };
 AssetModule = __decorate([
@@ -20,6 +23,9 @@ AssetModule = __decorate([
         imports: [
             typeorm_1.TypeOrmModule.forFeature([admin_entity_1.Admin]),
             typeorm_1.TypeOrmModule.forFeature([asset_entity_1.Asset]),
+            typeorm_1.TypeOrmModule.forFeature([type_asset_entity_1.TypeAsset]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User]),
+            type_asset_module_1.TypeAssetModule,
         ],
         controllers: [asset_controller_1.AssetController],
         providers: [asset_service_1.AssetService]

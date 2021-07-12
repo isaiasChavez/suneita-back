@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { validateOrReject } from 'class-validator';
-import { CreateAssetDTO, DeleteAssetDto } from './asset.dto';
+import { CreateAssetDTO, DeleteAssetDto, GetAssetDTO } from './asset.dto';
 import { AssetService } from './asset.service';
 
 @Controller('asset')
@@ -9,17 +9,10 @@ export class AssetController {
 
     }
 
-    @Get(':uuid')
-    async getAllAssetsByAdmin(@Param() uuid): Promise<any> {
-        console.log({ uuid })
+    @Get()
+    async getAllAssetsByUser(@Body()getAssetDTO: GetAssetDTO): Promise<any> {
         try {
-            if (uuid.uuid.length < 20) {
-                console.log("no se puede")
-                return {
-                    status: 5
-                }
-            }
-            return await this.assetService.getAllAssetsByAdmin(uuid);
+            return await this.assetService.getAllAssetsByUser(getAssetDTO);
         } catch (error) {
             return error
         }

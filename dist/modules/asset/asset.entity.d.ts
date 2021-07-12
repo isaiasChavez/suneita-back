@@ -1,5 +1,6 @@
 import { Admin } from "../user/user/admin.entity";
 import { User } from "../user/user/user.entity";
+import { TypeAsset } from "./type-asset/type-asset.entity";
 export declare class Asset {
     id: string;
     url: string;
@@ -11,4 +12,5 @@ export declare class Asset {
     createUuid(): void;
     admin: Admin;
     user: User;
+    typeAsset: TypeAsset;
 }
