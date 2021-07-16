@@ -85,6 +85,7 @@ let UploadService = class UploadService {
         }).array('upload', 1);
     }
     async fileupload(req, res, folder) {
+        console.log({ req, res, folder });
         try {
             switch (folder) {
                 case '1':

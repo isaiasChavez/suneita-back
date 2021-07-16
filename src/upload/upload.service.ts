@@ -16,6 +16,7 @@ export class UploadService {
     constructor() { }
 
     async fileupload(@Req() req, @Res() res, folder: string) {
+        console.log({req,res,folder})
         try {
             switch (folder) {
                 case '1':

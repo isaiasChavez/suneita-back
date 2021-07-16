@@ -280,24 +280,6 @@ let SesionService = class SesionService {
                     lastname: user.lastname,
                     email: user.email,
                     avatar: user.avatar,
-                    assets: [
-                        {
-                            url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/jimmy-dean-DyQiNSgrM58-unsplash.jpg',
-                            type: 1
-                        },
-                        {
-                            url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/bretana_rg_360_final.jpg',
-                            type: 2
-                        },
-                        {
-                            url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/video%20del%20mar%20congelado-sin%20copyright-%5Bvisual%20freedom%5D.mp4',
-                            type: 3
-                        },
-                        {
-                            url: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/Ayutthaya%20-%20Easy%20Tripod%20Paint%20_%20360_VR%20Master%20Series%20_%20Free%20Download.mp4',
-                            type: 4
-                        }
-                    ],
                     type: user.type.id,
                 },
                 status: 0,
