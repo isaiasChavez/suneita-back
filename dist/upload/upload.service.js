@@ -20,12 +20,13 @@ const multerS3 = require("multer-s3");
 const s3Storage = require("multer-sharp-s3");
 const AWS_S3_BUCKET_NAME = 'bioderma-space';
 const s3 = new AWS.S3({
-    endpoint: 'sfo2.digitaloceanspaces.com', accessKeyId: 'ZSBKUIMMILMJDX65O7UX',
-    secretAccessKey: 'eK1JtgpKaFgCYUU7H3/aiRf0eNfJ+ijUrZCfTuwGdn0'
+    endpoint: 'sfo2.digitaloceanspaces.com',
+    accessKeyId: 'ZSBKUIMMILMJDX65O7UX',
+    secretAccessKey: 'eK1JtgpKaFgCYUU7H3/aiRf0eNfJ+ijUrZCfTuwGdn0',
 });
 let UploadService = class UploadService {
     constructor() {
-        this.upload = multer({
+        this.uploadImage = multer({
             storage: multerS3({
                 s3: s3,
                 bucket: AWS_S3_BUCKET_NAME,
@@ -36,7 +37,7 @@ let UploadService = class UploadService {
                 },
             }),
         }).array('upload', 1);
-        this.uploadProduct = multer({
+        this.uploadImage360 = multer({
             storage: multerS3({
                 s3: s3,
                 bucket: AWS_S3_BUCKET_NAME,
@@ -47,7 +48,7 @@ let UploadService = class UploadService {
                 },
             }),
         }).array('upload', 1);
-        this.uploadCampaing = multer({
+        this.uploadVideo = multer({
             storage: multerS3({
                 s3: s3,
                 bucket: AWS_S3_BUCKET_NAME,
@@ -58,7 +59,7 @@ let UploadService = class UploadService {
                 },
             }),
         }).array('upload', 1);
-        this.uploadBlog = multer({
+        this.uploadVideo360 = multer({
             storage: multerS3({
                 s3: s3,
                 bucket: AWS_S3_BUCKET_NAME,
@@ -68,7 +69,7 @@ let UploadService = class UploadService {
                     cb(null, `blog/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
                 },
             }),
-        }).array('upload', 1);
+        }).array('upload');
         this.uploadUser = multer({
             storage: s3Storage({
                 s3: s3,
@@ -80,71 +81,96 @@ let UploadService = class UploadService {
                 resize: {
                     width: 200,
                     height: 200,
-                }
+                },
             }),
         }).array('upload', 1);
     }
     async fileupload(req, res, folder) {
-        console.log({ req, res, folder });
         try {
             switch (folder) {
                 case '1':
-                    this.upload(req, res, function (error) {
+                    this.uploadImage(req, res, function (error) {
                         if (error) {
                             console.log(error);
-                            return res.status(404).json(`Failed to upload pdf file: ${error}`);
+                            return res
+                                .status(404)
+                                .json(`Failed to upload pdf file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf("/capacitacion/"), urlToReturn.lenght);
-                        return res.status(201).json("https://bioderma-space.sfo2.cdn.digitaloceanspaces.com" + urlToReturn);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/capacitacion/'), urlToReturn.lenght);
+                        return res
+                            .status(201)
+                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            urlToReturn);
                     });
                     break;
                 case '2':
-                    this.uploadProduct(req, res, function (error) {
+                    this.uploadImage360(req, res, function (error) {
                         if (error) {
                             console.log(error);
-                            return res.status(404).json(`Failed to upload image file: ${error}`);
+                            return res
+                                .status(404)
+                                .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf("/productos/"), urlToReturn.lenght);
-                        return res.status(201).json("https://bioderma-space.sfo2.cdn.digitaloceanspaces.com" + urlToReturn);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/productos/'), urlToReturn.lenght);
+                        return res
+                            .status(201)
+                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            urlToReturn);
                     });
                     break;
                 case '3':
-                    this.uploadCampaing(req, res, function (error) {
+                    this.uploadVideo(req, res, function (error) {
                         if (error) {
                             console.log(error);
-                            return res.status(404).json(`Failed to upload image file: ${error}`);
+                            return res
+                                .status(404)
+                                .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf("/campanas/"), urlToReturn.lenght);
-                        return res.status(201).json("https://bioderma-space.sfo2.cdn.digitaloceanspaces.com" + urlToReturn);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/campanas/'), urlToReturn.lenght);
+                        return res
+                            .status(201)
+                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            urlToReturn);
                     });
                     break;
                 case '4':
-                    this.uploadBlog(req, res, function (error) {
+                    this.uploadVideo360(req, res, function (error) {
                         if (error) {
-                            console.log(error);
-                            return res.status(404).json(`Failed to upload image file: ${error}`);
+                            console.log('req.files:', req.files);
+                            console.log('Multer Error:', error);
+                            return res
+                                .status(404)
+                                .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf("/blog/"), urlToReturn.lenght);
-                        return res.status(201).json("https://bioderma-space.sfo2.cdn.digitaloceanspaces.com" + urlToReturn);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/blog/'), urlToReturn.lenght);
+                        return res
+                            .status(201)
+                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            urlToReturn);
                     });
                     break;
                 case '5':
                     this.uploadUser(req, res, function (error) {
                         if (error) {
                             console.log(error);
-                            return res.status(404).json(`Failed to upload image file: ${error}`);
+                            return res
+                                .status(404)
+                                .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].Location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf("/users/"), urlToReturn.lenght);
-                        return res.status(201).json("https://bioderma-space.sfo2.cdn.digitaloceanspaces.com" + urlToReturn);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/users/'), urlToReturn.lenght);
+                        return res
+                            .status(201)
+                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            urlToReturn);
                     });
                     break;
                 default:
-                    console.log("default");
+                    console.log('default');
                     break;
             }
         }

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Admin } from '../user/user/admin.entity';
 import { CreateAssetDTO, DeleteAssetDto, GetAssetDTO } from './asset.dto';
 import { Asset } from './asset.entity';
-import { ADMIN, SUPER_ADMIN,USER_NORMAL } from 'src/types';
+import { ADMIN, SUPER_ADMIN, USER_NORMAL } from 'src/types';
 import { SuperAdmin } from '../user/user/superadmin.entity';
 import { User } from '../user/user/user.entity';
 import { TypeAsset } from './type-asset/type-asset.entity';
@@ -12,13 +12,20 @@ import { TypeAsset } from './type-asset/type-asset.entity';
 @Injectable()
 export class AssetService {
 
-    constructor(
+    constructor (
         @InjectRepository(Admin) private adminRepository: Repository<Admin>,
         @InjectRepository(User) private userRepository: Repository<User>,
         @InjectRepository(Asset) private assetRepository: Repository<Asset>,
         @InjectRepository(TypeAsset) private typeAssetRepository: Repository<TypeAsset>,
     ) {
     }
+    types ={ 
+        IMAGE:1,
+        IMAGE360:2,
+        VIDEO:3,
+        VIDEO360:4
+    }
+
 
     async getAllAssetsByUser(getAssetDTO: GetAssetDTO): Promise<any> {
         try {
@@ -31,23 +38,23 @@ export class AssetService {
             }
 
             let user: User | Admin
-            if (getAssetDTO.type === ADMIN ) {
-                 user = await this.adminRepository.findOne({
-                     relations: ["type"],
+            if (getAssetDTO.type === ADMIN) {
+                user = await this.adminRepository.findOne({
+                    relations: ["type"],
                     where: {
-                        uuid:getAssetDTO.adminUuid
+                        uuid: getAssetDTO.adminUuid
                     }
                 })
             }
-            if (getAssetDTO.type ===  USER_NORMAL) {
+            if (getAssetDTO.type === USER_NORMAL) {
                 user = await this.userRepository.findOne({
                     relations: ["type"],
-                   where: {
-                       uuid: getAssetDTO.userUuid,
-                       isActive:true
-                   }
-               })
-           }
+                    where: {
+                        uuid: getAssetDTO.userUuid,
+                        isActive: true
+                    }
+                })
+            }
 
             if (!user) {
                 return {
@@ -55,30 +62,41 @@ export class AssetService {
                     error: "No existe el administrador"
                 }
             }
-            let assets:Asset[]
+            let assets: Asset[]
             if (user.type.id === USER_NORMAL) {
                 assets = await this.assetRepository.find({
                     select: ["url"],
-                    relations:["typeAsset"],
+                    relations: ["typeAsset"],
                     where: {
                         user
-                }})
+                    }
+                })
             }
+
+
+
             if (user.type.id === ADMIN) {
                 assets = await this.assetRepository.find({
                     select: ["url"],
-                    relations:["typeAsset"],
+                    relations: ["typeAsset"],
                     where: {
-                        admin:user
-                }})
+                        admin: user
+                    }
+                })
             }
+            const images:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.IMAGE)
+            const images360:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.IMAGE360)
+            const videos:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.VIDEO)
+            const videos360:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.VIDEO360)
+            
+            console.log({images,videos360,videos,images360})
 
 
 
 
             return {
-                assets,
-                status:0
+                assets:{images,videos360,videos,images360},
+                status: 0
             }
         } catch (err) {
             console.log("AssetService - get: ", err);
@@ -104,23 +122,23 @@ export class AssetService {
             }
 
             let user: User | Admin
-            if (createAssetDTO.type === ADMIN ) {
-                 user = await this.adminRepository.findOne({
+            if (createAssetDTO.type === ADMIN) {
+                user = await this.adminRepository.findOne({
                     relations: ["assets"],
                     where: {
-                        uuid:createAssetDTO.adminUuid
+                        uuid: createAssetDTO.adminUuid
                     }
                 })
             }
-            if (createAssetDTO.type ===  USER_NORMAL) {
+            if (createAssetDTO.type === USER_NORMAL) {
                 user = await this.userRepository.findOne({
-                   relations: ["assets"],
-                   where: {
-                       uuid: createAssetDTO.userUuid,
-                       isActive:true
-                   }
-               })
-           }
+                    relations: ["assets"],
+                    where: {
+                        uuid: createAssetDTO.userUuid,
+                        isActive: true
+                    }
+                })
+            }
 
             if (!user) {
                 return {
@@ -129,7 +147,7 @@ export class AssetService {
                 }
             }
 
-            const typeAsset =await this.typeAssetRepository.findOne(createAssetDTO.typeAsset)
+            const typeAsset = await this.typeAssetRepository.findOne(createAssetDTO.typeAsset)
             if (!typeAsset) {
                 throw new HttpException(
                     {
@@ -137,30 +155,30 @@ export class AssetService {
                         error: "No permitido",
                     },
                     403
-                );  
+                );
             }
-            let asset:Asset
-            if (createAssetDTO.type === ADMIN ) {
+            let asset: Asset
+            if (createAssetDTO.type === ADMIN) {
                 asset = this.assetRepository.create({
-                    user:null,
-                    admin:user,
+                    user: null,
+                    admin: user,
                     url: createAssetDTO.url,
                     typeAsset
                 })
-           }
-           if (createAssetDTO.type ===  USER_NORMAL) {
-            asset = this.assetRepository.create({
-                user,
-                admin:null,
-                url: createAssetDTO.url,
-                typeAsset
-            })
-          }
-            
+            }
+            if (createAssetDTO.type === USER_NORMAL) {
+                asset = this.assetRepository.create({
+                    user,
+                    admin: null,
+                    url: createAssetDTO.url,
+                    typeAsset
+                })
+            }
+
             await this.assetRepository.save(asset)
             return {
                 asset: {
-                    url:asset.url
+                    url: asset.url
                 },
                 status: 0
             }

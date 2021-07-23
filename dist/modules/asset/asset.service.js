@@ -27,6 +27,12 @@ let AssetService = class AssetService {
         this.userRepository = userRepository;
         this.assetRepository = assetRepository;
         this.typeAssetRepository = typeAssetRepository;
+        this.types = {
+            IMAGE: 1,
+            IMAGE360: 2,
+            VIDEO: 3,
+            VIDEO360: 4
+        };
     }
     async getAllAssetsByUser(getAssetDTO) {
         try {
@@ -79,8 +85,13 @@ let AssetService = class AssetService {
                     }
                 });
             }
+            const images = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE);
+            const images360 = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE360);
+            const videos = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO);
+            const videos360 = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO360);
+            console.log({ images, videos360, videos, images360 });
             return {
-                assets,
+                assets: { images, videos360, videos, images360 },
                 status: 0
             };
         }

@@ -10,6 +10,12 @@ export declare class AssetService {
     private assetRepository;
     private typeAssetRepository;
     constructor(adminRepository: Repository<Admin>, userRepository: Repository<User>, assetRepository: Repository<Asset>, typeAssetRepository: Repository<TypeAsset>);
+    types: {
+        IMAGE: number;
+        IMAGE360: number;
+        VIDEO: number;
+        VIDEO360: number;
+    };
     getAllAssetsByUser(getAssetDTO: GetAssetDTO): Promise<any>;
     create(createAssetDTO: CreateAssetDTO): Promise<any>;
     delete(deleteAssetDto: DeleteAssetDto): Promise<any>;
