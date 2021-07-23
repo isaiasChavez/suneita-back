@@ -29,6 +29,10 @@ __decorate([
     __metadata("design:type", String)
 ], Asset.prototype, "url", void 0);
 __decorate([
+    typeorm_1.Column({ length: 300, nullable: true, default: '' }),
+    __metadata("design:type", String)
+], Asset.prototype, "thumbnail", void 0);
+__decorate([
     typeorm_1.Column({ type: "uuid", nullable: false }),
     __metadata("design:type", String)
 ], Asset.prototype, "uuid", void 0);

@@ -22,8 +22,9 @@ import { Asset } from 'src/modules/asset/asset.entity';
 
 @Entity({ schema: 'Users' })
 export class User {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
   id: string;
+
 
   @Column({ length: 50 })
   name: string;

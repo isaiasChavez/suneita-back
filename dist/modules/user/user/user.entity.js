@@ -26,7 +26,7 @@ let User = class User {
     }
 };
 __decorate([
-    typeorm_1.PrimaryColumn(),
+    typeorm_1.PrimaryGeneratedColumn(),
     __metadata("design:type", String)
 ], User.prototype, "id", void 0);
 __decorate([

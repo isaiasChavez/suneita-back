@@ -23,6 +23,9 @@ export class Asset {
     @Column({ length: 300, nullable: false })
     url: string;
 
+    @Column({ length: 300, nullable: true, default:'' })
+    thumbnail: string;
+
     @Column({ type: "uuid", nullable: false })
     uuid: string;
 
@@ -48,6 +51,7 @@ export class Asset {
 
     @ManyToOne(() => User, user => user.assets)
     user: User;
+
     @ManyToOne((typeAsset) => TypeAsset, (typeAsset) => typeAsset.asset)
     typeAsset: TypeAsset;
 

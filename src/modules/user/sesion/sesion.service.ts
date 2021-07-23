@@ -731,9 +731,6 @@ export class SesionService {
           email: createUserDTO.email,
         },
       });
-
-
-
       if (!invitation) {
         return {
           status: 1,
@@ -782,6 +779,7 @@ export class SesionService {
         email: createUserDTO.email,
         password: userPassword,
       });
+      
       await this.userRepository.save(user);
 
       if (invitation.superAdmin) {
