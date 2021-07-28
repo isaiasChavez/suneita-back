@@ -21,10 +21,13 @@ import { Invitation } from '../invitation/invitation.entity';
 import { Role } from '../role/role.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 const jwt = require('jsonwebtoken');
 @Injectable()
 export class SesionService {
   constructor (
+    private readonly mailerService: MailerService,
+
     @InjectRepository(Sesion) private sesionRepository: Repository<Sesion>,
     @InjectRepository(Type) private typeRepository: Repository<Type>,
     @InjectRepository(User) private userRepository: Repository<User>,
@@ -547,10 +550,8 @@ export class SesionService {
 
   async requestPasswordReset(requestEmail: string): Promise<any> {
     try {
-      console.log('***', { requestEmail }, '***');
 
       let response = { status: 0 };
-
       const user: User = await this.userRepository.findOne({
         relations: ['type'],
         where: { email: requestEmail },
@@ -579,6 +580,7 @@ export class SesionService {
             admin: admin ? admin : null,
           },
         });
+
         if (existToken) {
           console.log({ existToken });
           await this.tokenRepository.remove(existToken);
@@ -597,20 +599,20 @@ export class SesionService {
           { token: registerToken.id },
           process.env.TOKEN_SECRET,
           {
-            expiresIn: 7200,
+            expiresIn: 7200000,
           },
         );
 
         // Se envia correo
-        // await this.mailerService.sendMail({
-        //     to: requestEmail,
-        //     subject: "Recuperacion de contraseña.",
-        //     template: "./recovery.hbs",
-        //     context: {
-        //         url: jwtToken,
-        //         email: requestEmail,
-        //     },
-        // });
+        await this.mailerService.sendMail({
+            to: requestEmail,
+            subject: "Recuperacion de contraseña.",
+            template: "./recovery.hbs",
+            context: {
+                url: token,
+                email: requestEmail,
+            },
+        });
         return {
           token,
           status: 0,

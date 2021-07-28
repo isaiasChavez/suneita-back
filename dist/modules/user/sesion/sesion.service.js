@@ -28,9 +28,11 @@ const invitation_entity_1 = require("../invitation/invitation.entity");
 const role_entity_1 = require("../role/role.entity");
 const suscription_entity_1 = require("../../suscription/suscription.entity");
 const asset_entity_1 = require("../../asset/asset.entity");
+const mailer_1 = require("@nestjs-modules/mailer");
 const jwt = require('jsonwebtoken');
 let SesionService = class SesionService {
-    constructor(sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+    constructor(mailerService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+        this.mailerService = mailerService;
         this.sesionRepository = sesionRepository;
         this.typeRepository = typeRepository;
         this.userRepository = userRepository;
@@ -408,7 +410,6 @@ let SesionService = class SesionService {
     }
     async requestPasswordReset(requestEmail) {
         try {
-            console.log('***', { requestEmail }, '***');
             let response = { status: 0 };
             const user = await this.userRepository.findOne({
                 relations: ['type'],
@@ -446,7 +447,16 @@ let SesionService = class SesionService {
                 });
                 const registerToken = await this.tokenRepository.save(newToken);
                 const token = await jwt.sign({ token: registerToken.id }, process.env.TOKEN_SECRET, {
-                    expiresIn: 7200,
+                    expiresIn: 7200000,
+                });
+                await this.mailerService.sendMail({
+                    to: requestEmail,
+                    subject: "Recuperacion de contraseña.",
+                    template: "./recovery.hbs",
+                    context: {
+                        url: token,
+                        email: requestEmail,
+                    },
                 });
                 return {
                     token,
@@ -619,17 +629,18 @@ let SesionService = class SesionService {
 };
 SesionService = __decorate([
     common_1.Injectable(),
-    __param(0, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
-    __param(1, typeorm_1.InjectRepository(type_entity_1.Type)),
-    __param(2, typeorm_1.InjectRepository(user_entity_1.User)),
-    __param(3, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
-    __param(4, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(5, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(6, typeorm_1.InjectRepository(asset_entity_1.Asset)),
-    __param(7, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
-    __param(8, typeorm_1.InjectRepository(token_entity_1.Token)),
-    __param(9, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
+    __param(1, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
+    __param(2, typeorm_1.InjectRepository(type_entity_1.Type)),
+    __param(3, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(4, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(5, typeorm_1.InjectRepository(admin_entity_1.Admin)),
+    __param(6, typeorm_1.InjectRepository(role_entity_1.Role)),
+    __param(7, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(8, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
+    __param(9, typeorm_1.InjectRepository(token_entity_1.Token)),
+    __param(10, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __metadata("design:paramtypes", [mailer_1.MailerService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
