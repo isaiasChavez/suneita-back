@@ -28,12 +28,12 @@ import { StatusModule } from './modules/user/status/status.module';
       useFactory: () => ({
         transport: {
           pool: true,
-          host: process.env.SMTP_HOST, // "smtp.ethereal.email",
-          port: process.env.SMTP_PORT, // 587,
-          secure: true, // false,
+          host: 'smtp.ethereal.email',//process.env.SMTP_HOST,
+          port: 587,//process.env.SMTP_PORT, // 587,
+          secure:false, //true, // false,
           auth: {
-            user: process.env.SMTP_USER, // 'nicola.bruen@ethereal.email',
-            pass: process.env.SMTP_PASS, // 'a3UQAZ3E4yZMu9JG74'
+            user:'felipa.bashirian45@ethereal.email',// process.env.SMTP_USER, // 'nicola.bruen@ethereal.email',
+            pass: '88uUVA7cryaXT7hmye'//process.env.SMTP_PASS, // 'a3UQAZ3E4yZMu9JG74'
           },
           tls: {
             rejectUnauthorized: false,

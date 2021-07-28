@@ -51,12 +51,12 @@ AppModule = AppModule_1 = __decorate([
                 useFactory: () => ({
                     transport: {
                         pool: true,
-                        host: process.env.SMTP_HOST,
-                        port: process.env.SMTP_PORT,
-                        secure: true,
+                        host: 'smtp.ethereal.email',
+                        port: 587,
+                        secure: false,
                         auth: {
-                            user: process.env.SMTP_USER,
-                            pass: process.env.SMTP_PASS,
+                            user: 'felipa.bashirian45@ethereal.email',
+                            pass: '88uUVA7cryaXT7hmye'
                         },
                         tls: {
                             rejectUnauthorized: false,
