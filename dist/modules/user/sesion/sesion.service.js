@@ -452,7 +452,7 @@ let SesionService = class SesionService {
                 await this.mailerService.sendMail({
                     to: requestEmail,
                     subject: "Recuperacion de contraseña.",
-                    template: "./recovery.hbs",
+                    template: __dirname + '/recovery.hbs',
                     context: {
                         url: token,
                         email: requestEmail,
