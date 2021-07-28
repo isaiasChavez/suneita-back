@@ -1,4 +1,5 @@
 import { Optional } from '@nestjs/common';
+
 import {
   IsBoolean,
   IsDateString,
@@ -17,6 +18,24 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+
+export class UserDTO {
+  constructor({ email,uuid, name,avatar,isActive,lastname }) {
+    this.email = email;
+    this.avatar = avatar;
+    this.isActive = isActive;
+    this.name = name
+    this.uuid=uuid
+    this.lastname = lastname
+  }
+  isActive:boolean
+  lastname: string
+  avatar: string
+  name: string
+  uuid: string
+  email: string;
+}
+
 
 export class InviteAdminDTO {
   constructor({ email, type }) {
@@ -111,6 +130,54 @@ export class InviteUserDTO {
   @IsNotEmpty()
   typeToInvite: number;
 }
+
+export class FindUserChildrens {
+  constructor({
+    adminUuid,
+    superAdminUuid,
+    type
+  }) {
+    this.adminUuid = adminUuid;
+    this.superAdminUuid = superAdminUuid;
+    this.type = type
+  }
+
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  adminUuid: string;
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  superAdminUuid: string;
+  @IsNumber()
+  @IsNotEmpty()
+  type: number;
+}
+export class SimpleRequest {
+  constructor({
+    adminUuid,
+    superAdminUuid,
+    type
+  }) {
+    this.adminUuid = adminUuid;
+    this.superAdminUuid = superAdminUuid;
+    this.type = type
+  }
+
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  adminUuid: string;
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  superAdminUuid: string;
+  @IsNumber()
+  @IsNotEmpty()
+  type: number;
+}
+
 
 export class ConfirmUserPassword {
   constructor({ email, password }) {
@@ -240,12 +307,23 @@ export class UpdateUserDTO {
   @IsNotEmpty()
   @IsString()
   adminUuid: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  @IsString()
+  superAdminUuid: string;
+
   @IsString()
   @MaxLength(100)
   name: string;
   @IsString()
   @MaxLength(150)
   avatar: string;
+  
+  @IsString()
+  @MaxLength(150)
+  thumbnail: string;
+
   @MaxLength(100)
   @IsString()
   @IsNotEmpty()
@@ -253,36 +331,51 @@ export class UpdateUserDTO {
 }
 
 export class DeleteAdminUserDTO {
-  constructor({ superAdminUuid, adminUuid, status }) {
+  constructor({ superAdminUuid, adminUuidToStop, status }) {
     this.superAdminUuid = superAdminUuid;
-    this.adminUuid = adminUuid;
+    this.adminUuidToStop = adminUuidToStop;
     this.status = status;
   }
   @IsUUID()
   @IsNotEmpty()
   @IsString()
   superAdminUuid: number;
+  
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  adminUuid: number;
+  adminUuidToStop: number;
 
   @IsOptional()
   @IsBoolean()
   status: boolean;
+
 }
 
 export class DeleteUserDTO {
-  constructor({ adminUuid, userUuid }) {
-    this.userUuid = userUuid;
+  constructor({ adminUuid,superAdminUuid,type, userUuidToChange,status }) {
+    this.userUuidToChange = userUuidToChange;
     this.adminUuid = adminUuid;
+    this.status = status;
+    this.type=type
+    this.superAdminUuid=superAdminUuid
   }
   @IsUUID()
-  @IsNotEmpty()
+  @IsOptional()
+  @IsString()
+  superAdminUuid: number;
+  @IsUUID()
+  @IsOptional()
   @IsString()
   adminUuid: number;
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  userUuid: number;
+  userUuidToChange: number;
+  @IsOptional()
+  @IsBoolean()
+  status: boolean;
+  @IsNumber()
+  @IsNotEmpty()
+  type: number;
 }

@@ -6,6 +6,8 @@ import {
     Put,
     Delete,
     Param,
+    Req,
+    Res,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import {
@@ -16,6 +18,8 @@ import {
     UpdateUserAdminDTO,
     DeleteAdminUserDTO,
     DeleteUserDTO,
+    FindUserChildrens,
+    SimpleRequest,
 } from "./user.dto";
 import { validateOrReject } from "class-validator";
 
@@ -39,18 +43,35 @@ export class UserController {
         }
     }
 
+
+
+    @Get('detail')
+    async findUserDetail(@Req() request, @Res() response): Promise<any> {
+        
+        const requestDetailDTO = new SimpleRequest(request.body)
+        try {
+            await validateOrReject(requestDetailDTO);
+            return await this.userService.findUserDetail(requestDetailDTO,response);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+
     @Get("/:udminUuid")
     async findAllUsers(@Param('udminUuid') udminUuid: number): Promise<any> {
         return await this.userService.findAllUsers(udminUuid);
     }
 
-
-    @Get(":email")
-    async findUserDetail(@Param("email") email): Promise<any> {
-        return await this.userService.findUserDetail(email);
+    @Post("childrens")
+    async getUserChildrens(@Body() findUserChildrens: FindUserChildrens): Promise<any> {
+        console.log("--->",{findUserChildrens})
+        return await this.userService.findUserChildrens(findUserChildrens);
     }
 
-
+    
 
 
     @Post("confirm")
@@ -149,12 +170,25 @@ export class UserController {
             }
         }
     }
-    @Put("suspend")
+    @Put("suspendadmin")
     async suspendAdminUser(@Body() suspendAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
         let newsuspendAdminUserDTO = new DeleteAdminUserDTO(suspendAdminUserDTO)
         try {
             await validateOrReject(newsuspendAdminUserDTO);
             return await this.userService.suspendUserAdmin(newsuspendAdminUserDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+    @Put("suspenduser")
+    async suspendUser(@Body() suspendUserDTO: DeleteUserDTO): Promise<any> {
+        let newSuspendUserDTO = new DeleteUserDTO(suspendUserDTO)
+        try {
+            await validateOrReject(newSuspendUserDTO);
+            return await this.userService.suspendUser(newSuspendUserDTO);
         } catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {

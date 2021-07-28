@@ -35,11 +35,25 @@ let UserController = class UserController {
             };
         }
     }
+    async findUserDetail(request, response) {
+        const requestDetailDTO = new user_dto_1.SimpleRequest(request.body);
+        try {
+            await class_validator_1.validateOrReject(requestDetailDTO);
+            return await this.userService.findUserDetail(requestDetailDTO, response);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
     async findAllUsers(udminUuid) {
         return await this.userService.findAllUsers(udminUuid);
     }
-    async findUserDetail(email) {
-        return await this.userService.findUserDetail(email);
+    async getUserChildrens(findUserChildrens) {
+        console.log("--->", { findUserChildrens });
+        return await this.userService.findUserChildrens(findUserChildrens);
     }
     async confirmUserPassword(confirmUserPassword) {
         let newConfirmUserPassword = new user_dto_1.ConfirmUserPassword(confirmUserPassword);
@@ -132,6 +146,19 @@ let UserController = class UserController {
             };
         }
     }
+    async suspendUser(suspendUserDTO) {
+        let newSuspendUserDTO = new user_dto_1.DeleteUserDTO(suspendUserDTO);
+        try {
+            await class_validator_1.validateOrReject(newSuspendUserDTO);
+            return await this.userService.suspendUser(newSuspendUserDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
 };
 __decorate([
     common_1.Post("invite"),
@@ -141,6 +168,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "create", null);
 __decorate([
+    common_1.Get('detail'),
+    __param(0, common_1.Req()), __param(1, common_1.Res()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "findUserDetail", null);
+__decorate([
     common_1.Get("/:udminUuid"),
     __param(0, common_1.Param('udminUuid')),
     __metadata("design:type", Function),
@@ -148,12 +182,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "findAllUsers", null);
 __decorate([
-    common_1.Get(":email"),
-    __param(0, common_1.Param("email")),
+    common_1.Post("childrens"),
+    __param(0, common_1.Body()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [user_dto_1.FindUserChildrens]),
     __metadata("design:returntype", Promise)
-], UserController.prototype, "findUserDetail", null);
+], UserController.prototype, "getUserChildrens", null);
 __decorate([
     common_1.Post("confirm"),
     __param(0, common_1.Body()),
@@ -197,12 +231,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "deleteAdminUser", null);
 __decorate([
-    common_1.Put("suspend"),
+    common_1.Put("suspendadmin"),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [user_dto_1.DeleteAdminUserDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "suspendAdminUser", null);
+__decorate([
+    common_1.Put("suspenduser"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.DeleteUserDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "suspendUser", null);
 UserController = __decorate([
     common_1.Controller("user"),
     __metadata("design:paramtypes", [user_service_1.UserService])

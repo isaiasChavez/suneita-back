@@ -21,6 +21,7 @@ const token_entity_1 = require("../token/token.entity");
 const type_entity_1 = require("../type/type.entity");
 const role_entity_1 = require("../role/role.entity");
 const sesion_entity_1 = require("../sesion/sesion.entity");
+const user_dto_1 = require("./user.dto");
 const mailer_1 = require("@nestjs-modules/mailer");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
@@ -32,13 +33,14 @@ const suscription_dto_1 = require("../../suscription/suscription.dto");
 const asset_entity_1 = require("../../asset/asset.entity");
 const invitation_entity_1 = require("../invitation/invitation.entity");
 let UserService = class UserService {
-    constructor(mailerService, userRepository, suscripctionRepository, superAdminRepository, adminRepository, tokenRepository, typeRepository, roleRepository, invitationRepository, sesionRepository, suscriptionRepository) {
+    constructor(mailerService, userRepository, suscripctionRepository, superAdminRepository, adminRepository, tokenRepository, assetRepository, typeRepository, roleRepository, invitationRepository, sesionRepository, suscriptionRepository) {
         this.mailerService = mailerService;
         this.userRepository = userRepository;
         this.suscripctionRepository = suscripctionRepository;
         this.superAdminRepository = superAdminRepository;
         this.adminRepository = adminRepository;
         this.tokenRepository = tokenRepository;
+        this.assetRepository = assetRepository;
         this.typeRepository = typeRepository;
         this.roleRepository = roleRepository;
         this.invitationRepository = invitationRepository;
@@ -53,6 +55,11 @@ let UserService = class UserService {
             SUPERADMIN: 'SUPERADMIN',
             ADMIN: 'ADMIN',
             USER: 'USER',
+        };
+        this.typesNumbers = {
+            SUPERADMIN: 1,
+            ADMIN: 2,
+            USER: 3,
         };
     }
     async invite(request) {
@@ -135,6 +142,18 @@ let UserService = class UserService {
                     invitationToSign = invitation.id;
                 }
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
+                console.log({ jwtToken });
+                const algo = await this.mailerService.sendMail({
+                    to: request.email,
+                    subject: 'Has sido invitado a Ocupath.',
+                    template: __dirname + '/invitacion.hbs',
+                    context: {
+                        url: jwtToken,
+                        type: request.type,
+                        email: request.email,
+                    },
+                });
+                console.log({ algo });
             }
             else {
                 if (userExist.isActive || adminExist.isActive) {
@@ -213,10 +232,53 @@ let UserService = class UserService {
             }, 500);
         }
     }
-    async findUserDetail(requestEmail) {
-        console.log('findUserDetail');
+    async findUserDetail(requestDetailDTO, res) {
         try {
-            const user = await this.userRepository.findOne({
+            let user;
+            const isSuperAdmin = requestDetailDTO.type === this.typesNumbers.SUPERADMIN;
+            const isAdmin = requestDetailDTO.type === this.typesNumbers.ADMIN;
+            if (isAdmin) {
+                user = await this.adminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: requestDetailDTO.adminUuid,
+                    },
+                });
+            }
+            if (isSuperAdmin) {
+                user = await this.superAdminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: requestDetailDTO.superAdminUuid,
+                    },
+                });
+            }
+            if (!user) {
+                return res.status(404);
+            }
+            return res.status(201).json({
+                status: 0,
+                profile: {
+                    id: user.id,
+                    name: user.name,
+                    uuid: user.uuid,
+                    lastname: user.lastname,
+                    email: user.email,
+                    type: user.type.id,
+                },
+            });
+        }
+        catch (err) {
+            console.log('UserService - findUserDetail: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error getting user',
+            }, 500);
+        }
+    }
+    async findAdminDetail(requestEmail) {
+        try {
+            const user = await this.adminRepository.findOne({
                 relations: ['type'],
                 where: { email: requestEmail },
             });
@@ -225,6 +287,7 @@ let UserService = class UserService {
                     id: user.id,
                     name: user.name,
                     lastname: user.lastname,
+                    uuid: user.uuid,
                     email: user.email,
                     type: user.type.id,
                 },
@@ -232,6 +295,149 @@ let UserService = class UserService {
         }
         catch (err) {
             console.log('UserService - findUserDetail: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error getting user',
+            }, 500);
+        }
+    }
+    async findUserChildrens(findUserChildrensDTO) {
+        try {
+            let user;
+            const dataChildrens = {
+                admins: [],
+                users: [],
+            };
+            const isSuperAdmin = findUserChildrensDTO.type === this.typesNumbers.SUPERADMIN;
+            const isAdmin = findUserChildrensDTO.type === this.typesNumbers.ADMIN;
+            if (isAdmin) {
+                user = await this.adminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: findUserChildrensDTO.adminUuid,
+                        isActive: true,
+                        isDeleted: false,
+                    },
+                });
+            }
+            if (isSuperAdmin) {
+                user = await this.superAdminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: findUserChildrensDTO.superAdminUuid,
+                        isActive: true,
+                    },
+                });
+            }
+            if (!user) {
+                return {
+                    status: 1,
+                    msg: 'User not found',
+                };
+            }
+            if (isSuperAdmin) {
+                dataChildrens.admins = await this.adminRepository.find({
+                    select: ['name', 'lastname', 'avatar', 'uuid', 'isActive', 'email'],
+                    relations: ['suscriptions'],
+                    where: {
+                        superadmin: user,
+                        isDeleted: false,
+                    },
+                });
+                dataChildrens.users = await this.userRepository.find({
+                    select: ['name', 'lastname', 'avatar', 'uuid', 'isActive'],
+                    relations: ['suscriptions'],
+                    where: {
+                        superadmin: user,
+                        isDeleted: false,
+                    },
+                });
+            }
+            if (isAdmin) {
+                dataChildrens.users = await this.userRepository.find({
+                    select: ['name', 'lastname', 'email', 'avatar', 'uuid', 'isActive'],
+                    relations: ['suscriptions'],
+                    where: {
+                        admin: user,
+                        isDeleted: false,
+                    },
+                });
+            }
+            const childrens = {
+                admins: [],
+                users: [],
+            };
+            const filterUsers = (child) => {
+                const dataToSend = {
+                    avatar: child.avatar,
+                    email: child.email,
+                    isActive: child.isActive,
+                    uuid: child.uuid,
+                    lastname: child.lastname,
+                    name: child.name,
+                    suscriptions: null,
+                    lastSuscription: null,
+                };
+                dataToSend.suscriptions = child.suscriptions.map((suscription) => {
+                    return {
+                        cost: suscription.cost,
+                        createdAt: suscription.createdAt,
+                        finishedAt: suscription.finishedAt,
+                        isActive: suscription.isActive,
+                        isDeleted: suscription.isDeleted,
+                        startedAt: suscription.startedAt,
+                    };
+                });
+                dataToSend.lastSuscription = dataToSend.suscriptions[0]
+                    ? dataToSend.suscriptions[0]
+                    : null;
+                return dataToSend;
+            };
+            if (isSuperAdmin) {
+                childrens.admins = dataChildrens.admins.map((child) => {
+                    const dataToSend = {
+                        avatar: child.avatar,
+                        email: child.email,
+                        isActive: child.isActive,
+                        lastname: child.lastname,
+                        uuid: child.uuid,
+                        name: child.name,
+                        suscriptions: null,
+                        lastSuscription: null,
+                    };
+                    dataToSend.suscriptions = child.suscriptions.map((suscription) => {
+                        return {
+                            cost: suscription.cost,
+                            invitations: suscription.invitations,
+                            createdAt: suscription.createdAt,
+                            finishedAt: suscription.finishedAt,
+                            isActive: suscription.isActive,
+                            isDeleted: suscription.isDeleted,
+                            startedAt: suscription.startedAt,
+                        };
+                    });
+                    dataToSend.lastSuscription = dataToSend.suscriptions[0];
+                    return dataToSend;
+                });
+                childrens.users = dataChildrens.users.map(filterUsers);
+            }
+            else {
+                childrens.users = dataChildrens.users.map(filterUsers);
+            }
+            return {
+                profile: {
+                    id: user.id,
+                    name: user.name,
+                    uuid: user.uuid,
+                    lastname: user.lastname,
+                    email: user.email,
+                    type: user.type.id,
+                    childrens,
+                },
+            };
+        }
+        catch (err) {
+            console.log('UserService - findUserChildrens: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error getting user',
@@ -294,7 +500,6 @@ let UserService = class UserService {
                     uuid: updateUserAdminDTO.superAdminUuid,
                 },
             });
-            console.log({ superadmin });
             if (!superadmin) {
                 return { status: 1, msg: 'supadmin not found' };
             }
@@ -414,7 +619,6 @@ let UserService = class UserService {
                 if (updateUserDTO.avatar.length !== 0) {
                     user.avatar = updateUserDTO.avatar;
                 }
-                console.log({ user });
                 user.isActive = true;
                 await this.userRepository.save(user);
                 const userToReturn = await this.userRepository.findOne({
@@ -439,6 +643,45 @@ let UserService = class UserService {
             }, 500);
         }
     }
+    async getTypeAndUser(type, adminUuid, superAdminUuid) {
+        try {
+            let userRequesting;
+            const isSuperAdmin = type === this.typesNumbers.SUPERADMIN;
+            const isAdmin = type === this.typesNumbers.ADMIN;
+            if (isAdmin) {
+                userRequesting = await this.adminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: adminUuid,
+                    },
+                });
+            }
+            if (isSuperAdmin) {
+                userRequesting = await this.superAdminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: superAdminUuid,
+                    },
+                });
+            }
+            if (!userRequesting) {
+                return { status: 1 };
+            }
+            return {
+                status: 0,
+                user: userRequesting,
+                isSuperAdmin,
+                isAdmin,
+            };
+        }
+        catch (err) {
+            console.log('UserService - deleteUser: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error deleting user',
+            }, 500);
+        }
+    }
     async deleteUserAdmin(deleteAdminUserDTO) {
         try {
             const superAdmin = await this.superAdminRepository.findOne({
@@ -451,39 +694,36 @@ let UserService = class UserService {
             }
             const admin = await this.adminRepository.findOne({
                 relations: ['users', 'assets'],
-                where: { uuid: deleteAdminUserDTO.adminUuid },
+                where: { uuid: deleteAdminUserDTO.adminUuidToStop },
             });
             if (!admin) {
                 return { status: 2, msg: 'admin not found' };
             }
-            console.log('admin.users', admin.users);
-            await Promise.all(admin.users.map(async (user) => {
-                console.log({ user });
-                user.isActive = false;
-                user.isDeleted = true;
-                await this.userRepository.save(user);
-            }));
-            await Promise.all(admin.assets.map(async (asset) => {
-                asset.isActive = false;
-                asset.isDeleted = true;
-                await this.userRepository.save(asset);
-            }));
-            const suscription = await this.suscriptionRepository.findOne({
+            await this.updateArrayUsers(admin.users, { isActive: false, isDeleted: true });
+            const assetsAdmin = await this.assetRepository.find({
                 where: {
                     admin,
                 },
             });
-            if (suscription) {
-                suscription.isActive = false;
-                suscription.isDeleted = true;
-                const temtSusp = this.suscriptionRepository.create({});
-                suscription.finishedAt = temtSusp.createdAt;
-                await this.suscriptionRepository.save(suscription);
+            const assetsAdminIds = assetsAdmin.map((asset) => asset.id);
+            if (assetsAdminIds.length > 0) {
+                await this.assetRepository
+                    .createQueryBuilder()
+                    .update()
+                    .set({
+                    isActive: false,
+                    isDeleted: true,
+                })
+                    .where('id IN (:...assetsAdminIds)', {
+                    assetsAdminIds,
+                })
+                    .execute();
             }
             admin.isActive = false;
             admin.isDeleted = true;
             await this.adminRepository.save(admin);
-            return { status: 0 };
+            const userDTO = new user_dto_1.UserDTO(admin);
+            return { status: 0, admin: userDTO };
         }
         catch (err) {
             console.log('UserService - deleteUser: ', err);
@@ -495,28 +735,47 @@ let UserService = class UserService {
     }
     async deleteUser(deleteUserDTO) {
         try {
-            const admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: deleteUserDTO.adminUuid,
-                },
-            });
-            if (!admin) {
-                return { status: 1, msg: 'admin not found' };
+            let userRequesting;
+            const isSuperAdmin = deleteUserDTO.type === this.typesNumbers.SUPERADMIN;
+            const isAdmin = deleteUserDTO.type === this.typesNumbers.ADMIN;
+            if (isAdmin) {
+                userRequesting = await this.adminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: deleteUserDTO.adminUuid,
+                    },
+                });
+            }
+            if (isSuperAdmin) {
+                userRequesting = await this.superAdminRepository.findOne({
+                    relations: ['type'],
+                    where: {
+                        uuid: deleteUserDTO.superAdminUuid,
+                    },
+                });
+            }
+            if (!userRequesting) {
+                return { status: 1 };
             }
             const userToDelete = await this.userRepository.findOne({
                 relations: ['admin'],
-                where: { uuid: deleteUserDTO.userUuid },
+                where: {
+                    uuid: deleteUserDTO.userUuidToChange,
+                    superadmin: isSuperAdmin ? userRequesting : null,
+                    admin: isAdmin ? userRequesting : null,
+                },
             });
             if (!userToDelete) {
                 return { status: 2, msg: 'user not found' };
             }
-            if (userToDelete.admin.id !== admin.id) {
-                return { status: 5, msg: 'unauthorized' };
-            }
             userToDelete.isActive = false;
             userToDelete.isDeleted = true;
             await this.userRepository.save(userToDelete);
-            return { status: 0 };
+            const userDTO = new user_dto_1.UserDTO(userToDelete);
+            return {
+                status: 0,
+                user: userDTO,
+            };
         }
         catch (err) {
             console.log('UserService - deleteUser: ', err);
@@ -524,6 +783,50 @@ let UserService = class UserService {
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error deleting user',
             }, 500);
+        }
+    }
+    async updateArrayUsers(users, status) {
+        const usersIds = users.map((user) => user.id);
+        let assetsIds = [];
+        if (usersIds.length !== 0) {
+            await this.userRepository
+                .createQueryBuilder()
+                .update()
+                .set(status)
+                .where('id IN (:...usersIds)', {
+                usersIds,
+            })
+                .execute();
+            const suscriptions = await this.suscripctionRepository.find({
+                where: {
+                    user: typeorm_2.In(usersIds),
+                },
+            });
+            const suscriptionsIds = suscriptions.map((suscription) => suscription.id);
+            await this.suscriptionRepository
+                .createQueryBuilder()
+                .update()
+                .set(status)
+                .where('id IN (:...suscriptionsIds)', {
+                suscriptionsIds,
+            })
+                .execute();
+            const assetsChildrens = await this.assetRepository.find({
+                where: {
+                    user: typeorm_2.In(usersIds),
+                },
+            });
+            assetsIds = assetsChildrens.map((asset) => asset.id);
+            if (assetsIds.length > 0) {
+                await this.assetRepository
+                    .createQueryBuilder()
+                    .update()
+                    .set(status)
+                    .where('id IN (:...allAssetsIds)', {
+                    assetsIds,
+                })
+                    .execute();
+            }
         }
     }
     async suspendUserAdmin(pauseAdminUserDTO) {
@@ -538,17 +841,12 @@ let UserService = class UserService {
             }
             const admin = await this.adminRepository.findOne({
                 relations: ['users'],
-                where: { uuid: pauseAdminUserDTO.adminUuid },
+                where: { uuid: pauseAdminUserDTO.adminUuidToStop },
             });
             if (!admin) {
                 return { status: 2, msg: 'admin not found' };
             }
-            await Promise.all(admin.users.map(async (user) => {
-                if (!user.isDeleted) {
-                    user.isActive = pauseAdminUserDTO.status;
-                    await this.userRepository.save(user);
-                }
-            }));
+            await this.updateArrayUsers(admin.users, { isActive: pauseAdminUserDTO.status, isDeleted: false });
             const suscription = await this.suscriptionRepository.findOne({
                 where: {
                     admin,
@@ -560,7 +858,8 @@ let UserService = class UserService {
             }
             admin.isActive = pauseAdminUserDTO.status;
             await this.adminRepository.save(admin);
-            return { status: 0 };
+            const userDTO = new user_dto_1.UserDTO(admin);
+            return { status: 0, admin: userDTO };
         }
         catch (err) {
             console.log('UserService - pauseUser: ', err);
@@ -570,7 +869,7 @@ let UserService = class UserService {
             }, 500);
         }
     }
-    async pauseUser(pauseUserDTO) {
+    async suspendUser(pauseUserDTO) {
         try {
             const admin = await this.adminRepository.findOne({
                 where: {
@@ -582,20 +881,20 @@ let UserService = class UserService {
             }
             const user = await this.userRepository.findOne({
                 relations: ['admin'],
-                where: { uuid: pauseUserDTO.userUuid },
+                where: { uuid: pauseUserDTO.userUuidToChange, admin },
             });
             if (!user) {
                 return { status: 2, msg: 'user not found' };
             }
-            if (user.admin.id !== admin.id) {
-                return {
-                    status: 5,
-                    msg: 'Unauthorized',
-                };
-            }
-            user.isActive = false;
+            const suscription = await this.suscriptionRepository.findOne({
+                where: {
+                    user,
+                },
+            });
+            user.isActive = pauseUserDTO.status;
             await this.userRepository.save(user);
-            return { status: 0 };
+            const userDTO = new user_dto_1.UserDTO(user);
+            return { status: 0, user: userDTO };
         }
         catch (err) {
             console.log('UserService - pause user: ', err);
@@ -606,6 +905,12 @@ let UserService = class UserService {
         }
     }
 };
+__decorate([
+    __param(1, common_1.Res()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.SimpleRequest, Object]),
+    __metadata("design:returntype", Promise)
+], UserService.prototype, "findUserDetail", null);
 UserService = __decorate([
     common_1.Injectable(),
     __param(1, typeorm_1.InjectRepository(user_entity_1.User)),
@@ -613,12 +918,14 @@ UserService = __decorate([
     __param(3, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
     __param(4, typeorm_1.InjectRepository(admin_entity_1.Admin)),
     __param(5, typeorm_1.InjectRepository(token_entity_1.Token)),
-    __param(6, typeorm_1.InjectRepository(type_entity_1.Type)),
-    __param(7, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(8, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
-    __param(9, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
-    __param(10, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(6, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(7, typeorm_1.InjectRepository(type_entity_1.Type)),
+    __param(8, typeorm_1.InjectRepository(role_entity_1.Role)),
+    __param(9, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __param(10, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
+    __param(11, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
     __metadata("design:paramtypes", [mailer_1.MailerService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

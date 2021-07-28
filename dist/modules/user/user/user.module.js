@@ -20,6 +20,7 @@ const superadmin_entity_1 = require("./superadmin.entity");
 const admin_entity_1 = require("./admin.entity");
 const suscription_entity_1 = require("../../suscription/suscription.entity");
 const invitation_entity_1 = require("../invitation/invitation.entity");
+const asset_entity_1 = require("../../asset/asset.entity");
 let UserModule = class UserModule {
 };
 UserModule = __decorate([
@@ -34,6 +35,7 @@ UserModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([role_entity_1.Role]),
             typeorm_1.TypeOrmModule.forFeature([sesion_entity_1.Sesion]),
             typeorm_1.TypeOrmModule.forFeature([invitation_entity_1.Invitation]),
+            typeorm_1.TypeOrmModule.forFeature([asset_entity_1.Asset]),
         ],
         providers: [user_service_1.UserService],
         controllers: [user_controller_1.UserController],

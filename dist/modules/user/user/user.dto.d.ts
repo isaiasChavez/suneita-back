@@ -1,3 +1,19 @@
+export declare class UserDTO {
+    constructor({ email, uuid, name, avatar, isActive, lastname }: {
+        email: any;
+        uuid: any;
+        name: any;
+        avatar: any;
+        isActive: any;
+        lastname: any;
+    });
+    isActive: boolean;
+    lastname: string;
+    avatar: string;
+    name: string;
+    uuid: string;
+    email: string;
+}
 export declare class InviteAdminDTO {
     constructor({ email, type }: {
         email: any;
@@ -32,6 +48,26 @@ export declare class InviteUserDTO {
     finishedAt: string;
     type: number;
     typeToInvite: number;
+}
+export declare class FindUserChildrens {
+    constructor({ adminUuid, superAdminUuid, type }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+    });
+    adminUuid: string;
+    superAdminUuid: string;
+    type: number;
+}
+export declare class SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, type }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+    });
+    adminUuid: string;
+    superAdminUuid: string;
+    type: number;
 }
 export declare class ConfirmUserPassword {
     constructor({ email, password }: {
@@ -87,25 +123,33 @@ export declare class UpdateUserDTO {
     });
     userUuid: string;
     adminUuid: string;
+    superAdminUuid: string;
     name: string;
     avatar: string;
+    thumbnail: string;
     lastname: string;
 }
 export declare class DeleteAdminUserDTO {
-    constructor({ superAdminUuid, adminUuid, status }: {
+    constructor({ superAdminUuid, adminUuidToStop, status }: {
         superAdminUuid: any;
+        adminUuidToStop: any;
+        status: any;
+    });
+    superAdminUuid: number;
+    adminUuidToStop: number;
+    status: boolean;
+}
+export declare class DeleteUserDTO {
+    constructor({ adminUuid, superAdminUuid, type, userUuidToChange, status }: {
         adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+        userUuidToChange: any;
         status: any;
     });
     superAdminUuid: number;
     adminUuid: number;
+    userUuidToChange: number;
     status: boolean;
-}
-export declare class DeleteUserDTO {
-    constructor({ adminUuid, userUuid }: {
-        adminUuid: any;
-        userUuid: any;
-    });
-    adminUuid: number;
-    userUuid: number;
+    type: number;
 }

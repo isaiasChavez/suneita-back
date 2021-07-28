@@ -127,9 +127,7 @@ export class SesionService {
             superadmin: user,
           });
         }
-        console.log(type.name);
         if (type.name === this.types.USER) {
-          console.log('Creando');
           sesion = this.sesionRepository.create({
             user,
           });
@@ -158,16 +156,44 @@ export class SesionService {
         }
         if (type.name === this.types.ADMIN) {
           dataChildrens.users = await this.userRepository.find({
-            select: ['name', 'lastname', 'avatar', 'uuid', 'isActive'],
+            select: ['name', 'lastname','email', 'avatar', 'uuid', 'isActive'],
+            relations: ['suscriptions'],
             where: {
               admin: user,
             },
           });
+
+          
         }
-        console.log({ dataChildrens })
         const childrens = {
           admins: [], users: []
         } 
+
+        const filterUsers = (child) => {
+          const dataToSend = {
+            avatar: child.avatar,
+            email: child.email,
+            isActive: child.isActive,
+            lastname: child.lastname,
+            uuid:child.uuid,
+            name: child.name,
+            suscriptions: null,
+            lastSuscription:null
+          }
+          dataToSend.suscriptions = child.suscriptions.map((suscription: Suscription) => {
+            return {
+              cost: suscription.cost,
+              createdAt: suscription.createdAt,
+              finishedAt: suscription.finishedAt,
+              isActive: suscription.isActive,
+              isDeleted: suscription.isDeleted,
+              startedAt: suscription.startedAt,
+            }
+          })
+          dataToSend.lastSuscription = dataToSend.suscriptions[0] ? dataToSend.suscriptions[0]:null 
+          return dataToSend
+        }
+
 
         if (type.name === this.types.SUPERADMIN) {
           childrens.admins = dataChildrens.admins.map((child) => {
@@ -175,6 +201,7 @@ export class SesionService {
               avatar: child.avatar,
               email: child.email,
               isActive: child.isActive,
+              uuid:child.uuid,
               lastname: child.lastname,
               name: child.name,
               suscriptions: null,
@@ -194,33 +221,11 @@ export class SesionService {
             dataToSend.lastSuscription = dataToSend.suscriptions[0]
             return dataToSend
           })
-          childrens.users  = dataChildrens.users.map((child) => {
-            const dataToSend = {
-              avatar: child.avatar,
-              email: child.email,
-              isActive: child.isActive,
-              lastname: child.lastname,
-              name: child.name,
-              suscriptions: null,
-              lastSuscription:null
-            }
-            dataToSend.suscriptions = child.suscriptions.map((suscription: Suscription) => {
-              return {
-                cost: suscription.cost,
-                createdAt: suscription.createdAt,
-                finishedAt: suscription.finishedAt,
-                isActive: suscription.isActive,
-                isDeleted: suscription.isDeleted,
-                startedAt: suscription.startedAt,
-              }
-            })
-            dataToSend.lastSuscription = dataToSend.suscriptions[0] ? dataToSend.suscriptions[0]:null 
-            return dataToSend
-          })
+          childrens.users  = dataChildrens.users.map(filterUsers)
 
 
         } else {
-          childrens.users = dataChildrens.users
+          childrens.users = dataChildrens.users.map(filterUsers)
           
         }
 

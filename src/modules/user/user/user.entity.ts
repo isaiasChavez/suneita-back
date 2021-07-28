@@ -24,21 +24,16 @@ import { Asset } from 'src/modules/asset/asset.entity';
 export class User {
   @PrimaryGeneratedColumn()
   id: string;
-
-
   @Column({ length: 50 })
   name: string;
-
   @Column({ length: 50 })
   lastname: string;
-
   @Column({
     type: 'text',
     default:
       'https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb',
   })
   avatar: string;
-
   @Column({ length: 250 })
   email: string;
 
