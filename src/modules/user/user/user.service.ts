@@ -97,6 +97,7 @@ export class UserService {
   typesNumbers: TypesNumbers;
   async invite(request: InviteUserDTO): Promise<any> {
     try {
+      console.log({request})
       let status = 0;
       let invitationToSign = '';
       let jwtToken = null;
@@ -112,13 +113,14 @@ export class UserService {
           where: { email: request.email },
         });
       }
+      console.log({adminExist})
 
       if (!userExist && !adminExist) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
         const invitation = await this.invitationRepository.findOne({
           where: { email: request.email },
         });
-
+        console.log({invitation})
         if (!invitation) {
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
           let typeUserRequesting: number;

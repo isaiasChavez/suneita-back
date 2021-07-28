@@ -64,6 +64,7 @@ let UserService = class UserService {
     }
     async invite(request) {
         try {
+            console.log({ request });
             let status = 0;
             let invitationToSign = '';
             let jwtToken = null;
@@ -76,10 +77,12 @@ let UserService = class UserService {
                     where: { email: request.email },
                 });
             }
+            console.log({ adminExist });
             if (!userExist && !adminExist) {
                 const invitation = await this.invitationRepository.findOne({
                     where: { email: request.email },
                 });
+                console.log({ invitation });
                 if (!invitation) {
                     let typeUserRequesting;
                     let admin = null;
