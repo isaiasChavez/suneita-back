@@ -28,19 +28,19 @@ import { StatusModule } from './modules/user/status/status.module';
       useFactory: () => ({
         transport: {
           pool: true,
-          host: 'box1128.bluehost.com',//process.env.SMTP_HOST,
-          port: 465,//process.env.SMTP_PORT, // 587,
+          host: 'smtp.ethereal.email',//process.env.SMTP_HOST,
+          port: 587,//process.env.SMTP_PORT, // 587,
           secure:false, //true, // false,
           auth: {
-            user:'bioderma@inmersys.com',// process.env.SMTP_USER, // 'nicola.bruen@ethereal.email',
-            pass: 'Bioderma1234.'//process.env.SMTP_PASS, // 'a3UQAZ3E4yZMu9JG74'
+            user:Configuration.EMAIL_ETHEREAL,// process.env.SMTP_USER, // 'nicola.bruen@ethereal.email',
+            pass: Configuration.PASS_ETHEREAL//process.env.SMTP_PASS, // 'a3UQAZ3E4yZMu9JG74'
           },
           tls: {
             rejectUnauthorized: false,
           },
         },
         defaults: {
-          from: '"Ocupath" <noreplay@ocupath.mx>',
+          from: '"Bioderma" <noreplay@bioderma.mx>',
         },
         template: {
           dir: __dirname + "/templates",

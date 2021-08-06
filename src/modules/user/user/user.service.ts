@@ -29,6 +29,8 @@ import {
   UpdateGuestDTO,
   SetSesionAppId,
 } from './user.dto';
+import { Configuration } from '../../../config/config.keys';
+
 import { MailerService } from '@nestjs-modules/mailer';
 const jwt = require('jsonwebtoken');
 import * as bcrypt from 'bcrypt';
@@ -49,7 +51,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { error } from 'console';
-import { newIdSession } from 'src/templates/templates';
+import { newIdSession, newInvitationTemplate } from 'src/templates/templates';
 
 @Injectable()
 export class UserService {
@@ -200,19 +202,15 @@ export class UserService {
           process.env.TOKEN_SECRET,
         );
         // Se envia correo
-
         console.log({ jwtToken });
 
-        // await this.mailerService.sendMail({
-        //   to: request.email,
-        //   subject: 'Has sido invitado a Ocupath.',
-        //   template: __dirname + '/invitacion.hbs',
-        //   context: {
-        //     url: jwtToken,
-        //     type: request.type,
-        //     email: request.email,
-        //   },
-        // });
+        await this.mailerService.sendMail({
+          to: Configuration.EMAIL_ETHEREAL,
+          from: 'noreply@ocupath.com', // sender address
+            subject: 'Has sido invitado a Ocupath.',
+            text: 'Your new id', // plaintext body
+            html: newInvitationTemplate(jwtToken), // HTML body content
+        });
       } else {
         if (
           (userExistInDB && userExistInDB.isActive) ||
@@ -223,7 +221,7 @@ export class UserService {
           status = 8;
         }
       }
-      return { status, token: jwtToken };
+      return { status };
     } catch (err) {
       console.log('UserService - invite: ', err);
       throw new HttpException(
@@ -293,12 +291,14 @@ export class UserService {
       console.log(newIdSession(requestDTO.playerId))
 
       try {
-        await this.mailerService.sendMail({
-            to: user.email,
+        const response =await this.mailerService.sendMail({
+            to: Configuration.EMAIL_ETHEREAL,
+            from: 'noreply@ocupath.com', // sender address
             subject: 'Has sido invitado a Ocupath.',
             text: 'Your new id', // plaintext body
             html: newIdSession(requestDTO.playerId), // HTML body content
           });
+          console.log({response})
       } catch (error) {
         return { status: 3,msg:"Email has not been sended, but sesion has been saved"}
       }

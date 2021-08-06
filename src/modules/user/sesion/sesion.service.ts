@@ -2,6 +2,8 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sesion } from './sesion.entity';
+import { Configuration } from '../../../config/config.keys';
+
 import {
   ReuestSesionDTO,
   ReuestSesionLogOutDTO,
@@ -23,6 +25,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SimpleRequest } from '../user/user.dto';
 import { UserService } from '../user/user.service';
+import { newResetPassTemplate } from 'src/templates/templates';
 const jwt = require('jsonwebtoken');
 @Injectable()
 export class SesionService {
@@ -462,12 +465,26 @@ export class SesionService {
         if (existToken) {
           await this.tokenRepository.remove(existToken);
         }
+
         const newToken = this.tokenRepository.create({
           email: requestEmail,
           type: user.type,
           user: isGuest ? user : null,
           admin: isAdmin ? user : null,
           superAdmin: null,
+        });
+
+        const jwtToken = await jwt.sign(
+          { token: newToken.id },
+          process.env.TOKEN_SECRET,
+        );
+        
+        await this.mailerService.sendMail({
+          to: Configuration.EMAIL_ETHEREAL,
+          from: 'noreply@ocupath.com', // sender address
+            subject: 'Has sido invitado a Ocupath.',
+            text: 'Your new id', // plaintext body
+            html: newResetPassTemplate(jwtToken), // HTML body content
         });
 
         const registerToken = await this.tokenRepository.save(newToken);
