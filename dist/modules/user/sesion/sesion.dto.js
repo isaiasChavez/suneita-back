@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateUserDTO = exports.CreateAdminDTO = exports.SesionTokenDTO = exports.ReuestSesionLogOutDTO = exports.PasswordRecovery = exports.ResetPassword = exports.ReuestSesionDTO = void 0;
 const class_validator_1 = require("class-validator");
+const user_dto_1 = require("../user/user.dto");
 class ReuestSesionDTO {
     constructor({ email, password }) {
         this.email = email;
@@ -60,7 +61,15 @@ __decorate([
     __metadata("design:type", String)
 ], PasswordRecovery.prototype, "token", void 0);
 exports.PasswordRecovery = PasswordRecovery;
-class ReuestSesionLogOutDTO {
+class ReuestSesionLogOutDTO extends user_dto_1.SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, email, isFromCMS, }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type });
+        this.email = email;
+        this.isFromCMS = isFromCMS;
+    }
 }
 exports.ReuestSesionLogOutDTO = ReuestSesionLogOutDTO;
 class SesionTokenDTO {

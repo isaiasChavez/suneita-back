@@ -1,32 +1,23 @@
-export declare class GetAssetDTO {
-    constructor({ adminUuid, userUuid, type }: {
+import { SimpleRequest } from "../user/user/user.dto";
+export declare class CreateAssetDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, url, typeAsset }: {
         adminUuid: any;
+        superAdminUuid: any;
         userUuid: any;
         type: any;
-    });
-    userUuid: string;
-    adminUuid: string;
-    type: number;
-}
-export declare class CreateAssetDTO {
-    constructor({ adminUuid, userUuid, url, type, typeAsset }: {
-        adminUuid: any;
-        userUuid: any;
         url: any;
-        type: any;
         typeAsset: any;
     });
-    userUuid: string;
-    adminUuid: string;
     url: string;
     typeAsset: number;
-    type: number;
 }
-export declare class DeleteAssetDto {
-    constructor({ adminUuid, uuid }: {
+export declare class DeleteAssetDto extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, uuid }: {
         adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
         uuid: any;
     });
-    adminUuid: string;
     uuid: string;
 }

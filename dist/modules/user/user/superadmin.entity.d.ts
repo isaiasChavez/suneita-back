@@ -8,6 +8,7 @@ export declare class SuperAdmin {
     name: string;
     lastname: string;
     avatar: string;
+    thumbnail: string;
     email: string;
     password: string;
     type: Type;

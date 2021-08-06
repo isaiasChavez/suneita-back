@@ -4,11 +4,9 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
-  ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
-  PrimaryColumn,
 } from 'typeorm';
 import { Type } from '../type/type.entity';
 import { Role } from '../role/role.entity';
@@ -19,6 +17,7 @@ import { Token } from '../token/token.entity';
 import { SuperAdmin } from './superadmin.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
+import { Status } from '../status/status.entity';
 
 @Entity({ schema: 'Users' })
 export class User {
@@ -34,6 +33,14 @@ export class User {
       'https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb',
   })
   avatar: string;
+  
+  @Column({
+    type: 'text',
+    default:
+      'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+  })
+  thumbnail: string;
+
   @Column({ length: 250 })
   email: string;
 
@@ -45,6 +52,9 @@ export class User {
 
   @ManyToOne((type) => Role, (role) => role.user)
   role: Role;
+
+  @ManyToOne((type) => Status, (status) => status.user)
+  status: Status;
 
   @ManyToOne(() => Admin, (admin) => admin.users)
   admin: Admin;

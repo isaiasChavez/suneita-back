@@ -13,13 +13,17 @@ import { UserService } from "./user.service";
 import {
     InviteUserDTO,
     ConfirmUserPassword,
-    CreateSuperAdminDTO,
     UpdateUserDTO,
     UpdateUserAdminDTO,
     DeleteAdminUserDTO,
     DeleteUserDTO,
     FindUserChildrens,
     SimpleRequest,
+    GetAdminDetailDTO,
+    GetUserDetailDTO,
+    ChangeName,
+    UpdateGuestDTO,
+    SetSesionAppId,
 } from "./user.dto";
 import { validateOrReject } from "class-validator";
 
@@ -36,39 +40,89 @@ export class UserController {
             await validateOrReject(newinviteUserDTO);
             return await this.userService.invite(newinviteUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
         }
     }
 
+    @Post("playerid")
+    async setSesionOfApp(@Body() setSesionAppId: SetSesionAppId): Promise<any> {
+        let newsetSesionAppId = new SetSesionAppId(setSesionAppId)
+        try {
+            console.log("playerid:", { newsetSesionAppId })
+            await validateOrReject(newsetSesionAppId);
+            return await this.userService.setSesionOfApp(newsetSesionAppId);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed)  please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
 
+    
 
     @Get('detail')
     async findUserDetail(@Req() request, @Res() response): Promise<any> {
-        
         const requestDetailDTO = new SimpleRequest(request.body)
         try {
             await validateOrReject(requestDetailDTO);
             return await this.userService.findUserDetail(requestDetailDTO,response);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+    @Get("/:udminUuid")
+    async findAllUsers(@Param('udminUuid') udminUuid: number): Promise<any> {
+        return await this.userService.findAllUsers(udminUuid);
+    }
+    @Post("childrens")
+    async getUserChildrens(@Body() dto: SimpleRequest): Promise<any> {
+        let findUserChildrens = new SimpleRequest(dto)
+
+        try {
+            await validateOrReject(findUserChildrens);
+            return await this.userService.findUserChildrens(findUserChildrens);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+    //Información de childrens
+    @Post("userinfo")
+    async getUserDetail(@Body() dto: GetUserDetailDTO): Promise<any> {
+        try {
+            let getUserDetailDTO = new GetUserDetailDTO(dto)
+            await validateOrReject(getUserDetailDTO);
+            return await this.userService.getUserDetail(getUserDetailDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
         }
     }
 
-    @Get("/:udminUuid")
-    async findAllUsers(@Param('udminUuid') udminUuid: number): Promise<any> {
-        return await this.userService.findAllUsers(udminUuid);
-    }
-
-    @Post("childrens")
-    async getUserChildrens(@Body() findUserChildrens: FindUserChildrens): Promise<any> {
-        console.log("--->",{findUserChildrens})
-        return await this.userService.findUserChildrens(findUserChildrens);
+    @Post("admininfo")
+    async getAdminDetail(@Body() dto: GetAdminDetailDTO): Promise<any> {
+        console.log("--->",{dto})
+        try {
+            let getAdminDetailDTO = new GetAdminDetailDTO(dto)
+            await validateOrReject(getAdminDetailDTO);
+            return await this.userService.getAdminDetail(getAdminDetailDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
     }
 
     
@@ -82,11 +136,9 @@ export class UserController {
         let newConfirmUserPassword = new ConfirmUserPassword(confirmUserPassword)
         try {
             await validateOrReject(newConfirmUserPassword);
-            // return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
             return await this.userService.confirmPassword(confirmUserPassword);
-            // return await this.userService.create(newCreateUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
@@ -95,35 +147,52 @@ export class UserController {
 
 
 
-    @Post("superadmin")
-    async createSuperAdmin(@Body() createSuperAdminDTO: CreateSuperAdminDTO): Promise<any> {
-        let newcreateSuperAdminDTO = new CreateSuperAdminDTO(createSuperAdminDTO)
-        try {
-            await validateOrReject(newcreateSuperAdminDTO);
-            return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
-        } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            }
-        }
-
-    }
+    
    
 
     @Put('admin')
-    async updateAdminUser(@Body() updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {
+    async updateAdmin(@Body() updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {
         let newupdateUserDTO = new UpdateUserAdminDTO(updateUserAdminDTO)
         try {
             await validateOrReject(newupdateUserDTO);
-            return await this.userService.updateAdminUser(newupdateUserDTO);
+            return await this.userService.updateAdmin(newupdateUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
         }
     }
+    @Put('guest')
+    async updateGuest(@Body() updateGuestDTO: UpdateGuestDTO): Promise<any> {
+        let newUpdateGuestDTO = new UpdateGuestDTO(updateGuestDTO)
+        try {
+            await validateOrReject(newUpdateGuestDTO);
+            return await this.userService.updateGuest(newUpdateGuestDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+
+
+    
+    @Post("name")
+    async updateName(@Body() changeName: ChangeName): Promise<any> {
+        let newchangeName = new ChangeName(changeName)
+        try {
+            await validateOrReject(newchangeName);
+            return await this.userService.updateName(newchangeName);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+
     @Put()
     async updateUser(@Body() updateUserDTO: UpdateUserDTO): Promise<any> {
         let newupdateUserDTO = new UpdateUserDTO(updateUserDTO)
@@ -131,7 +200,7 @@ export class UserController {
             await validateOrReject(newupdateUserDTO);
             return await this.userService.updateUser(newupdateUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
@@ -142,14 +211,12 @@ export class UserController {
 
     @Put("deleteuser")
     async deleteUser(@Body() deleteUserDTO: DeleteUserDTO): Promise<any> {
-
         let newdeleteUserDTO = new DeleteUserDTO(deleteUserDTO)
-
         try {
             await validateOrReject(newdeleteUserDTO);
             return await this.userService.deleteUser(newdeleteUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
@@ -164,7 +231,7 @@ export class UserController {
             await validateOrReject(newdeleteAdminUserDTO);
             return await this.userService.deleteUserAdmin(newdeleteAdminUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
@@ -177,7 +244,7 @@ export class UserController {
             await validateOrReject(newsuspendAdminUserDTO);
             return await this.userService.suspendUserAdmin(newsuspendAdminUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }
@@ -190,7 +257,7 @@ export class UserController {
             await validateOrReject(newSuspendUserDTO);
             return await this.userService.suspendUser(newSuspendUserDTO);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             }

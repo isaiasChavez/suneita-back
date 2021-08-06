@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from '../user/user/admin.entity';
+import { User } from '../user/user/user.entity';
 import { UpdateSuscriptionDTO } from './suscription.dto';
 import { Suscription } from './suscription.entity';
 
@@ -12,30 +13,16 @@ export class SuscriptionService {
         @InjectRepository(Suscription) private suscriptionRepository: Repository<Suscription>,
     ) {
     }
-
-    async update(updateSuscriptionDTO: UpdateSuscriptionDTO): Promise<any> {
+    async update(suscription:Suscription,updateSuscriptionDTO: UpdateSuscriptionDTO,user:Admin|User,isAdmin:boolean,isGuest:boolean): Promise<any> {
         try {
-            let admin: Admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: updateSuscriptionDTO.adminUuid
-                }
-            })
-            console.log({ admin })
-            if (!admin) {
-                return {
-                    status: 1
-                }
-            }
-            const suscription: Suscription = await this.suscriptionRepository.findOne({
-                where: {
-                    admin
-                }
-            })
-            console.log({ suscription })
+            
             if (!suscription) {
-                return {
-                    status: 1
-                }
+                suscription = await this.suscriptionRepository.findOne({
+                    where: {
+                        admin:isAdmin?user:null,
+                        user:isGuest?user:null
+                    }
+                })
             }
             if (updateSuscriptionDTO.finishedAt) {
                 suscription.finishedAt = new Date(updateSuscriptionDTO.finishedAt)
@@ -47,8 +34,6 @@ export class SuscriptionService {
                 suscription.cost = updateSuscriptionDTO.cost;
             }
             this.suscriptionRepository.save(suscription)
-
-
         } catch (err) {
             console.log("SuscriptionService - update: ", err);
             throw new HttpException(

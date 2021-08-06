@@ -1,9 +1,10 @@
-import { CreateAssetDTO, DeleteAssetDto, GetAssetDTO } from './asset.dto';
+import { SimpleRequest } from '../user/user/user.dto';
+import { CreateAssetDTO, DeleteAssetDto } from './asset.dto';
 import { AssetService } from './asset.service';
 export declare class AssetController {
     private assetService;
     constructor(assetService: AssetService);
-    getAllAssetsByUser(getAssetDTO: GetAssetDTO): Promise<any>;
+    getAllAssetsByUser(getAssetDTO: SimpleRequest): Promise<any>;
     create(createAssetDTO: CreateAssetDTO): Promise<any>;
     delete(deleteAssetDTO: DeleteAssetDto): Promise<any>;
 }

@@ -12,6 +12,7 @@ import { Admin } from './admin.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
+import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
     TypeOrmModule.forFeature([Invitation]),
     TypeOrmModule.forFeature([Asset]),
   ],
-  providers: [UserService],
   controllers: [UserController],
+  providers: [UserService,SuscriptionService],
 })
 export class UserModule {}

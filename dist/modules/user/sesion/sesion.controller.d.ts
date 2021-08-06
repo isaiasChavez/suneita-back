@@ -5,6 +5,7 @@ export declare class SesionController {
     constructor(sesionService: SesionService);
     Login(reuestSesionDTO: ReuestSesionDTO): Promise<any>;
     LoginFromApp(reuestSesionDTO: ReuestSesionDTO): Promise<any>;
+    validating(token: string): Promise<any>;
     recoveryPassword(passwordRecovery: PasswordRecovery): Promise<any>;
     requestPasswordReset(email: any): Promise<any>;
     Logout(requestSesionLogOutDTO: ReuestSesionLogOutDTO): Promise<any>;

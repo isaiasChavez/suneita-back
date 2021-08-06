@@ -7,7 +7,6 @@ import { User } from '../user/user.entity';
 export class Sesion {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
   @Column({
     type: 'timestamp without time zone',
     default: () => 'CURRENT_TIMESTAMP',
@@ -17,11 +16,8 @@ export class Sesion {
   @Column({ length: 200, nullable: true })
   playerId: string;
 
-  // @ManyToOne(
-  //     (type) => User,
-  //     (user) => user.sesion
-  // )
-  // user: User;
+  @Column({ nullable: false, default: false })
+  isFromCMS: boolean;
   @ManyToOne((type) => Admin, (admin) => admin.sesion)
   admin: Admin;
   @ManyToOne((type) => SuperAdmin, (superadmin) => superadmin.sesion)

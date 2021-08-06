@@ -8,11 +8,9 @@ import {
   ReuestSesionLogOutDTO,
 } from './sesion.dto';
 import { validateOrReject } from 'class-validator';
-
 @Controller('sesion')
 export class SesionController {
   constructor (private sesionService: SesionService) { }
-
   @Post()
   async Login(@Body() reuestSesionDTO: ReuestSesionDTO): Promise<any> {
     console.log({ reuestSesionDTO });
@@ -32,10 +30,8 @@ export class SesionController {
       };
     }
   }
-   @Post('login')
+  @Post('login')
   async LoginFromApp(@Body() reuestSesionDTO: ReuestSesionDTO): Promise<any> {
-    console.log({ reuestSesionDTO });
-
     const newreuestSesionDTO = new ReuestSesionDTO(reuestSesionDTO);
     try {
       await validateOrReject(newreuestSesionDTO);
@@ -49,6 +45,17 @@ export class SesionController {
         errors,
       };
     }
+  }
+
+
+  @Post('validate/:token')
+  async validating(@Param('token') token: string): Promise<any> {
+    if (token.length<50) {
+        return {
+          status:5
+        }
+    }
+    return await this.sesionService.validateIfExistToken(token);
   }
 
   @Put('recovery')
@@ -69,8 +76,9 @@ export class SesionController {
       };
     }
   }
-  @Get('requestreset/:email')
+  @Post('requestreset/:email')
   async requestPasswordReset(@Param('email') email): Promise<any> {
+    console.log("requestPasswordReset")
     return await this.sesionService.requestPasswordReset(email);
   }
 
@@ -105,7 +113,7 @@ export class SesionController {
     try {
       await validateOrReject(newCreateUserDTO);
       // return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
-      return await this.sesionService.create(newCreateUserDTO);
+      return await this.sesionService.createGuest(newCreateUserDTO);
     } catch (errors) {
       console.log('Caught promise rejection (validation failed). Errors: ', errors);
       return {

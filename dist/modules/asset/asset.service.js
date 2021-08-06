@@ -18,11 +18,12 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const admin_entity_1 = require("../user/user/admin.entity");
 const asset_entity_1 = require("./asset.entity");
-const types_1 = require("../../types");
 const user_entity_1 = require("../user/user/user.entity");
 const type_asset_entity_1 = require("./type-asset/type-asset.entity");
+const user_service_1 = require("../user/user/user.service");
 let AssetService = class AssetService {
-    constructor(adminRepository, userRepository, assetRepository, typeAssetRepository) {
+    constructor(userService, adminRepository, userRepository, assetRepository, typeAssetRepository) {
+        this.userService = userService;
         this.adminRepository = adminRepository;
         this.userRepository = userRepository;
         this.assetRepository = assetRepository;
@@ -36,52 +37,30 @@ let AssetService = class AssetService {
     }
     async getAllAssetsByUser(getAssetDTO) {
         try {
-            if (!getAssetDTO.adminUuid && !getAssetDTO.userUuid) {
-                return {
-                    status: 5,
-                    error: "No permitido"
-                };
-            }
-            let user;
-            if (getAssetDTO.type === types_1.ADMIN) {
-                user = await this.adminRepository.findOne({
-                    relations: ["type"],
-                    where: {
-                        uuid: getAssetDTO.adminUuid
-                    }
-                });
-            }
-            if (getAssetDTO.type === types_1.USER_NORMAL) {
-                user = await this.userRepository.findOne({
-                    relations: ["type"],
-                    where: {
-                        uuid: getAssetDTO.userUuid,
-                        isActive: true
-                    }
-                });
-            }
+            const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(getAssetDTO);
             if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el administrador"
+                    error: "No existe el usuario"
                 };
             }
             let assets;
-            if (user.type.id === types_1.USER_NORMAL) {
+            if (isGuest) {
                 assets = await this.assetRepository.find({
-                    select: ["url"],
+                    select: ["url", "thumbnail"],
                     relations: ["typeAsset"],
                     where: {
                         user
                     }
                 });
             }
-            if (user.type.id === types_1.ADMIN) {
+            if (isAdmin) {
                 assets = await this.assetRepository.find({
-                    select: ["url"],
+                    select: ["url", "thumbnail"],
                     relations: ["typeAsset"],
                     where: {
-                        admin: user
+                        admin: user,
+                        isDeleted: false
                     }
                 });
             }
@@ -105,30 +84,7 @@ let AssetService = class AssetService {
     }
     async create(createAssetDTO) {
         try {
-            if (!createAssetDTO.adminUuid && !createAssetDTO.userUuid) {
-                return {
-                    status: 5,
-                    error: "No existe usuario"
-                };
-            }
-            let user;
-            if (createAssetDTO.type === types_1.ADMIN) {
-                user = await this.adminRepository.findOne({
-                    relations: ["assets"],
-                    where: {
-                        uuid: createAssetDTO.adminUuid
-                    }
-                });
-            }
-            if (createAssetDTO.type === types_1.USER_NORMAL) {
-                user = await this.userRepository.findOne({
-                    relations: ["assets"],
-                    where: {
-                        uuid: createAssetDTO.userUuid,
-                        isActive: true
-                    }
-                });
-            }
+            const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(createAssetDTO);
             if (!user) {
                 return {
                     status: 1,
@@ -143,7 +99,7 @@ let AssetService = class AssetService {
                 }, 403);
             }
             let asset;
-            if (createAssetDTO.type === types_1.ADMIN) {
+            if (isAdmin) {
                 asset = this.assetRepository.create({
                     user: null,
                     admin: user,
@@ -151,7 +107,7 @@ let AssetService = class AssetService {
                     typeAsset
                 });
             }
-            if (createAssetDTO.type === types_1.USER_NORMAL) {
+            if (isGuest) {
                 asset = this.assetRepository.create({
                     user,
                     admin: null,
@@ -162,7 +118,9 @@ let AssetService = class AssetService {
             await this.assetRepository.save(asset);
             return {
                 asset: {
-                    url: asset.url
+                    url: asset.url,
+                    thumbnail: asset.thumbnail,
+                    typeAsset
                 },
                 status: 0
             };
@@ -177,28 +135,34 @@ let AssetService = class AssetService {
     }
     async delete(deleteAssetDto) {
         try {
-            const admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: deleteAssetDto.adminUuid
-                }
-            });
-            if (!admin) {
+            const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(deleteAssetDto);
+            if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el administrador"
+                    error: "No existe el usuario"
                 };
             }
-            const asset = await this.assetRepository.findOne({
-                relations: ['admin'],
-                where: {
-                    uuid: deleteAssetDto.uuid
-                },
-            });
+            let asset;
+            if (isAdmin) {
+                asset = await this.assetRepository.findOne({
+                    relations: ['admin'],
+                    where: {
+                        uuid: deleteAssetDto.uuid,
+                        admin: user
+                    },
+                });
+            }
+            if (isGuest) {
+                asset = await this.assetRepository.findOne({
+                    relations: ['admin'],
+                    where: {
+                        uuid: deleteAssetDto.uuid,
+                        user
+                    },
+                });
+            }
             if (!asset) {
                 return { status: 2, msg: 'asset not found' };
-            }
-            if (asset.admin.id !== admin.id) {
-                return { status: 2, msg: 'Unauthorized' };
             }
             await this.assetRepository.remove(asset);
             return;
@@ -214,11 +178,12 @@ let AssetService = class AssetService {
 };
 AssetService = __decorate([
     common_1.Injectable(),
-    __param(0, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(1, typeorm_1.InjectRepository(user_entity_1.User)),
-    __param(2, typeorm_1.InjectRepository(asset_entity_1.Asset)),
-    __param(3, typeorm_1.InjectRepository(type_asset_entity_1.TypeAsset)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
+    __param(1, typeorm_1.InjectRepository(admin_entity_1.Admin)),
+    __param(2, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(3, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(4, typeorm_1.InjectRepository(type_asset_entity_1.TypeAsset)),
+    __metadata("design:paramtypes", [user_service_1.UserService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

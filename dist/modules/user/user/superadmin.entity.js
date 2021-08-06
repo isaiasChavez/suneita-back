@@ -43,6 +43,13 @@ __decorate([
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "avatar", void 0);
 __decorate([
+    typeorm_1.Column({
+        type: 'text',
+        default: 'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+    }),
+    __metadata("design:type", String)
+], SuperAdmin.prototype, "thumbnail", void 0);
+__decorate([
     typeorm_1.Column({ length: 250 }),
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "email", void 0);

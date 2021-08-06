@@ -29,7 +29,7 @@ __decorate([
     __metadata("design:type", String)
 ], Asset.prototype, "url", void 0);
 __decorate([
-    typeorm_1.Column({ length: 300, nullable: true, default: '' }),
+    typeorm_1.Column({ length: 300, nullable: true, default: 'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/jimmy-dean-DyQiNSgrM58-unsplash.jpg' }),
     __metadata("design:type", String)
 ], Asset.prototype, "thumbnail", void 0);
 __decorate([

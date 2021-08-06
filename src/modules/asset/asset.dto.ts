@@ -1,69 +1,45 @@
 import { IsNotEmpty, IsNumber, IsOptional, isString, IsString, IsUrl, isURL, IsUUID, MinLength } from "class-validator";
+import { SimpleRequest } from "../user/user/user.dto";
 
 
 
-export class GetAssetDTO {
-    constructor({ adminUuid,userUuid, type }) {
-        this.adminUuid = adminUuid
-        this.userUuid = userUuid
-        this.type = type
-    }
-    @IsUUID()
-    @IsNotEmpty()
-    @IsString()
-    userUuid: string;
-    @IsUUID()
-    @IsNotEmpty()
-    @IsString()
-    adminUuid: string;
-    @IsNotEmpty()
-    @IsString()
-    type: number;
-}
 
 
-export class CreateAssetDTO {
-    constructor({ adminUuid,userUuid, url,type,typeAsset }) {
-        this.adminUuid = adminUuid
-        this.userUuid = userUuid
+export class CreateAssetDTO extends SimpleRequest {
+    constructor({ adminUuid,
+        superAdminUuid,
+        userUuid,
+        type,url,typeAsset }) {
+        super({adminUuid,
+            superAdminUuid,
+            userUuid,
+            type})
         this.url = url
-        this.type = type
         this.typeAsset = typeAsset
 
     }
-    @IsUUID()
-    @IsNotEmpty()
-    @IsString()
-    @IsOptional()
-    
-    userUuid: string;
-    @IsUUID()
-    @IsNotEmpty()
-    @IsOptional()
-    @IsString()
-    adminUuid: string;
+   
     @IsNotEmpty()
     @IsString()
     @IsUrl()
     url: string;
-
     @IsNotEmpty()
     @IsNumber()
     typeAsset: number;
-    @IsNotEmpty()
-    @IsNumber()
-    type: number;
+  
 }
 
-export class DeleteAssetDto {
-    constructor({ adminUuid, uuid }) {
-        this.adminUuid = adminUuid
+export class DeleteAssetDto extends SimpleRequest {
+    constructor({ adminUuid,
+        superAdminUuid,
+        userUuid,
+        type, uuid }) {
+        super({adminUuid,
+            superAdminUuid,
+            userUuid,
+            type,})
         this.uuid = uuid
     }
-    @IsUUID()
-    @IsNotEmpty()
-    @IsString()
-    adminUuid: string;
     @IsUUID()
     @IsString()
     @IsNotEmpty()

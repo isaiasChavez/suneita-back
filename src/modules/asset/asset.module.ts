@@ -1,7 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Suscription } from '../suscription/suscription.entity';
+import { SuscriptionService } from '../suscription/suscription.service';
+import { Invitation } from '../user/invitation/invitation.entity';
+import { Role } from '../user/role/role.entity';
+import { Sesion } from '../user/sesion/sesion.entity';
+import { Token } from '../user/token/token.entity';
+import { Type } from '../user/type/type.entity';
 import { Admin } from '../user/user/admin.entity';
+import { SuperAdmin } from '../user/user/superadmin.entity';
 import { User } from '../user/user/user.entity';
+import { UserService } from '../user/user/user.service';
 import { AssetController } from './asset.controller';
 import { Asset } from './asset.entity';
 import { AssetService } from './asset.service';
@@ -14,9 +23,16 @@ import { TypeAssetModule } from './type-asset/type-asset.module';
     TypeOrmModule.forFeature([Asset]),
     TypeOrmModule.forFeature([TypeAsset]),
     TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([SuperAdmin]),
+    TypeOrmModule.forFeature([Suscription]),
+    TypeOrmModule.forFeature([Token]),
+    TypeOrmModule.forFeature([Type]),
+    TypeOrmModule.forFeature([Role]),
+    TypeOrmModule.forFeature([Sesion]),
+    TypeOrmModule.forFeature([Invitation]),
     TypeAssetModule,
   ],
   controllers: [AssetController],
-  providers: [AssetService]
+  providers: [AssetService,UserService,SuscriptionService]
 })
 export class AssetModule { }

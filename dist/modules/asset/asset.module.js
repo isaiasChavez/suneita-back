@@ -9,8 +9,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AssetModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
+const suscription_entity_1 = require("../suscription/suscription.entity");
+const suscription_service_1 = require("../suscription/suscription.service");
+const invitation_entity_1 = require("../user/invitation/invitation.entity");
+const role_entity_1 = require("../user/role/role.entity");
+const sesion_entity_1 = require("../user/sesion/sesion.entity");
+const token_entity_1 = require("../user/token/token.entity");
+const type_entity_1 = require("../user/type/type.entity");
 const admin_entity_1 = require("../user/user/admin.entity");
+const superadmin_entity_1 = require("../user/user/superadmin.entity");
 const user_entity_1 = require("../user/user/user.entity");
+const user_service_1 = require("../user/user/user.service");
 const asset_controller_1 = require("./asset.controller");
 const asset_entity_1 = require("./asset.entity");
 const asset_service_1 = require("./asset.service");
@@ -25,10 +34,17 @@ AssetModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([asset_entity_1.Asset]),
             typeorm_1.TypeOrmModule.forFeature([type_asset_entity_1.TypeAsset]),
             typeorm_1.TypeOrmModule.forFeature([user_entity_1.User]),
+            typeorm_1.TypeOrmModule.forFeature([superadmin_entity_1.SuperAdmin]),
+            typeorm_1.TypeOrmModule.forFeature([suscription_entity_1.Suscription]),
+            typeorm_1.TypeOrmModule.forFeature([token_entity_1.Token]),
+            typeorm_1.TypeOrmModule.forFeature([type_entity_1.Type]),
+            typeorm_1.TypeOrmModule.forFeature([role_entity_1.Role]),
+            typeorm_1.TypeOrmModule.forFeature([sesion_entity_1.Sesion]),
+            typeorm_1.TypeOrmModule.forFeature([invitation_entity_1.Invitation]),
             type_asset_module_1.TypeAssetModule,
         ],
         controllers: [asset_controller_1.AssetController],
-        providers: [asset_service_1.AssetService]
+        providers: [asset_service_1.AssetService, user_service_1.UserService, suscription_service_1.SuscriptionService]
     })
 ], AssetModule);
 exports.AssetModule = AssetModule;

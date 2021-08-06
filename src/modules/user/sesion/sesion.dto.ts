@@ -8,6 +8,7 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { SimpleRequest } from '../user/user.dto';
 
 export class ReuestSesionDTO {
   constructor({ email, password }) {
@@ -48,8 +49,24 @@ export class PasswordRecovery {
   token: string;
 }
 
-export class ReuestSesionLogOutDTO {
+export class ReuestSesionLogOutDTO extends SimpleRequest {
+  constructor({
+    adminUuid,
+    superAdminUuid,
+    userUuid,
+    type,
+    email,
+    isFromCMS,
+  }) {
+    super({adminUuid,
+      superAdminUuid,
+      userUuid,
+      type})
+    this.email = email;
+    this.isFromCMS = isFromCMS;
+  }
   readonly email: string;
+  readonly isFromCMS: boolean;
 }
 
 export class SesionTokenDTO {

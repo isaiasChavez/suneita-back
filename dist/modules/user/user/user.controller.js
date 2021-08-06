@@ -29,7 +29,21 @@ let UserController = class UserController {
             return await this.userService.invite(newinviteUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async setSesionOfApp(setSesionAppId) {
+        let newsetSesionAppId = new user_dto_1.SetSesionAppId(setSesionAppId);
+        try {
+            console.log("playerid:", { newsetSesionAppId });
+            await class_validator_1.validateOrReject(newsetSesionAppId);
+            return await this.userService.setSesionOfApp(newsetSesionAppId);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed)  please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -42,7 +56,7 @@ let UserController = class UserController {
             return await this.userService.findUserDetail(requestDetailDTO, response);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -51,9 +65,45 @@ let UserController = class UserController {
     async findAllUsers(udminUuid) {
         return await this.userService.findAllUsers(udminUuid);
     }
-    async getUserChildrens(findUserChildrens) {
-        console.log("--->", { findUserChildrens });
-        return await this.userService.findUserChildrens(findUserChildrens);
+    async getUserChildrens(dto) {
+        let findUserChildrens = new user_dto_1.SimpleRequest(dto);
+        try {
+            await class_validator_1.validateOrReject(findUserChildrens);
+            return await this.userService.findUserChildrens(findUserChildrens);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async getUserDetail(dto) {
+        try {
+            let getUserDetailDTO = new user_dto_1.GetUserDetailDTO(dto);
+            await class_validator_1.validateOrReject(getUserDetailDTO);
+            return await this.userService.getUserDetail(getUserDetailDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async getAdminDetail(dto) {
+        console.log("--->", { dto });
+        try {
+            let getAdminDetailDTO = new user_dto_1.GetAdminDetailDTO(dto);
+            await class_validator_1.validateOrReject(getAdminDetailDTO);
+            return await this.userService.getAdminDetail(getAdminDetailDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
     }
     async confirmUserPassword(confirmUserPassword) {
         let newConfirmUserPassword = new user_dto_1.ConfirmUserPassword(confirmUserPassword);
@@ -62,33 +112,46 @@ let UserController = class UserController {
             return await this.userService.confirmPassword(confirmUserPassword);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
         }
     }
-    async createSuperAdmin(createSuperAdminDTO) {
-        let newcreateSuperAdminDTO = new user_dto_1.CreateSuperAdminDTO(createSuperAdminDTO);
-        try {
-            await class_validator_1.validateOrReject(newcreateSuperAdminDTO);
-            return await this.userService.createSuperAdmin(newcreateSuperAdminDTO);
-        }
-        catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
-            return {
-                errors
-            };
-        }
-    }
-    async updateAdminUser(updateUserAdminDTO) {
+    async updateAdmin(updateUserAdminDTO) {
         let newupdateUserDTO = new user_dto_1.UpdateUserAdminDTO(updateUserAdminDTO);
         try {
             await class_validator_1.validateOrReject(newupdateUserDTO);
-            return await this.userService.updateAdminUser(newupdateUserDTO);
+            return await this.userService.updateAdmin(newupdateUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async updateGuest(updateGuestDTO) {
+        let newUpdateGuestDTO = new user_dto_1.UpdateGuestDTO(updateGuestDTO);
+        try {
+            await class_validator_1.validateOrReject(newUpdateGuestDTO);
+            return await this.userService.updateGuest(newUpdateGuestDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async updateName(changeName) {
+        let newchangeName = new user_dto_1.ChangeName(changeName);
+        try {
+            await class_validator_1.validateOrReject(newchangeName);
+            return await this.userService.updateName(newchangeName);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -101,7 +164,7 @@ let UserController = class UserController {
             return await this.userService.updateUser(newupdateUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -114,7 +177,7 @@ let UserController = class UserController {
             return await this.userService.deleteUser(newdeleteUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -127,7 +190,7 @@ let UserController = class UserController {
             return await this.userService.deleteUserAdmin(newdeleteAdminUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -140,7 +203,7 @@ let UserController = class UserController {
             return await this.userService.suspendUserAdmin(newsuspendAdminUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -153,7 +216,7 @@ let UserController = class UserController {
             return await this.userService.suspendUser(newSuspendUserDTO);
         }
         catch (errors) {
-            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
             return {
                 errors
             };
@@ -167,6 +230,13 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.InviteUserDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "create", null);
+__decorate([
+    common_1.Post("playerid"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.SetSesionAppId]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "setSesionOfApp", null);
 __decorate([
     common_1.Get('detail'),
     __param(0, common_1.Req()), __param(1, common_1.Res()),
@@ -185,9 +255,23 @@ __decorate([
     common_1.Post("childrens"),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.FindUserChildrens]),
+    __metadata("design:paramtypes", [user_dto_1.SimpleRequest]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getUserChildrens", null);
+__decorate([
+    common_1.Post("userinfo"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.GetUserDetailDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getUserDetail", null);
+__decorate([
+    common_1.Post("admininfo"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.GetAdminDetailDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getAdminDetail", null);
 __decorate([
     common_1.Post("confirm"),
     __param(0, common_1.Body()),
@@ -196,19 +280,26 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "confirmUserPassword", null);
 __decorate([
-    common_1.Post("superadmin"),
-    __param(0, common_1.Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.CreateSuperAdminDTO]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "createSuperAdmin", null);
-__decorate([
     common_1.Put('admin'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [user_dto_1.UpdateUserAdminDTO]),
     __metadata("design:returntype", Promise)
-], UserController.prototype, "updateAdminUser", null);
+], UserController.prototype, "updateAdmin", null);
+__decorate([
+    common_1.Put('guest'),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.UpdateGuestDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "updateGuest", null);
+__decorate([
+    common_1.Post("name"),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.ChangeName]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "updateName", null);
 __decorate([
     common_1.Put(),
     __param(0, common_1.Body()),

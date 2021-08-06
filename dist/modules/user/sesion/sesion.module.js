@@ -21,6 +21,8 @@ const invitation_entity_1 = require("../invitation/invitation.entity");
 const role_entity_1 = require("../role/role.entity");
 const suscription_entity_1 = require("../../suscription/suscription.entity");
 const asset_entity_1 = require("../../asset/asset.entity");
+const user_service_1 = require("../user/user.service");
+const suscription_service_1 = require("../../suscription/suscription.service");
 let SesionModule = class SesionModule {
 };
 SesionModule = __decorate([
@@ -38,7 +40,7 @@ SesionModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([asset_entity_1.Asset]),
         ],
         controllers: [sesion_controller_1.SesionController],
-        providers: [sesion_service_1.SesionService],
+        providers: [sesion_service_1.SesionService, user_service_1.UserService, suscription_service_1.SuscriptionService],
     })
 ], SesionModule);
 exports.SesionModule = SesionModule;

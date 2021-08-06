@@ -32,6 +32,10 @@ __decorate([
     __metadata("design:type", String)
 ], Sesion.prototype, "playerId", void 0);
 __decorate([
+    typeorm_1.Column({ nullable: false, default: false }),
+    __metadata("design:type", Boolean)
+], Sesion.prototype, "isFromCMS", void 0);
+__decorate([
     typeorm_1.ManyToOne((type) => admin_entity_1.Admin, (admin) => admin.sesion),
     __metadata("design:type", admin_entity_1.Admin)
 ], Sesion.prototype, "admin", void 0);

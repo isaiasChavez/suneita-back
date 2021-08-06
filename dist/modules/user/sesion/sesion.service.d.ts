@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Sesion } from './sesion.entity';
 import { ReuestSesionDTO, ReuestSesionLogOutDTO, PasswordRecovery, CreateAdminDTO, CreateUserDTO } from './sesion.dto';
-import { Types, Roles } from '../../../types';
+import { Types, Roles, TypesNumbers } from '../../../types';
 import { Type } from '../type/type.entity';
 import { User } from '../user/user.entity';
 import { Admin } from '../user/admin.entity';
@@ -12,8 +12,10 @@ import { Role } from '../role/role.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { MailerService } from '@nestjs-modules/mailer';
+import { UserService } from '../user/user.service';
 export declare class SesionService {
     private readonly mailerService;
+    private readonly userService;
     private sesionRepository;
     private typeRepository;
     private userRepository;
@@ -24,8 +26,9 @@ export declare class SesionService {
     private superAdminRepository;
     private tokenRepository;
     private invitationRepository;
-    constructor(mailerService: MailerService, sesionRepository: Repository<Sesion>, typeRepository: Repository<Type>, userRepository: Repository<User>, suscriptionRepository: Repository<Suscription>, adminRepository: Repository<Admin>, roleRepository: Repository<Role>, assetRepository: Repository<Asset>, superAdminRepository: Repository<SuperAdmin>, tokenRepository: Repository<Token>, invitationRepository: Repository<Invitation>);
+    constructor(mailerService: MailerService, userService: UserService, sesionRepository: Repository<Sesion>, typeRepository: Repository<Type>, userRepository: Repository<User>, suscriptionRepository: Repository<Suscription>, adminRepository: Repository<Admin>, roleRepository: Repository<Role>, assetRepository: Repository<Asset>, superAdminRepository: Repository<SuperAdmin>, tokenRepository: Repository<Token>, invitationRepository: Repository<Invitation>);
     types: Types;
+    typesNumbers: TypesNumbers;
     roles: Roles;
     jwtService: any;
     token: string;
@@ -33,8 +36,15 @@ export declare class SesionService {
     RequesLoginFromApp(requestDTO: ReuestSesionDTO): Promise<any>;
     RequesLogout(reuestSesionLogOutDTO: ReuestSesionLogOutDTO): Promise<any>;
     decifreToken(email: string): Promise<any>;
+    validateIfExistToken(token: string): Promise<any>;
     passwordRecovery(requestDTO: PasswordRecovery): Promise<any>;
     requestPasswordReset(requestEmail: string): Promise<any>;
+    getWhoIsRequesting(email: string): Promise<{
+        isAdmin: boolean;
+        isSuperAdmin: boolean;
+        isGuest: boolean;
+        user: SuperAdmin | Admin | User;
+    }>;
     createAdmin(createAdminDTO: CreateAdminDTO): Promise<any>;
-    create(createUserDTO: CreateUserDTO): Promise<any>;
+    createGuest(createUserDTO: CreateUserDTO): Promise<any>;
 }

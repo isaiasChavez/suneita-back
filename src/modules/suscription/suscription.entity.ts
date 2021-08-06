@@ -10,6 +10,7 @@ import {
     BeforeInsert,
 } from "typeorm";
 import { v4 as uuid } from "uuid";
+import { Status } from "../user/status/status.entity";
 import { Admin } from "../user/user/admin.entity";
 import { User } from "../user/user/user.entity";
 
@@ -49,6 +50,7 @@ export class Suscription {
     @Column({ nullable: true, default: 0 })
     invitations: number;
 
+   
 
     @Column({ nullable: false, default: false })
     isDeleted: boolean;

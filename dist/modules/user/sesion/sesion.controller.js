@@ -37,7 +37,6 @@ let SesionController = class SesionController {
         }
     }
     async LoginFromApp(reuestSesionDTO) {
-        console.log({ reuestSesionDTO });
         const newreuestSesionDTO = new sesion_dto_1.ReuestSesionDTO(reuestSesionDTO);
         try {
             await class_validator_1.validateOrReject(newreuestSesionDTO);
@@ -49,6 +48,14 @@ let SesionController = class SesionController {
                 errors,
             };
         }
+    }
+    async validating(token) {
+        if (token.length < 50) {
+            return {
+                status: 5
+            };
+        }
+        return await this.sesionService.validateIfExistToken(token);
     }
     async recoveryPassword(passwordRecovery) {
         const newPasswordRecovery = new sesion_dto_1.PasswordRecovery(passwordRecovery);
@@ -64,6 +71,7 @@ let SesionController = class SesionController {
         }
     }
     async requestPasswordReset(email) {
+        console.log("requestPasswordReset");
         return await this.sesionService.requestPasswordReset(email);
     }
     async Logout(requestSesionLogOutDTO) {
@@ -89,7 +97,7 @@ let SesionController = class SesionController {
         let newCreateUserDTO = new sesion_dto_1.CreateUserDTO(createUserDTO);
         try {
             await class_validator_1.validateOrReject(newCreateUserDTO);
-            return await this.sesionService.create(newCreateUserDTO);
+            return await this.sesionService.createGuest(newCreateUserDTO);
         }
         catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
@@ -114,6 +122,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "LoginFromApp", null);
 __decorate([
+    common_1.Post('validate/:token'),
+    __param(0, common_1.Param('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "validating", null);
+__decorate([
     common_1.Put('recovery'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
@@ -121,7 +136,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "recoveryPassword", null);
 __decorate([
-    common_1.Get('requestreset/:email'),
+    common_1.Post('requestreset/:email'),
     __param(0, common_1.Param('email')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

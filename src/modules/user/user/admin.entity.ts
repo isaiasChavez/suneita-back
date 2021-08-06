@@ -17,6 +17,7 @@ import { User } from "./user.entity";
 import { Suscription } from "src/modules/suscription/suscription.entity";
 import { Asset } from "src/modules/asset/asset.entity";
 import { Token } from "../token/token.entity";
+import { Status } from "../status/status.entity";
 
 @Entity({ schema: "Users" })
 export class Admin {
@@ -32,7 +33,12 @@ export class Admin {
 
     @Column({ type: "text", default: "https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb" })
     avatar: string;
-
+    @Column({
+        type: 'text',
+        default:
+          'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+      })
+      thumbnail: string;
 
     @Column({ length: 250 })
     email: string;
@@ -56,7 +62,8 @@ export class Admin {
         (role) => role.user
     )
     role: Role;
-
+    @ManyToOne((type) => Status, (status) => status.admin)
+    status: Status;
 
     @ManyToOne((type) => SuperAdmin, superadmin => superadmin.admins)
     superadmin: SuperAdmin;

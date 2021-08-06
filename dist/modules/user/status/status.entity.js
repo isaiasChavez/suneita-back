@@ -10,7 +10,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Status = void 0;
+const suscription_entity_1 = require("../../suscription/suscription.entity");
 const typeorm_1 = require("typeorm");
+const admin_entity_1 = require("../user/admin.entity");
 const user_entity_1 = require("../user/user.entity");
 let Status = class Status {
 };
@@ -23,9 +25,13 @@ __decorate([
     __metadata("design:type", String)
 ], Status.prototype, "name", void 0);
 __decorate([
-    typeorm_1.OneToMany(type => user_entity_1.User, user => user.role),
+    typeorm_1.OneToMany(type => user_entity_1.User, user => user.status),
     __metadata("design:type", Array)
 ], Status.prototype, "user", void 0);
+__decorate([
+    typeorm_1.OneToMany(type => admin_entity_1.Admin, admin => admin.status),
+    __metadata("design:type", Array)
+], Status.prototype, "admin", void 0);
 Status = __decorate([
     typeorm_1.Entity({ schema: 'Users' })
 ], Status);

@@ -10,8 +10,7 @@ import {
   CreateUserDTO,
 } from './sesion.dto';
 import * as bcrypt from 'bcrypt';
-import * as moment from 'moment';
-import { ADMIN, Types, Roles, USER_NORMAL } from '../../../types';
+import { ADMIN, Types, Roles, USER_NORMAL, TypesNumbers } from '../../../types';
 import { Type } from '../type/type.entity';
 import { User } from '../user/user.entity';
 import { Admin } from '../user/admin.entity';
@@ -22,12 +21,14 @@ import { Role } from '../role/role.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { MailerService } from '@nestjs-modules/mailer';
+import { SimpleRequest } from '../user/user.dto';
+import { UserService } from '../user/user.service';
 const jwt = require('jsonwebtoken');
 @Injectable()
 export class SesionService {
   constructor (
     private readonly mailerService: MailerService,
-
+    private readonly userService: UserService,
     @InjectRepository(Sesion) private sesionRepository: Repository<Sesion>,
     @InjectRepository(Type) private typeRepository: Repository<Type>,
     @InjectRepository(User) private userRepository: Repository<User>,
@@ -51,190 +52,77 @@ export class SesionService {
       ADMIN: 'ADMIN',
       USER: 'USER',
     };
+    this.typesNumbers = {
+      SUPERADMIN: 1,
+      ADMIN: 2,
+      USER: 3,
+    };
     console.log({ jwt });
     this.jwtService = jwt;
   }
   types: Types;
+  typesNumbers: TypesNumbers;
+
   roles: Roles;
   jwtService;
   token: string;
 
   async RequesLogin(requestDTO: ReuestSesionDTO): Promise<any> {
     try {
-      console.log('Entra');
       let response = null;
-      let user: Admin | SuperAdmin | User;
-      let type: Type;
-
-      user = await this.superAdminRepository.findOne({
-        relations: ['type', 'admins'],
-        where: { email: requestDTO.email, isActive: true },
-      });
-
-      if (!user) {
-        user = await this.adminRepository.findOne({
-          relations: ['type', 'users'],
-          where: { email: requestDTO.email, isActive: true },
-        });
-      }
-      if (!user) {
-        user = await this.userRepository.findOne({
-          relations: ['type'],
-          where: { email: requestDTO.email, isActive: true },
-        });
-      }
+      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestDTO.email)
       if (!user) {
         return {
           status: 1,
           msg: `email does't exist`,
         };
-      } else {
-        console.log({ user });
-        type = user.type;
-      }
+      } 
 
       const match = await bcrypt.compare(requestDTO.password, user.password);
 
       if (match) {
         let sesionExist: Sesion;
 
-        if (type.name === this.types.SUPERADMIN) {
+        if (isSuperAdmin) {
           sesionExist = await this.sesionRepository.findOne({
             where: { superadmin: user },
           });
         }
-        if (type.name === this.types.ADMIN) {
+        if (isAdmin) {
           sesionExist = await this.sesionRepository.findOne({
             where: { admin: user },
           });
         }
-        if (type.name === this.types.USER) {
+        if (isGuest) {
           sesionExist = await this.sesionRepository.findOne({
             where: { user },
           });
         }
-        console.log({ sesionExist });
         if (sesionExist) {
-          console.log('Existe una sesion');
           await this.sesionRepository.remove(sesionExist);
         }
 
         let sesion: Sesion;
-        if (type.name === this.types.ADMIN) {
+        if (isAdmin) {
           sesion = this.sesionRepository.create({
             admin: user,
+            isFromCMS:true
           });
         }
-        if (type.name === this.types.SUPERADMIN) {
+        if (isSuperAdmin) {
           sesion = this.sesionRepository.create({
             superadmin: user,
+            isFromCMS:true
           });
         }
-        if (type.name === this.types.USER) {
+        if (isGuest) {
           sesion = this.sesionRepository.create({
             user,
+            isFromCMS:true
           });
         }
-
-        let dataChildrens: { admins: Admin[], users: User[] } = {
-          admins:[],users:[],
-        };
-
-        if (type.name === this.types.SUPERADMIN) {
-          dataChildrens.admins = await this.adminRepository.find({
-            select: ['name', 'lastname', 'avatar', 'uuid', 'isActive','email'],
-            relations: ['suscriptions'],
-            where: {
-              superadmin: user,
-            },
-          });
-          dataChildrens.users = await this.userRepository.find({
-            select: ['name', 'lastname', 'avatar', 'uuid', 'isActive'],
-            relations: ['suscriptions'],
-            where: {
-              superadmin: user,
-            },
-          });
-
-        }
-        if (type.name === this.types.ADMIN) {
-          dataChildrens.users = await this.userRepository.find({
-            select: ['name', 'lastname','email', 'avatar', 'uuid', 'isActive'],
-            relations: ['suscriptions'],
-            where: {
-              admin: user,
-            },
-          });
-
-          
-        }
-        const childrens = {
-          admins: [], users: []
-        } 
-
-        const filterUsers = (child) => {
-          const dataToSend = {
-            avatar: child.avatar,
-            email: child.email,
-            isActive: child.isActive,
-            lastname: child.lastname,
-            uuid:child.uuid,
-            name: child.name,
-            suscriptions: null,
-            lastSuscription:null
-          }
-          dataToSend.suscriptions = child.suscriptions.map((suscription: Suscription) => {
-            return {
-              cost: suscription.cost,
-              createdAt: suscription.createdAt,
-              finishedAt: suscription.finishedAt,
-              isActive: suscription.isActive,
-              isDeleted: suscription.isDeleted,
-              startedAt: suscription.startedAt,
-            }
-          })
-          dataToSend.lastSuscription = dataToSend.suscriptions[0] ? dataToSend.suscriptions[0]:null 
-          return dataToSend
-        }
-
-
-        if (type.name === this.types.SUPERADMIN) {
-          childrens.admins = dataChildrens.admins.map((child) => {
-            const dataToSend = {
-              avatar: child.avatar,
-              email: child.email,
-              isActive: child.isActive,
-              uuid:child.uuid,
-              lastname: child.lastname,
-              name: child.name,
-              suscriptions: null,
-              lastSuscription:null
-            }
-            dataToSend.suscriptions = child.suscriptions.map((suscription: Suscription) => {
-              return {
-                cost: suscription.cost,
-                invitations: suscription.invitations,
-                createdAt: suscription.createdAt,
-                finishedAt: suscription.finishedAt,
-                isActive: suscription.isActive,
-                isDeleted: suscription.isDeleted,
-                startedAt: suscription.startedAt,
-              }
-            })
-            dataToSend.lastSuscription = dataToSend.suscriptions[0]
-            return dataToSend
-          })
-          childrens.users  = dataChildrens.users.map(filterUsers)
-
-
-        } else {
-          childrens.users = dataChildrens.users.map(filterUsers)
-          
-        }
-
 
         const loggedUser = await this.sesionRepository.save(sesion);
-        console.log({ loggedUser });
         const payload = {
           usuario: {
             uuid: user.uuid,
@@ -252,9 +140,9 @@ export class SesionService {
             token,
             name: user.name,
             lastname: user.lastname,
+            thumbnail: user.thumbnail,
             email: user.email,
-            childrens,
-            type: type.id,
+            type: user.type.id,
           },
           status: 0,
         };
@@ -275,123 +163,86 @@ export class SesionService {
       );
     }
   }
-
   async RequesLoginFromApp(requestDTO: ReuestSesionDTO): Promise<any> {
     try {
-      console.log({requestDTO})
-      let response = null;
-      let user: Admin | SuperAdmin | User;
-      let type: Type;
-
-      // user = await this.superAdminRepository.findOne({
-      //   relations: ['type', 'admins'],
-      //   where: { email: requestDTO.email, isActive: true },
-      // });
-
-        user = await this.adminRepository.findOne({
-          relations: ['type', 'users'],
-          where: { email: requestDTO.email, isActive: true },
-        });
+      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestDTO.email)
       if (!user) {
-        user = await this.userRepository.findOne({
-          relations: ['type'],
-          where: { email: requestDTO.email, isActive: true },
-        });
+        return {
+          status: 1,
+          msg: `email does't exist`,
+        };
       }
-      // if (!user) {
-      //   return {
-      //     status: 1,
-      //     msg: `email does't exist`,
-      //   };
-      // } else {
-      //   type = user.type;
-      // }
+      const match = await bcrypt.compare(requestDTO.password, user.password);
+      let response
+      if (match) {
+        let sesionExist: Sesion;
+        if (isSuperAdmin) {
+          sesionExist = await this.sesionRepository.findOne({
+            where: { superadmin: user },
+          });
+        }
+        if (isAdmin) {
+          sesionExist = await this.sesionRepository.findOne({
+            where: { admin: user },
+          });
+        }
+        if (isGuest) {
+          sesionExist = await this.sesionRepository.findOne({
+            where: { user },
+          });
+        }
+        if (sesionExist) {
+          await this.sesionRepository.remove(sesionExist);
+        }
 
-      // const match = await bcrypt.compare(requestDTO.password, user.password);
+        let sesion: Sesion;
 
-      // if (match) {
-      //   let sesionExist: Sesion;
-
-      //   if (type.name === this.types.SUPERADMIN) {
-      //     sesionExist = await this.sesionRepository.findOne({
-      //       where: { superadmin: user },
-      //     });
-      //   }
-      //   if (type.name === this.types.ADMIN) {
-      //     sesionExist = await this.sesionRepository.findOne({
-      //       where: { admin: user },
-      //     });
-      //   }
-      //   if (type.name === this.types.USER) {
-      //     sesionExist = await this.sesionRepository.findOne({
-      //       where: { user },
-      //     });
-      //   }
-      //   if (sesionExist) {
-      //     await this.sesionRepository.remove(sesionExist);
-      //   }
-
-      //   let sesion: Sesion;
-      //   let assets: Asset[];
-
-      //   if (type.name === this.types.ADMIN) {
-      //     assets = await this.assetRepository.find({
-      //       where: { admin: user },
-      //     })
-      //     sesion = this.sesionRepository.create({
-      //       admin: user,
-      //     });
-      //   }
-      //   if (type.name === this.types.SUPERADMIN) {
-
-      //     sesion = this.sesionRepository.create({
-      //       superadmin: user,
-      //     });
-      //   }
-      //   if (type.name === this.types.USER) {
-      //      assets = await this.assetRepository.find({
-      //       where: { user: user },
-      //     })
-      //     console.log('Creando');
-      //     sesion = this.sesionRepository.create({
-      //       user,
-      //     });
-      //   }
-      //   const loggedUser = await this.sesionRepository.save(sesion);
+        if (isAdmin) {
+          sesion = this.sesionRepository.create({
+            admin: user,
+            isFromCMS:false
+          });
+        }
+        if (isSuperAdmin) {
+          sesion = this.sesionRepository.create({
+            superadmin: user,
+            isFromCMS:false
+          });
+        }
+        if (isGuest) {
+          sesion = this.sesionRepository.create({
+            user,
+            isFromCMS:false
+          });
+        }
+        await this.sesionRepository.save(sesion);
         const payload = {
           usuario: {
             uuid: user.uuid,
             type: user.type.id,
           },
         };
-
         const token = await this.jwtService.sign(payload, process.env.SECRETA, {
-          expiresIn: 36000000,
-        });
-
-        //TYPE IMG 1
-        //TYPE IMG 360 2
-        //TYPE video 3
-        //TYPE video 360 4
-      
+          expiresIn: 36000000000,
+        });    
         response = {
           profile: {
             token,
             name: user.name,
             lastname: user.lastname,
+            thumbnail: user.thumbnail,
             email: user.email,
             avatar: user.avatar,
-            
             type: user.type.id,
           },
           status: 0,
         };
         return response;
-    // }
-    //    else {
-    //     response = { status: 2, msg: "pass doesn't match" };
-    //   }
-      // return response;
+    }
+       else {
+        response = { status: 2, msg: "pass doesn't match" };
+      }
+      return response;
     } catch (err) {
       console.log('SesionService - RequesLogin: ', err);
 
@@ -411,23 +262,33 @@ export class SesionService {
     reuestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
     try {
+      const {isFromCMS} = reuestSesionLogOutDTO
+      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO)
       let response = null;
-
-      const user = await this.userRepository.findOne({
-        where: { email: reuestSesionLogOutDTO.email },
-      });
-
-      if (user) {
-        const actualSesion = await this.sesionRepository.findOne({
-          where: { user: user },
-        });
-
-        await this.sesionRepository.remove(actualSesion);
-
-        response = { status: 0 };
-      } else {
-        response = { status: 1 };
+      let actualSesion:Sesion
+      if (!user) {
+          return { status:1, msg: 'user not found'}
       }
+      if (isSuperAdmin) {
+        actualSesion = await this.sesionRepository.findOne({
+          where: {superadmin: user,isFromCMS},
+        });
+      }
+      if (isAdmin) {
+        actualSesion = await this.sesionRepository.findOne({
+          where: { admin: user,isFromCMS},
+        });
+      }
+      if (isGuest) {
+        actualSesion = await this.sesionRepository.findOne({
+          where: {  user,isFromCMS },
+        });
+      }
+      if (!actualSesion) {
+        return { status:2, msg: 'sesion not found'}
+      }
+      await this.sesionRepository.remove(actualSesion);
+      response = { status: 0 };
 
       return response;
     } catch (err) {
@@ -444,7 +305,6 @@ export class SesionService {
   }
   async decifreToken(email: string): Promise<any> {
     try {
-      console.log({ email })
       const dataInvitation: Invitation =
         await this.invitationRepository.findOne({
           where: { email },
@@ -474,15 +334,53 @@ export class SesionService {
       );
     }
   }
+  async validateIfExistToken(token: string): Promise<any> {
+    try {
+      console.log("validateIfExistToken")
+      let jwtDecoded:{ tokenid:number}
+      try {
+        jwtDecoded = jwt.verify(token, process.env.TOKEN_SECRET);
+        const tokenExist = await this.tokenRepository.findOne(
+          jwtDecoded.tokenid,
+        );
+        if (tokenExist) {
+          return {status:0, msg:"Token valid"}
+        }
+        return {status:3, msg:"Token does not exist"}
+      } catch (error) {
+        return {status:1, msg:"Token invalid"}
+      }
+
+    } catch (err) {
+      console.log('SesionService - validateIfExistToken: ', err);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error decifring ',
+        },
+        500,
+      );
+    }
+  }
   async passwordRecovery(requestDTO: PasswordRecovery): Promise<any> {
     try {
-      let response = { status: 0 };
-      const jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
-      if (!jwtDecoded.token) {
-        response = { status: 10 };
+      console.log("passwordRecovery")
+      let response = { status: 0,msg:'ok' };
+      let jwtDecoded:{ tokenid:number}
+      try {
+        jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
+        
+      } catch (error) {
+        console.log({error})
+        return {status:5, msg:"Token invalid"}
+      }
+
+      if (!jwtDecoded.tokenid) {
+        response = { status: 10, msg:'token does not exist'};
       } else {
         const tokenExist = await this.tokenRepository.findOne(
-          jwtDecoded.token,
+          jwtDecoded.tokenid,
           {
             relations: ['type', 'user', 'admin'],
           },
@@ -510,7 +408,6 @@ export class SesionService {
               },
             );
           }
-          console.log({ userToUpdate });
           if (!userToUpdate) {
             return {
               status: 5,
@@ -530,7 +427,7 @@ export class SesionService {
           // Se elimina el token de la base de datos
           await this.tokenRepository.remove(tokenExist);
         } else {
-          response = { status: 10 };
+          response = { status: 10, msg:'token does not exist'};
         }
       }
 
@@ -550,71 +447,49 @@ export class SesionService {
 
   async requestPasswordReset(requestEmail: string): Promise<any> {
     try {
-
       let response = { status: 0 };
-      const user: User = await this.userRepository.findOne({
-        relations: ['type'],
-        where: { email: requestEmail },
-      });
-
-      const admin: Admin = await this.adminRepository.findOne({
-        relations: ['type'],
-        where: { email: requestEmail },
-      });
-
-      if (user || admin) {
-        const pettioner: User | Admin = user ? user : admin;
-        if (user && admin) {
-          return {
-            status: 5,
-            msg: 'No es posible',
-          };
-        }
-
+      const {isAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestEmail)
+      if (user) {        
         //Verificar si ya existe un token antes que este
-
-        const existToken = await this.tokenRepository.findOne({
-          relations: ['admin', 'user'],
-          where: {
-            user: user ? user : null,
-            admin: admin ? admin : null,
-          },
-        });
-
+        let existToken:Token
+          existToken = await this.tokenRepository.findOne({
+            relations: ['admin', 'user'],
+            where: {
+              user: isGuest?user:null,
+              admin:isAdmin? user:null
+            },
+          });
         if (existToken) {
-          console.log({ existToken });
           await this.tokenRepository.remove(existToken);
         }
-
         const newToken = this.tokenRepository.create({
           email: requestEmail,
-          type: pettioner.type,
-          user: user ? user : null,
-          admin: admin ? admin : null,
+          type: user.type,
+          user: isGuest ? user : null,
+          admin: isAdmin ? user : null,
           superAdmin: null,
         });
 
         const registerToken = await this.tokenRepository.save(newToken);
+
         const token = await jwt.sign(
-          { token: registerToken.id },
+          { tokenid: registerToken.id },
           process.env.TOKEN_SECRET,
           {
             expiresIn: 7200000,
           },
         );
-
+        console.log({registerToken,token})
         // Se envia correo
-        await this.mailerService.sendMail({
-            to: requestEmail,
-            subject: "Recuperacion de contraseña.",
-            template: __dirname + '/recovery.hbs',
-            context: {
-                url: token,
-                email: requestEmail,
-            },
-        });
+        // await this.mailerService.sendMail({
+        //     to: requestEmail,
+        //     subject: "Recuperacion de contraseña.",
+        //     template: __dirname + '/recovery.hbs',
+        //     context: {
+        //         token,
+        //     },
+        // });
         return {
-          token,
           status: 0,
         };
       } else {
@@ -628,6 +503,44 @@ export class SesionService {
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           error: 'Error requesting password reset',
+        },
+        500,
+      );
+    }
+  }
+
+
+  async getWhoIsRequesting(email:string): Promise<{isAdmin:boolean,isSuperAdmin:boolean,isGuest:boolean,user:SuperAdmin|Admin|User}> {
+    try {
+      let user: Admin | SuperAdmin | User;
+      user = await this.superAdminRepository.findOne({
+        relations: ['type'],
+        where: { email, isActive: true },
+      });
+
+      if (!user) {
+        user = await this.adminRepository.findOne({
+          relations: ['type'],
+          where: { email, isActive: true },
+        });
+      }
+
+      if (!user) {
+        user = await this.userRepository.findOne({
+          relations: ['type'],
+          where: { email, isActive: true },
+        });
+      }
+      const isSuperAdmin = user.type.id === this.typesNumbers.SUPERADMIN;
+      const isAdmin = user.type.id === this.typesNumbers.ADMIN;
+      const isGuest = user.type.id === this.typesNumbers.USER;
+      return {isAdmin,isSuperAdmin,isGuest,user}
+    } catch (err) {
+      console.log('SesionService - getWhoIsRequesting: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error Changing Name  user',
         },
         500,
       );
@@ -652,17 +565,13 @@ export class SesionService {
           error: 'No hay una invitación para este usuario',
         };
       }
-
       //Verificar que el superadministrador exista
-
-
       const existUser = await this.adminRepository.findOne({
         where: {
           email: createAdminDTO.email,
           isDeleted: false,
         },
       });
-
       if (existUser) {
         await this.invitationRepository.remove(invitation)
         return {
@@ -671,9 +580,6 @@ export class SesionService {
           existUser,
         };
       }
-
-
-
       const adminRole = await this.roleRepository.findOne({
         where: {
           name: this.roles.ADMIN,
@@ -728,9 +634,8 @@ export class SesionService {
     }
   }
 
-  async create(createUserDTO: CreateUserDTO): Promise<any> {
+  async createGuest(createUserDTO: CreateUserDTO): Promise<any> {
     try {
-      console.log("Creando nuevo usuario")
       const invitation: Invitation = await this.invitationRepository.findOne({
         relations: ['admin', 'superAdmin'],
         where: {
@@ -744,7 +649,6 @@ export class SesionService {
           error: 'No existe una invitación',
         };
       }
-
       const existUser = await this.userRepository.findOne({
         where: {
           email: createUserDTO.email,
@@ -757,25 +661,17 @@ export class SesionService {
           error: 'Este email ya existe',
         };
       }
-
       const userRole = await this.roleRepository.findOne({
         where: {
           name: this.roles.USER,
         },
       });
-
       const userType = await this.roleRepository.findOne({
         where: {
           name: this.types.USER
         },
       });
-
-      
-
-
       const userPassword = await bcrypt.hash(createUserDTO.password, 12);
-
-
       const user = this.userRepository.create({
         admin: invitation.admin,
         superadmin: invitation.superAdmin,
@@ -803,17 +699,7 @@ export class SesionService {
         finishedAt: new Date(invitation.finishedAt),
       });
       await this.suscriptionRepository.save(userSuscription);
-
-
       }
-
-      console.log({ user })
-
-
-
-
-
-      
       await this.invitationRepository.remove(invitation)
       return { status: 0 };
     } catch (err) {

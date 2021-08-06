@@ -35,6 +35,12 @@ export class SuperAdmin {
   })
   avatar: string;
 
+  @Column({
+    type: 'text',
+    default:
+      'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+  })
+  thumbnail: string;
   @Column({ length: 250 })
   email: string;
 

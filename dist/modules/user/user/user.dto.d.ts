@@ -60,14 +60,26 @@ export declare class FindUserChildrens {
     type: number;
 }
 export declare class SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, type }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type }: {
         adminUuid: any;
         superAdminUuid: any;
+        userUuid: any;
         type: any;
     });
     adminUuid: string;
+    userUuid: string;
     superAdminUuid: string;
     type: number;
+}
+export declare class ChangeName extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
+        name: any;
+    });
+    name: string;
 }
 export declare class ConfirmUserPassword {
     constructor({ email, password }: {
@@ -76,6 +88,16 @@ export declare class ConfirmUserPassword {
     });
     email: string;
     password: string;
+}
+export declare class SetSesionAppId extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, playerId }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
+        playerId: any;
+    });
+    playerId: string;
 }
 export declare class CreateSuperAdminDTO {
     constructor({ name, lastname, email, password, passwordmaster }: {
@@ -91,43 +113,61 @@ export declare class CreateSuperAdminDTO {
     email: string;
     password: string;
 }
-export declare class UpdateUserAdminDTO {
-    constructor({ superAdminUuid, adminUuid, name, lastname, avatar, startedAt, finishedAt, cost, business, }: {
-        superAdminUuid: any;
+export declare class UpdateUserAdminDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, business, adminUuidToUpdate }: {
         adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
         name: any;
         lastname: any;
-        avatar: any;
         startedAt: any;
         finishedAt: any;
         cost: any;
         business: any;
+        adminUuidToUpdate: any;
     });
-    superAdminUuid: string;
-    adminUuid: string;
     name: string | null;
     lastname: string | null;
-    avatar: string | null;
+    business: string | null;
     startedAt: string | null;
     finishedAt: string | null;
     cost: number;
-    business: string | null;
+    adminUuidToUpdate: string;
 }
-export declare class UpdateUserDTO {
-    constructor({ userUuid, adminUuid, name, lastname, avatar }: {
-        userUuid: any;
+export declare class UpdateGuestDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, userUuidToUpdate }: {
         adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
         name: any;
         lastname: any;
-        avatar: any;
+        startedAt: any;
+        finishedAt: any;
+        cost: any;
+        userUuidToUpdate: any;
     });
-    userUuid: string;
-    adminUuid: string;
-    superAdminUuid: string;
+    name: string;
+    lastname: string;
+    startedAt: string | null;
+    finishedAt: string;
+    cost: number;
+    userUuidToUpdate: string;
+}
+export declare class UpdateUserDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
+        name: any;
+        avatar: any;
+        thumbnail: any;
+    });
     name: string;
     avatar: string;
     thumbnail: string;
-    lastname: string;
 }
 export declare class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }: {
@@ -138,6 +178,30 @@ export declare class DeleteAdminUserDTO {
     superAdminUuid: number;
     adminUuidToStop: number;
     status: boolean;
+}
+export declare class GetUserDetailDTO {
+    constructor({ adminUuid, superAdminUuid, type, userUuidToGet }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+        userUuidToGet: any;
+    });
+    superAdminUuid: number;
+    adminUuid: number;
+    userUuidToGet: number;
+    type: number;
+}
+export declare class GetAdminDetailDTO {
+    constructor({ adminUuid, superAdminUuid, type, adminUuidToGet }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+        adminUuidToGet: any;
+    });
+    superAdminUuid: number;
+    adminUuid: number;
+    adminUuidToGet: number;
+    type: number;
 }
 export declare class DeleteUserDTO {
     constructor({ adminUuid, superAdminUuid, type, userUuidToChange, status }: {

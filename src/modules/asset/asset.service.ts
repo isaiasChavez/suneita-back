@@ -2,17 +2,17 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from '../user/user/admin.entity';
-import { CreateAssetDTO, DeleteAssetDto, GetAssetDTO } from './asset.dto';
+import { CreateAssetDTO, DeleteAssetDto } from './asset.dto';
 import { Asset } from './asset.entity';
-import { ADMIN, SUPER_ADMIN, USER_NORMAL } from 'src/types';
-import { SuperAdmin } from '../user/user/superadmin.entity';
 import { User } from '../user/user/user.entity';
 import { TypeAsset } from './type-asset/type-asset.entity';
-
+import { UserService } from '../user/user/user.service';
+import { SimpleRequest } from '../user/user/user.dto';
 @Injectable()
 export class AssetService {
 
     constructor (
+        private readonly userService: UserService,
         @InjectRepository(Admin) private adminRepository: Repository<Admin>,
         @InjectRepository(User) private userRepository: Repository<User>,
         @InjectRepository(Asset) private assetRepository: Repository<Asset>,
@@ -27,60 +27,33 @@ export class AssetService {
     }
 
 
-    async getAllAssetsByUser(getAssetDTO: GetAssetDTO): Promise<any> {
+    async getAllAssetsByUser(getAssetDTO: SimpleRequest): Promise<any> {
         try {
 
-            if (!getAssetDTO.adminUuid && !getAssetDTO.userUuid) {
-                return {
-                    status: 5,
-                    error: "No permitido"
-                }
-            }
-
-            let user: User | Admin
-            if (getAssetDTO.type === ADMIN) {
-                user = await this.adminRepository.findOne({
-                    relations: ["type"],
-                    where: {
-                        uuid: getAssetDTO.adminUuid
-                    }
-                })
-            }
-            if (getAssetDTO.type === USER_NORMAL) {
-                user = await this.userRepository.findOne({
-                    relations: ["type"],
-                    where: {
-                        uuid: getAssetDTO.userUuid,
-                        isActive: true
-                    }
-                })
-            }
-
+             const {isAdmin,isGuest,user}=await this.userService.getWhoIsRequesting(getAssetDTO)
             if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el administrador"
+                    error: "No existe el usuario"
                 }
             }
             let assets: Asset[]
-            if (user.type.id === USER_NORMAL) {
+            if (isGuest) {
                 assets = await this.assetRepository.find({
-                    select: ["url"],
+                    select: ["url","thumbnail"],
                     relations: ["typeAsset"],
                     where: {
                         user
                     }
                 })
             }
-
-
-
-            if (user.type.id === ADMIN) {
+            if (isAdmin) {
                 assets = await this.assetRepository.find({
-                    select: ["url"],
+                    select: ["url","thumbnail"],
                     relations: ["typeAsset"],
                     where: {
-                        admin: user
+                        admin: user,
+                        isDeleted:false
                     }
                 })
             }
@@ -88,12 +61,7 @@ export class AssetService {
             const images360:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.IMAGE360)
             const videos:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.VIDEO)
             const videos360:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.VIDEO360)
-            
             console.log({images,videos360,videos,images360})
-
-
-
-
             return {
                 assets:{images,videos360,videos,images360},
                 status: 0
@@ -113,40 +81,13 @@ export class AssetService {
 
     async create(createAssetDTO: CreateAssetDTO): Promise<any> {
         try {
-
-            if (!createAssetDTO.adminUuid && !createAssetDTO.userUuid) {
-                return {
-                    status: 5,
-                    error: "No existe usuario"
-                }
-            }
-
-            let user: User | Admin
-            if (createAssetDTO.type === ADMIN) {
-                user = await this.adminRepository.findOne({
-                    relations: ["assets"],
-                    where: {
-                        uuid: createAssetDTO.adminUuid
-                    }
-                })
-            }
-            if (createAssetDTO.type === USER_NORMAL) {
-                user = await this.userRepository.findOne({
-                    relations: ["assets"],
-                    where: {
-                        uuid: createAssetDTO.userUuid,
-                        isActive: true
-                    }
-                })
-            }
-
+            const {isAdmin,isGuest,user}=await this.userService.getWhoIsRequesting(createAssetDTO)
             if (!user) {
                 return {
                     status: 1,
                     error: "No existe el usuario"
                 }
             }
-
             const typeAsset = await this.typeAssetRepository.findOne(createAssetDTO.typeAsset)
             if (!typeAsset) {
                 throw new HttpException(
@@ -158,7 +99,7 @@ export class AssetService {
                 );
             }
             let asset: Asset
-            if (createAssetDTO.type === ADMIN) {
+            if (isAdmin) {
                 asset = this.assetRepository.create({
                     user: null,
                     admin: user,
@@ -166,7 +107,7 @@ export class AssetService {
                     typeAsset
                 })
             }
-            if (createAssetDTO.type === USER_NORMAL) {
+            if (isGuest) {
                 asset = this.assetRepository.create({
                     user,
                     admin: null,
@@ -178,7 +119,9 @@ export class AssetService {
             await this.assetRepository.save(asset)
             return {
                 asset: {
-                    url: asset.url
+                    url: asset.url,
+                    thumbnail: asset.thumbnail,
+                    typeAsset
                 },
                 status: 0
             }
@@ -195,30 +138,36 @@ export class AssetService {
     }
     async delete(deleteAssetDto: DeleteAssetDto): Promise<any> {
         try {
-            const admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: deleteAssetDto.adminUuid
-                }
-            })
-            if (!admin) {
+
+            const {isAdmin,isGuest,user}=await this.userService.getWhoIsRequesting(deleteAssetDto)            
+            if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el administrador"
+                    error: "No existe el usuario"
                 }
             }
-            const asset = await this.assetRepository.findOne({
-                relations: ['admin'],
-                where: {
-                    uuid: deleteAssetDto.uuid
-                },
-            })
+            let asset:Asset
+            if (isAdmin) {
+                asset = await this.assetRepository.findOne({
+                    relations: ['admin'],
+                    where: {
+                        uuid: deleteAssetDto.uuid,
+                        admin:user
+                    },
+                })
+            }
+            if (isGuest) {
+                asset = await this.assetRepository.findOne({
+                    relations: ['admin'],
+                    where: {
+                        uuid: deleteAssetDto.uuid,
+                        user
+                    },
+                })
+            }
             if (!asset) {
                 return { status: 2, msg: 'asset not found' };
             }
-            if (asset.admin.id !== admin.id) {
-                return { status: 2, msg: 'Unauthorized' };
-            }
-
             await this.assetRepository.remove(asset)
             return
         } catch (err) {

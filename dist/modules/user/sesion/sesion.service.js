@@ -29,10 +29,12 @@ const role_entity_1 = require("../role/role.entity");
 const suscription_entity_1 = require("../../suscription/suscription.entity");
 const asset_entity_1 = require("../../asset/asset.entity");
 const mailer_1 = require("@nestjs-modules/mailer");
+const user_service_1 = require("../user/user.service");
 const jwt = require('jsonwebtoken');
 let SesionService = class SesionService {
-    constructor(mailerService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+    constructor(mailerService, userService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
         this.mailerService = mailerService;
+        this.userService = userService;
         this.sesionRepository = sesionRepository;
         this.typeRepository = typeRepository;
         this.userRepository = userRepository;
@@ -53,168 +55,65 @@ let SesionService = class SesionService {
             ADMIN: 'ADMIN',
             USER: 'USER',
         };
+        this.typesNumbers = {
+            SUPERADMIN: 1,
+            ADMIN: 2,
+            USER: 3,
+        };
         console.log({ jwt });
         this.jwtService = jwt;
     }
     async RequesLogin(requestDTO) {
         try {
-            console.log('Entra');
             let response = null;
-            let user;
-            let type;
-            user = await this.superAdminRepository.findOne({
-                relations: ['type', 'admins'],
-                where: { email: requestDTO.email, isActive: true },
-            });
-            if (!user) {
-                user = await this.adminRepository.findOne({
-                    relations: ['type', 'users'],
-                    where: { email: requestDTO.email, isActive: true },
-                });
-            }
-            if (!user) {
-                user = await this.userRepository.findOne({
-                    relations: ['type'],
-                    where: { email: requestDTO.email, isActive: true },
-                });
-            }
+            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO.email);
             if (!user) {
                 return {
                     status: 1,
                     msg: `email does't exist`,
                 };
             }
-            else {
-                console.log({ user });
-                type = user.type;
-            }
             const match = await bcrypt.compare(requestDTO.password, user.password);
             if (match) {
                 let sesionExist;
-                if (type.name === this.types.SUPERADMIN) {
+                if (isSuperAdmin) {
                     sesionExist = await this.sesionRepository.findOne({
                         where: { superadmin: user },
                     });
                 }
-                if (type.name === this.types.ADMIN) {
+                if (isAdmin) {
                     sesionExist = await this.sesionRepository.findOne({
                         where: { admin: user },
                     });
                 }
-                if (type.name === this.types.USER) {
+                if (isGuest) {
                     sesionExist = await this.sesionRepository.findOne({
                         where: { user },
                     });
                 }
-                console.log({ sesionExist });
                 if (sesionExist) {
-                    console.log('Existe una sesion');
                     await this.sesionRepository.remove(sesionExist);
                 }
                 let sesion;
-                if (type.name === this.types.ADMIN) {
+                if (isAdmin) {
                     sesion = this.sesionRepository.create({
                         admin: user,
+                        isFromCMS: true
                     });
                 }
-                if (type.name === this.types.SUPERADMIN) {
+                if (isSuperAdmin) {
                     sesion = this.sesionRepository.create({
                         superadmin: user,
+                        isFromCMS: true
                     });
                 }
-                if (type.name === this.types.USER) {
+                if (isGuest) {
                     sesion = this.sesionRepository.create({
                         user,
+                        isFromCMS: true
                     });
-                }
-                let dataChildrens = {
-                    admins: [], users: [],
-                };
-                if (type.name === this.types.SUPERADMIN) {
-                    dataChildrens.admins = await this.adminRepository.find({
-                        select: ['name', 'lastname', 'avatar', 'uuid', 'isActive', 'email'],
-                        relations: ['suscriptions'],
-                        where: {
-                            superadmin: user,
-                        },
-                    });
-                    dataChildrens.users = await this.userRepository.find({
-                        select: ['name', 'lastname', 'avatar', 'uuid', 'isActive'],
-                        relations: ['suscriptions'],
-                        where: {
-                            superadmin: user,
-                        },
-                    });
-                }
-                if (type.name === this.types.ADMIN) {
-                    dataChildrens.users = await this.userRepository.find({
-                        select: ['name', 'lastname', 'email', 'avatar', 'uuid', 'isActive'],
-                        relations: ['suscriptions'],
-                        where: {
-                            admin: user,
-                        },
-                    });
-                }
-                const childrens = {
-                    admins: [], users: []
-                };
-                const filterUsers = (child) => {
-                    const dataToSend = {
-                        avatar: child.avatar,
-                        email: child.email,
-                        isActive: child.isActive,
-                        lastname: child.lastname,
-                        uuid: child.uuid,
-                        name: child.name,
-                        suscriptions: null,
-                        lastSuscription: null
-                    };
-                    dataToSend.suscriptions = child.suscriptions.map((suscription) => {
-                        return {
-                            cost: suscription.cost,
-                            createdAt: suscription.createdAt,
-                            finishedAt: suscription.finishedAt,
-                            isActive: suscription.isActive,
-                            isDeleted: suscription.isDeleted,
-                            startedAt: suscription.startedAt,
-                        };
-                    });
-                    dataToSend.lastSuscription = dataToSend.suscriptions[0] ? dataToSend.suscriptions[0] : null;
-                    return dataToSend;
-                };
-                if (type.name === this.types.SUPERADMIN) {
-                    childrens.admins = dataChildrens.admins.map((child) => {
-                        const dataToSend = {
-                            avatar: child.avatar,
-                            email: child.email,
-                            isActive: child.isActive,
-                            uuid: child.uuid,
-                            lastname: child.lastname,
-                            name: child.name,
-                            suscriptions: null,
-                            lastSuscription: null
-                        };
-                        dataToSend.suscriptions = child.suscriptions.map((suscription) => {
-                            return {
-                                cost: suscription.cost,
-                                invitations: suscription.invitations,
-                                createdAt: suscription.createdAt,
-                                finishedAt: suscription.finishedAt,
-                                isActive: suscription.isActive,
-                                isDeleted: suscription.isDeleted,
-                                startedAt: suscription.startedAt,
-                            };
-                        });
-                        dataToSend.lastSuscription = dataToSend.suscriptions[0];
-                        return dataToSend;
-                    });
-                    childrens.users = dataChildrens.users.map(filterUsers);
-                }
-                else {
-                    childrens.users = dataChildrens.users.map(filterUsers);
                 }
                 const loggedUser = await this.sesionRepository.save(sesion);
-                console.log({ loggedUser });
                 const payload = {
                     usuario: {
                         uuid: user.uuid,
@@ -230,9 +129,9 @@ let SesionService = class SesionService {
                         token,
                         name: user.name,
                         lastname: user.lastname,
+                        thumbnail: user.thumbnail,
                         email: user.email,
-                        childrens,
-                        type: type.id,
+                        type: user.type.id,
                     },
                     status: 0,
                 };
@@ -253,40 +152,81 @@ let SesionService = class SesionService {
     }
     async RequesLoginFromApp(requestDTO) {
         try {
-            console.log({ requestDTO });
-            let response = null;
-            let user;
-            let type;
-            user = await this.adminRepository.findOne({
-                relations: ['type', 'users'],
-                where: { email: requestDTO.email, isActive: true },
-            });
+            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO.email);
             if (!user) {
-                user = await this.userRepository.findOne({
-                    relations: ['type'],
-                    where: { email: requestDTO.email, isActive: true },
-                });
+                return {
+                    status: 1,
+                    msg: `email does't exist`,
+                };
             }
-            const payload = {
-                usuario: {
-                    uuid: user.uuid,
-                    type: user.type.id,
-                },
-            };
-            const token = await this.jwtService.sign(payload, process.env.SECRETA, {
-                expiresIn: 36000000,
-            });
-            response = {
-                profile: {
-                    token,
-                    name: user.name,
-                    lastname: user.lastname,
-                    email: user.email,
-                    avatar: user.avatar,
-                    type: user.type.id,
-                },
-                status: 0,
-            };
+            const match = await bcrypt.compare(requestDTO.password, user.password);
+            let response;
+            if (match) {
+                let sesionExist;
+                if (isSuperAdmin) {
+                    sesionExist = await this.sesionRepository.findOne({
+                        where: { superadmin: user },
+                    });
+                }
+                if (isAdmin) {
+                    sesionExist = await this.sesionRepository.findOne({
+                        where: { admin: user },
+                    });
+                }
+                if (isGuest) {
+                    sesionExist = await this.sesionRepository.findOne({
+                        where: { user },
+                    });
+                }
+                if (sesionExist) {
+                    await this.sesionRepository.remove(sesionExist);
+                }
+                let sesion;
+                if (isAdmin) {
+                    sesion = this.sesionRepository.create({
+                        admin: user,
+                        isFromCMS: false
+                    });
+                }
+                if (isSuperAdmin) {
+                    sesion = this.sesionRepository.create({
+                        superadmin: user,
+                        isFromCMS: false
+                    });
+                }
+                if (isGuest) {
+                    sesion = this.sesionRepository.create({
+                        user,
+                        isFromCMS: false
+                    });
+                }
+                await this.sesionRepository.save(sesion);
+                const payload = {
+                    usuario: {
+                        uuid: user.uuid,
+                        type: user.type.id,
+                    },
+                };
+                const token = await this.jwtService.sign(payload, process.env.SECRETA, {
+                    expiresIn: 36000000000,
+                });
+                response = {
+                    profile: {
+                        token,
+                        name: user.name,
+                        lastname: user.lastname,
+                        thumbnail: user.thumbnail,
+                        email: user.email,
+                        avatar: user.avatar,
+                        type: user.type.id,
+                    },
+                    status: 0,
+                };
+                return response;
+            }
+            else {
+                response = { status: 2, msg: "pass doesn't match" };
+            }
             return response;
         }
         catch (err) {
@@ -299,20 +239,33 @@ let SesionService = class SesionService {
     }
     async RequesLogout(reuestSesionLogOutDTO) {
         try {
+            const { isFromCMS } = reuestSesionLogOutDTO;
+            const { isAdmin, isSuperAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO);
             let response = null;
-            const user = await this.userRepository.findOne({
-                where: { email: reuestSesionLogOutDTO.email },
-            });
-            if (user) {
-                const actualSesion = await this.sesionRepository.findOne({
-                    where: { user: user },
+            let actualSesion;
+            if (!user) {
+                return { status: 1, msg: 'user not found' };
+            }
+            if (isSuperAdmin) {
+                actualSesion = await this.sesionRepository.findOne({
+                    where: { superadmin: user, isFromCMS },
                 });
-                await this.sesionRepository.remove(actualSesion);
-                response = { status: 0 };
             }
-            else {
-                response = { status: 1 };
+            if (isAdmin) {
+                actualSesion = await this.sesionRepository.findOne({
+                    where: { admin: user, isFromCMS },
+                });
             }
+            if (isGuest) {
+                actualSesion = await this.sesionRepository.findOne({
+                    where: { user, isFromCMS },
+                });
+            }
+            if (!actualSesion) {
+                return { status: 2, msg: 'sesion not found' };
+            }
+            await this.sesionRepository.remove(actualSesion);
+            response = { status: 0 };
             return response;
         }
         catch (err) {
@@ -325,7 +278,6 @@ let SesionService = class SesionService {
     }
     async decifreToken(email) {
         try {
-            console.log({ email });
             const dataInvitation = await this.invitationRepository.findOne({
                 where: { email },
                 relations: ['type'],
@@ -350,15 +302,47 @@ let SesionService = class SesionService {
             }, 500);
         }
     }
+    async validateIfExistToken(token) {
+        try {
+            console.log("validateIfExistToken");
+            let jwtDecoded;
+            try {
+                jwtDecoded = jwt.verify(token, process.env.TOKEN_SECRET);
+                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.tokenid);
+                if (tokenExist) {
+                    return { status: 0, msg: "Token valid" };
+                }
+                return { status: 3, msg: "Token does not exist" };
+            }
+            catch (error) {
+                return { status: 1, msg: "Token invalid" };
+            }
+        }
+        catch (err) {
+            console.log('SesionService - validateIfExistToken: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error decifring ',
+            }, 500);
+        }
+    }
     async passwordRecovery(requestDTO) {
         try {
-            let response = { status: 0 };
-            const jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
-            if (!jwtDecoded.token) {
-                response = { status: 10 };
+            console.log("passwordRecovery");
+            let response = { status: 0, msg: 'ok' };
+            let jwtDecoded;
+            try {
+                jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
+            }
+            catch (error) {
+                console.log({ error });
+                return { status: 5, msg: "Token invalid" };
+            }
+            if (!jwtDecoded.tokenid) {
+                response = { status: 10, msg: 'token does not exist' };
             }
             else {
-                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.token, {
+                const tokenExist = await this.tokenRepository.findOne(jwtDecoded.tokenid, {
                     relations: ['type', 'user', 'admin'],
                 });
                 if (tokenExist) {
@@ -378,7 +362,6 @@ let SesionService = class SesionService {
                             },
                         });
                     }
-                    console.log({ userToUpdate });
                     if (!userToUpdate) {
                         return {
                             status: 5,
@@ -395,7 +378,7 @@ let SesionService = class SesionService {
                     await this.tokenRepository.remove(tokenExist);
                 }
                 else {
-                    response = { status: 10 };
+                    response = { status: 10, msg: 'token does not exist' };
                 }
             }
             return response;
@@ -411,55 +394,32 @@ let SesionService = class SesionService {
     async requestPasswordReset(requestEmail) {
         try {
             let response = { status: 0 };
-            const user = await this.userRepository.findOne({
-                relations: ['type'],
-                where: { email: requestEmail },
-            });
-            const admin = await this.adminRepository.findOne({
-                relations: ['type'],
-                where: { email: requestEmail },
-            });
-            if (user || admin) {
-                const pettioner = user ? user : admin;
-                if (user && admin) {
-                    return {
-                        status: 5,
-                        msg: 'No es posible',
-                    };
-                }
-                const existToken = await this.tokenRepository.findOne({
+            const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestEmail);
+            if (user) {
+                let existToken;
+                existToken = await this.tokenRepository.findOne({
                     relations: ['admin', 'user'],
                     where: {
-                        user: user ? user : null,
-                        admin: admin ? admin : null,
+                        user: isGuest ? user : null,
+                        admin: isAdmin ? user : null
                     },
                 });
                 if (existToken) {
-                    console.log({ existToken });
                     await this.tokenRepository.remove(existToken);
                 }
                 const newToken = this.tokenRepository.create({
                     email: requestEmail,
-                    type: pettioner.type,
-                    user: user ? user : null,
-                    admin: admin ? admin : null,
+                    type: user.type,
+                    user: isGuest ? user : null,
+                    admin: isAdmin ? user : null,
                     superAdmin: null,
                 });
                 const registerToken = await this.tokenRepository.save(newToken);
-                const token = await jwt.sign({ token: registerToken.id }, process.env.TOKEN_SECRET, {
+                const token = await jwt.sign({ tokenid: registerToken.id }, process.env.TOKEN_SECRET, {
                     expiresIn: 7200000,
                 });
-                await this.mailerService.sendMail({
-                    to: requestEmail,
-                    subject: "Recuperacion de contraseña.",
-                    template: __dirname + '/recovery.hbs',
-                    context: {
-                        url: token,
-                        email: requestEmail,
-                    },
-                });
+                console.log({ registerToken, token });
                 return {
-                    token,
                     status: 0,
                 };
             }
@@ -473,6 +433,38 @@ let SesionService = class SesionService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error requesting password reset',
+            }, 500);
+        }
+    }
+    async getWhoIsRequesting(email) {
+        try {
+            let user;
+            user = await this.superAdminRepository.findOne({
+                relations: ['type'],
+                where: { email, isActive: true },
+            });
+            if (!user) {
+                user = await this.adminRepository.findOne({
+                    relations: ['type'],
+                    where: { email, isActive: true },
+                });
+            }
+            if (!user) {
+                user = await this.userRepository.findOne({
+                    relations: ['type'],
+                    where: { email, isActive: true },
+                });
+            }
+            const isSuperAdmin = user.type.id === this.typesNumbers.SUPERADMIN;
+            const isAdmin = user.type.id === this.typesNumbers.ADMIN;
+            const isGuest = user.type.id === this.typesNumbers.USER;
+            return { isAdmin, isSuperAdmin, isGuest, user };
+        }
+        catch (err) {
+            console.log('SesionService - getWhoIsRequesting: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error Changing Name  user',
             }, 500);
         }
     }
@@ -550,9 +542,8 @@ let SesionService = class SesionService {
             }, 500);
         }
     }
-    async create(createUserDTO) {
+    async createGuest(createUserDTO) {
         try {
-            console.log("Creando nuevo usuario");
             const invitation = await this.invitationRepository.findOne({
                 relations: ['admin', 'superAdmin'],
                 where: {
@@ -614,7 +605,6 @@ let SesionService = class SesionService {
                 });
                 await this.suscriptionRepository.save(userSuscription);
             }
-            console.log({ user });
             await this.invitationRepository.remove(invitation);
             return { status: 0 };
         }
@@ -629,17 +619,18 @@ let SesionService = class SesionService {
 };
 SesionService = __decorate([
     common_1.Injectable(),
-    __param(1, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
-    __param(2, typeorm_1.InjectRepository(type_entity_1.Type)),
-    __param(3, typeorm_1.InjectRepository(user_entity_1.User)),
-    __param(4, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
-    __param(5, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(6, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(7, typeorm_1.InjectRepository(asset_entity_1.Asset)),
-    __param(8, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
-    __param(9, typeorm_1.InjectRepository(token_entity_1.Token)),
-    __param(10, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __param(2, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
+    __param(3, typeorm_1.InjectRepository(type_entity_1.Type)),
+    __param(4, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(5, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(6, typeorm_1.InjectRepository(admin_entity_1.Admin)),
+    __param(7, typeorm_1.InjectRepository(role_entity_1.Role)),
+    __param(8, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(9, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
+    __param(10, typeorm_1.InjectRepository(token_entity_1.Token)),
+    __param(11, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
     __metadata("design:paramtypes", [mailer_1.MailerService,
+        user_service_1.UserService,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

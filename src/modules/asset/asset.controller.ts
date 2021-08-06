@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { validateOrReject } from 'class-validator';
-import { CreateAssetDTO, DeleteAssetDto, GetAssetDTO } from './asset.dto';
+import { SimpleRequest } from '../user/user/user.dto';
+import { CreateAssetDTO, DeleteAssetDto } from './asset.dto';
 import { AssetService } from './asset.service';
 
 @Controller('asset')
@@ -10,7 +11,7 @@ export class AssetController {
     }
 
     @Get()
-    async getAllAssetsByUser(@Body()getAssetDTO: GetAssetDTO): Promise<any> {
+    async getAllAssetsByUser(@Body()getAssetDTO: SimpleRequest): Promise<any> {
         try {
             return await this.assetService.getAllAssetsByUser(getAssetDTO);
         } catch (error) {

@@ -11,7 +11,6 @@ import { User } from './user.entity';
 import { Token } from '../token/token.entity';
 import { Type } from '../type/type.entity';
 import { Role } from '../role/role.entity';
-// import { Target } from "../../trivia/target/target.entity";
 import { Sesion } from '../sesion/sesion.entity';
 import {
   InviteUserDTO,
@@ -24,6 +23,11 @@ import {
   DeleteUserDTO,
   UserDTO,
   SimpleRequest,
+  GetAdminDetailDTO,
+  GetUserDetailDTO,
+  ChangeName,
+  UpdateGuestDTO,
+  SetSesionAppId,
 } from './user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 const jwt = require('jsonwebtoken');
@@ -40,25 +44,17 @@ import {
 import { SuperAdmin } from './superadmin.entity';
 import { Admin } from './admin.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
-// import { SuscriptionService } from "src/modules/suscription/suscription.service";
 import { UpdateSuscriptionDTO } from 'src/modules/suscription/suscription.dto';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
-
-type UserRes = {
-  name: string;
-  avatar: string;
-  lastname: string;
-  email: string;
-  uuid: string;
-  suscription;
-};
+import { SuscriptionService } from 'src/modules/suscription/suscription.service';
+import { error } from 'console';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly mailerService: MailerService,
-    // private readonly suscriptionService: SuscriptionService,
+    private readonly suscriptionService: SuscriptionService,
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Suscription)
     private suscripctionRepository: Repository<Suscription>,
@@ -97,30 +93,28 @@ export class UserService {
   typesNumbers: TypesNumbers;
   async invite(request: InviteUserDTO): Promise<any> {
     try {
-      console.log({request})
       let status = 0;
       let invitationToSign = '';
       let jwtToken = null;
       // Se verifica si el usuario ya cuenta con una invitacion enviada
-      const userExist: User = await this.userRepository.findOne({
-        where: { email: request.email },
+      const userExistInDB: User = await this.userRepository.findOne({
+        where: {
+          email: request.email,
+          isDeleted: false,
+        },
       });
-
-      let adminExist: Admin;
-
-      if (!userExist) {
-        adminExist = await this.adminRepository.findOne({
-          where: { email: request.email },
+      let adminExistInDB: Admin;
+      if (!userExistInDB) {
+        adminExistInDB = await this.adminRepository.findOne({
+          where: { email: request.email, isDeleted: false },
         });
       }
-      console.log({adminExist})
-
-      if (!userExist && !adminExist) {
+      if (!userExistInDB && !adminExistInDB) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
         const invitation = await this.invitationRepository.findOne({
           where: { email: request.email },
         });
-        console.log({invitation})
+        console.log({ invitation });
         if (!invitation) {
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
           let typeUserRequesting: number;
@@ -206,32 +200,26 @@ export class UserService {
         );
         // Se envia correo
 
-        console.log({jwtToken})
+        console.log({ jwtToken });
 
-        const algo =await this.mailerService.sendMail({
-          to: request.email,
-          subject: 'Has sido invitado a Ocupath.',
-          template: __dirname + '/invitacion.hbs',
-          context: {
-            url: jwtToken,
-            type: request.type,
-            email: request.email,
-          },
-        });
-        console.log({algo})
+        // await this.mailerService.sendMail({
+        //   to: request.email,
+        //   subject: 'Has sido invitado a Ocupath.',
+        //   template: __dirname + '/invitacion.hbs',
+        //   context: {
+        //     url: jwtToken,
+        //     type: request.type,
+        //     email: request.email,
+        //   },
+        // });
       } else {
-        if (userExist.isActive || adminExist.isActive) {
+        if (
+          (userExistInDB && userExistInDB.isActive) ||
+          (adminExistInDB && adminExistInDB.isActive)
+        ) {
           status = 9;
         } else {
           status = 8;
-          if (userExist) {
-            userExist.isActive = true;
-            await this.userRepository.save(userExist);
-          }
-          if (adminExist) {
-            adminExist.isActive = true;
-            await this.adminRepository.save(adminExist);
-          }
         }
       }
       return { status, token: jwtToken };
@@ -277,6 +265,61 @@ export class UserService {
     }
   }
 
+
+  async setSesionOfApp(requestDTO: SetSesionAppId): Promise<any> {
+
+    try {
+      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestDTO)
+
+      if (!user) {
+        return {status:1,msg:"User does not exist"}
+      }
+      const sesionExist:Sesion =await this.sesionRepository.findOne({
+        where: {
+          admin:isAdmin?user:null,
+          user:isGuest?user:null,
+          isFromCMS:false, 
+        }
+      })
+
+
+      if (!sesionExist) {
+          return{ status: 2, msg:"sesion does not exist"}
+      }
+      sesionExist.playerId = requestDTO.playerId
+      await this.sesionRepository.save(sesionExist)
+
+
+      // await this.mailerService.sendMail({
+        //   to: request.email,
+        //   subject: 'Has sido invitado a Ocupath.',
+        //   template: __dirname + '/invitacion.hbs',
+        //   context: {
+        //     url: jwtToken,
+        //     type: request.type,
+        //     email: request.email,
+        //   },
+        // });
+      try {
+        
+      } catch (error) {
+        return { status: 3,msg:"Email has not been sended, but sesion has been saved"}
+      }
+
+      return { status: 0}
+    } catch (err) {
+      console.log('UserService - confirmPassword: ', err);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error confirming user password',
+        },
+        500,
+      );
+    }
+  }
+
   async confirmPassword(requestDTO: ConfirmUserPassword): Promise<any> {
     try {
       let response = { status: 0 };
@@ -313,36 +356,16 @@ export class UserService {
     }
   }
 
+  //Información del usuario logueado
   async findUserDetail(
     requestDetailDTO: SimpleRequest,
     @Res() res,
   ): Promise<any> {
     try {
-      let user: SuperAdmin | Admin;
-
-      const isSuperAdmin =
-        requestDetailDTO.type === this.typesNumbers.SUPERADMIN;
-      const isAdmin = requestDetailDTO.type === this.typesNumbers.ADMIN;
-      if (isAdmin) {
-        user = await this.adminRepository.findOne({
-          relations: ['type'],
-          where: {
-            uuid: requestDetailDTO.adminUuid,
-          },
-        });
-      }
-      if (isSuperAdmin) {
-        user = await this.superAdminRepository.findOne({
-          relations: ['type'],
-          where: {
-            uuid: requestDetailDTO.superAdminUuid,
-          },
-        });
-      }
+      const { user } = await this.getWhoIsRequesting(requestDetailDTO);
       if (!user) {
         return res.status(404);
       }
-
       return res.status(201).json({
         status: 0,
         profile: {
@@ -350,6 +373,7 @@ export class UserService {
           name: user.name,
           uuid: user.uuid,
           lastname: user.lastname,
+          thumbnail: user.thumbnail,
           email: user.email,
           type: user.type.id,
         },
@@ -366,24 +390,84 @@ export class UserService {
     }
   }
 
-  async findAdminDetail(requestEmail: string): Promise<any> {
+  async getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any> {
+    try {
+      const admin = await this.adminRepository.findOne({
+        relations: ['type', 'suscriptions'],
+        where: {
+          uuid: getAdminDetailDTO.adminUuidToGet,
+        },
+      });
+
+      const suscriptions = admin.suscriptions.map(
+        (suscription: Suscription) => {
+          return {
+            cost: suscription.cost,
+            createdAt: suscription.createdAt,
+            finishedAt: suscription.finishedAt,
+            isActive: suscription.isActive,
+            isDeleted: suscription.isDeleted,
+            startedAt: suscription.startedAt,
+          };
+        },
+      );
+      const lastSuscription = suscriptions.length > 0 ? suscriptions[0] : null;
+
+      return {
+        admin: {
+          id: admin.id,
+          name: admin.name,
+          lastname: admin.lastname,
+          uuid: admin.uuid,
+          email: admin.email,
+          type: admin.type.id,
+          lastSuscription,
+        },
+      };
+    } catch (err) {
+      console.log('UserService - getAdminDetail: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error getting user',
+        },
+        500,
+      );
+    }
+  }
+  async getUserDetail(getUserDetailDTO: GetUserDetailDTO): Promise<any> {
     try {
       const user = await this.adminRepository.findOne({
-        relations: ['type'],
-        where: { email: requestEmail },
+        relations: ['type', 'suscriptions'],
+        where: {
+          uuid: getUserDetailDTO.userUuidToGet,
+        },
       });
+      const suscriptions = user.suscriptions.map((suscription: Suscription) => {
+        return {
+          cost: suscription.cost,
+          createdAt: suscription.createdAt,
+          finishedAt: suscription.finishedAt,
+          isActive: suscription.isActive,
+          isDeleted: suscription.isDeleted,
+          startedAt: suscription.startedAt,
+        };
+      });
+      const lastSuscription = suscriptions.length > 0 ? suscriptions[0] : null;
+
       return {
-        profile: {
+        user: {
           id: user.id,
           name: user.name,
           lastname: user.lastname,
           uuid: user.uuid,
           email: user.email,
           type: user.type.id,
+          lastSuscription,
         },
       };
     } catch (err) {
-      console.log('UserService - findUserDetail: ', err);
+      console.log('UserService - getAdminDetail: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -394,38 +478,19 @@ export class UserService {
     }
   }
   async findUserChildrens(
-    findUserChildrensDTO: FindUserChildrens,
+    findUserChildrensDTO: SimpleRequest,
   ): Promise<any> {
     try {
-      let user: SuperAdmin | Admin;
       const dataChildrens: { admins: Admin[]; users: User[] } = {
         admins: [],
         users: [],
       };
+      const {
+        user,
+        isAdmin,
+        isSuperAdmin
+      } = await this.getWhoIsRequesting(findUserChildrensDTO);
 
-      const isSuperAdmin =
-        findUserChildrensDTO.type === this.typesNumbers.SUPERADMIN;
-      const isAdmin = findUserChildrensDTO.type === this.typesNumbers.ADMIN;
-
-      if (isAdmin) {
-        user = await this.adminRepository.findOne({
-          relations: ['type'],
-          where: {
-            uuid: findUserChildrensDTO.adminUuid,
-            isActive: true,
-            isDeleted: false,
-          },
-        });
-      }
-      if (isSuperAdmin) {
-        user = await this.superAdminRepository.findOne({
-          relations: ['type'],
-          where: {
-            uuid: findUserChildrensDTO.superAdminUuid,
-            isActive: true,
-          },
-        });
-      }
       if (!user) {
         return {
           status: 1,
@@ -435,15 +500,17 @@ export class UserService {
       if (isSuperAdmin) {
         dataChildrens.admins = await this.adminRepository.find({
           select: ['name', 'lastname', 'avatar', 'uuid', 'isActive', 'email'],
-          relations: ['suscriptions'],
+          relations: ['suscriptions','status'],
           where: {
             superadmin: user,
             isDeleted: false,
           },
         });
+        console.log(dataChildrens.admins)
+        
         dataChildrens.users = await this.userRepository.find({
           select: ['name', 'lastname', 'avatar', 'uuid', 'isActive'],
-          relations: ['suscriptions'],
+          relations: ['suscriptions','status'],
           where: {
             superadmin: user,
             isDeleted: false,
@@ -451,21 +518,35 @@ export class UserService {
         });
       }
       if (isAdmin) {
+        console.log({isAdmin})
         dataChildrens.users = await this.userRepository.find({
           select: ['name', 'lastname', 'email', 'avatar', 'uuid', 'isActive'],
-          relations: ['suscriptions'],
+          relations: ['suscriptions','status'],
           where: {
             admin: user,
             isDeleted: false,
           },
         });
       }
+      console.log(dataChildrens.admins)
+      console.log(dataChildrens.users)
+
       const childrens = {
         admins: [],
         users: [],
       };
-
-      const filterUsers = (child) => {
+      const filterDataSuscription =(suscription: Suscription)=>{
+        return {
+          cost: suscription.cost,
+          invitations: suscription.invitations,
+          createdAt: suscription.createdAt,
+          finishedAt: suscription.finishedAt,
+          isActive: suscription.isActive,
+          isDeleted: suscription.isDeleted,
+          startedAt: suscription.startedAt,
+        };
+      }
+      const filterUsers = (child:User) => {
         const dataToSend = {
           avatar: child.avatar,
           email: child.email,
@@ -473,28 +554,16 @@ export class UserService {
           uuid: child.uuid,
           lastname: child.lastname,
           name: child.name,
-          suscriptions: null,
           lastSuscription: null,
+          status:child.status.id
         };
-        dataToSend.suscriptions = child.suscriptions.map(
-          (suscription: Suscription) => {
-            return {
-              cost: suscription.cost,
-              createdAt: suscription.createdAt,
-              finishedAt: suscription.finishedAt,
-              isActive: suscription.isActive,
-              isDeleted: suscription.isDeleted,
-              startedAt: suscription.startedAt,
-            };
-          },
-        );
-        dataToSend.lastSuscription = dataToSend.suscriptions[0]
-          ? dataToSend.suscriptions[0]
-          : null;
+        const lastSuscription:Suscription = child.suscriptions.find((suscription: Suscription) => suscription.isActive);
+        dataToSend.lastSuscription = filterDataSuscription(lastSuscription)
         return dataToSend;
       };
+      
       if (isSuperAdmin) {
-        childrens.admins = dataChildrens.admins.map((child) => {
+        childrens.admins = dataChildrens.admins.map((child:Admin) => {
           const dataToSend = {
             avatar: child.avatar,
             email: child.email,
@@ -502,23 +571,11 @@ export class UserService {
             lastname: child.lastname,
             uuid: child.uuid,
             name: child.name,
-            suscriptions: null,
             lastSuscription: null,
+            status:child.status.id
           };
-          dataToSend.suscriptions = child.suscriptions.map(
-            (suscription: Suscription) => {
-              return {
-                cost: suscription.cost,
-                invitations: suscription.invitations,
-                createdAt: suscription.createdAt,
-                finishedAt: suscription.finishedAt,
-                isActive: suscription.isActive,
-                isDeleted: suscription.isDeleted,
-                startedAt: suscription.startedAt,
-              };
-            },
-          );
-          dataToSend.lastSuscription = dataToSend.suscriptions[0];
+          const lastSuscription:Suscription = child.suscriptions.find((suscription: Suscription) => suscription.isActive);
+          dataToSend.lastSuscription =  filterDataSuscription(lastSuscription)
           return dataToSend;
         });
         childrens.users = dataChildrens.users.map(filterUsers);
@@ -533,8 +590,8 @@ export class UserService {
           lastname: user.lastname,
           email: user.email,
           type: user.type.id,
-          childrens,
         },
+        childrens,
       };
     } catch (err) {
       console.log('UserService - findUserChildrens: ', err);
@@ -604,96 +661,118 @@ export class UserService {
     }
   }
 
-  async updateAdminUser(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {
+  async updateGuest(updateGuestDTO: UpdateGuestDTO): Promise<any> {
     try {
       let response = {};
-      const superadmin = await this.superAdminRepository.findOne({
+
+      const { isAdmin, isSuperAdmin, isGuest, user } =
+        await this.getWhoIsRequesting(updateGuestDTO);
+
+      if (!user) {
+        return { status: 1, msg: 'user requesting not found' };
+      }
+
+      const guest: User = await this.userRepository.findOne({
+        relations: ['admin', 'superadmin'],
         where: {
-          uuid: updateUserAdminDTO.superAdminUuid,
+          uuid: updateGuestDTO.userUuidToUpdate,
+          isActive: true,
+          admin: isAdmin ? user : null,
+          superadmin: isSuperAdmin ? user : null,
         },
       });
+
+      if (!guest) {
+        response = { status: 1, msg: 'user not found' };
+      }
+
+      if (updateGuestDTO.name) {
+        user.name = updateGuestDTO.name;
+      }
+      if (updateGuestDTO.lastname) {
+        user.lastname = updateGuestDTO.lastname;
+      }
+
+      //TODO: Actualizar el periodo
+
+      await this.userRepository.save(user);
+
+      response = {
+        user: {
+          name: guest.name,
+          lastname: guest.lastname,
+        },
+      };
+
+      // return response;
+    } catch (err) {
+      console.log('UserService - updateAdmin: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error updating  user',
+        },
+        500,
+      );
+    }
+  }
+
+  async updateAdmin(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {
+    try {
+      let response = {};
+      const {
+        user: superadmin,
+        isAdmin,
+        isGuest,
+      } = await this.getWhoIsRequesting(updateUserAdminDTO);
       if (!superadmin) {
         return { status: 1, msg: 'supadmin not found' };
       }
-
-      const user = await this.adminRepository.findOne({
+      const admin = await this.adminRepository.findOne({
         relations: ['superadmin'],
-        where: { uuid: updateUserAdminDTO.adminUuid },
+        where: {
+          uuid: updateUserAdminDTO.adminUuidToUpdate,
+          superadmin,
+        },
       });
-
-      console.log({ user });
-
-      if (!user) {
-        response = { status: 1, msg: 'user not found' };
-      } else {
-        if (updateUserAdminDTO.name) {
-          user.name = updateUserAdminDTO.name;
-        }
-        if (updateUserAdminDTO.lastname) {
-          user.lastname = updateUserAdminDTO.lastname;
-        }
-        if (updateUserAdminDTO.avatar) {
-          user.avatar = updateUserAdminDTO.avatar;
-        }
-        let suscription: Suscription;
-        if (
-          updateUserAdminDTO.startedAt ||
-          updateUserAdminDTO.finishedAt ||
-          updateUserAdminDTO.cost ||
-          updateUserAdminDTO.business
-        ) {
-          const updateSuscriptionDTO: UpdateSuscriptionDTO = {
-            business: updateUserAdminDTO.business,
-            cost: updateUserAdminDTO.cost,
-            finishedAt: updateUserAdminDTO.finishedAt,
-            startedAt: updateUserAdminDTO.startedAt,
-            adminUuid: user.uuid,
-          };
-          suscription = await this.suscriptionRepository.findOne({
-            select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
-            where: {
-              admin: user,
-            },
-          });
-          console.log({ suscription });
-
-          if (!suscription) {
-            return {
-              status: 1,
-            };
-          }
-          if (updateSuscriptionDTO.finishedAt) {
-            suscription.finishedAt = new Date(updateSuscriptionDTO.finishedAt);
-          }
-          if (updateSuscriptionDTO.startedAt) {
-            suscription.startedAt = new Date(updateSuscriptionDTO.startedAt);
-          }
-          if (updateSuscriptionDTO.cost && updateSuscriptionDTO.cost > 0) {
-            suscription.cost = updateSuscriptionDTO.cost;
-          }
-
-          this.suscriptionRepository.save(suscription);
-        }
-        user.isActive = true;
-
-        await this.adminRepository.save(user);
-
-        const userToReturn = await this.adminRepository.findOne({
-          relations: ['type'],
-          where: { uuid: user.uuid },
+      if (!admin) {
+        return { status: 1, msg: 'user not found' };
+      }
+      const updateSuscriptionDTO: UpdateSuscriptionDTO = {
+        business: updateUserAdminDTO.business,
+        cost: updateUserAdminDTO.cost,
+        finishedAt: updateUserAdminDTO.finishedAt,
+        startedAt: updateUserAdminDTO.startedAt,
+        adminUuid: admin.uuid,
+      };
+      const lastSuscription: Suscription =
+        await this.suscriptionRepository.findOne({
+          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+          where: {
+            admin,
+            user:null,
+            isActive: true,
+          },
         });
 
-        response = {
-          user: {
-            name: userToReturn.name,
-            avatar: userToReturn.avatar,
-            lastname: userToReturn.lastname,
-            email: userToReturn.email,
-            uuid: userToReturn.uuid,
-            suscription,
-          },
+      if (!lastSuscription) {
+        return {
+          status: 1,
         };
       }
+      this.suscriptionService.update(
+        lastSuscription,
+        updateSuscriptionDTO,
+        admin,
+        isAdmin,
+        isGuest,
+      );
+
+      await this.adminRepository.save(admin);
+      response = {
+        status: 0,
+        user: {},
+      };
 
       return response;
     } catch (err) {
@@ -707,63 +786,126 @@ export class UserService {
       );
     }
   }
-  async updateUser(updateUserDTO: UpdateUserDTO): Promise<any> {
+
+  async getWhoIsRequesting(request: SimpleRequest): Promise<{
+    isAdmin: boolean;
+    isSuperAdmin: boolean;
+    isGuest: boolean;
+    user: SuperAdmin | Admin | User;
+  }> {
     try {
-      let response = {};
-
-      const admin = await this.adminRepository.findOne({
-        where: {
-          uuid: updateUserDTO.adminUuid,
-        },
-      });
-      console.log('pasó', { admin });
-
-      if (!admin) {
-        return { status: 1, msg: 'admin not found' };
+      let user: SuperAdmin | Admin | User;
+      const isSuperAdmin = request.type === this.typesNumbers.SUPERADMIN;
+      const isAdmin = request.type === this.typesNumbers.ADMIN;
+      const isGuest = request.type === this.typesNumbers.USER;
+      if (isAdmin) {
+        user = await this.adminRepository.findOne({
+          relations: ['type'],
+          where: {
+            uuid: request.adminUuid,
+          },
+        });
+      }
+      if (isSuperAdmin) {
+        user = await this.superAdminRepository.findOne({
+          relations: ['type'],
+          where: {
+            uuid: request.superAdminUuid,
+          },
+        });
+      }
+      if (isGuest) {
+        user = await this.userRepository.findOne({
+          relations: ['type'],
+          where: {
+            uuid: request.userUuid,
+          },
+        });
       }
 
-      const user = await this.userRepository.findOne({
-        relations: ['admin'],
-        where: { uuid: updateUserDTO.userUuid },
-      });
-      console.log({ user });
+      return { isAdmin, isSuperAdmin, isGuest, user };
+    } catch (err) {
+      console.log('UserService - getWhoIsRequesting: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error Changing Name  user',
+        },
+        500,
+      );
+    }
+  }
+
+  async updateName(changeNameDto: ChangeName): Promise<any> {
+    try {
+      const { isAdmin, isSuperAdmin, isGuest, user } =
+        await this.getWhoIsRequesting(changeNameDto);
 
       if (!user) {
-        response = { status: 1, msg: 'user not found' };
-      } else {
-        if (user.admin.id !== admin.id) {
-          return {
-            status: 5,
-            msg: 'Unauthorized',
-          };
-        }
-
-        if (updateUserDTO.name.length !== 0) {
-          user.name = updateUserDTO.name;
-        }
-        if (updateUserDTO.lastname.length !== 0) {
-          user.lastname = updateUserDTO.lastname;
-        }
-
-        if (updateUserDTO.avatar.length !== 0) {
-          user.avatar = updateUserDTO.avatar;
-        }
-        user.isActive = true;
-        await this.userRepository.save(user);
-        const userToReturn = await this.userRepository.findOne({
-          where: { uuid: user.uuid },
-        });
-        response = {
-          user: {
-            avatar: userToReturn.avatar,
-            name: userToReturn.name,
-            lastname: userToReturn.lastname,
-            email: userToReturn.email,
-          },
-        };
+        return { status: 1 };
       }
 
-      return response;
+      user.name = changeNameDto.name;
+      if (isAdmin) {
+        await this.adminRepository.save(user);
+      }
+      if (isSuperAdmin) {
+        await this.superAdminRepository.save(user);
+      }
+      if (isGuest) {
+        await this.userRepository.save(user);
+      }
+      return {
+        status: 0,
+      };
+    } catch (err) {
+      console.log('UserService - ChangeName: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error Changing Name  user',
+        },
+        500,
+      );
+    }
+  }
+  //Actualiza el usuario loggeado
+  async updateUser(updateUserDTO: UpdateUserDTO): Promise<any> {
+    try {
+      console.log({ updateUserDTO });
+      const { isAdmin, isSuperAdmin, isGuest, user } =
+        await this.getWhoIsRequesting(updateUserDTO);
+      if (!user) {
+        return { status: 1 };
+      }
+      if (updateUserDTO.name) {
+        console.log('Ha actualizado el nombre');
+        user.name = updateUserDTO.name;
+      }
+      if (updateUserDTO.avatar) {
+        console.log('Ha actualizado el avatar');
+        user.avatar = updateUserDTO.avatar;
+        user.thumbnail = updateUserDTO.thumbnail;
+      }
+
+      if (isAdmin) {
+        await this.adminRepository.save(user);
+      }
+      if (isSuperAdmin) {
+        await this.superAdminRepository.save(user);
+      }
+      if (isGuest) {
+        await this.userRepository.save(user);
+      }
+
+      return {
+        status: 0,
+        user: {
+          avatar: user.avatar,
+          thumbnail: user.thumbnail,
+          name: user.name,
+        },
+      };
     } catch (err) {
       console.log('UserService - updateAdmin: ', err);
       throw new HttpException(
@@ -843,14 +985,17 @@ export class UserService {
       if (!admin) {
         return { status: 2, msg: 'admin not found' };
       }
-      await this.updateArrayUsers(admin.users,{isActive:false,isDeleted:true})
+      await this.updateArrayUsers(admin.users, {
+        isActive: false,
+        isDeleted: true,
+      });
       const assetsAdmin: Asset[] = await this.assetRepository.find({
         where: {
           admin,
         },
       });
       const assetsAdminIds = assetsAdmin.map((asset) => asset.id);
-      if (assetsAdminIds.length>0) {
+      if (assetsAdminIds.length > 0) {
         await this.assetRepository
           .createQueryBuilder()
           .update()
@@ -863,9 +1008,9 @@ export class UserService {
           })
           .execute();
       }
-        admin.isActive = false
-        admin.isDeleted = true
-        await this.adminRepository.save(admin)
+      admin.isActive = false;
+      admin.isDeleted = true;
+      await this.adminRepository.save(admin);
 
       const userDTO = new UserDTO(admin);
 
@@ -942,13 +1087,16 @@ export class UserService {
       );
     }
   }
-  async updateArrayUsers(users:User[],status:{isActive:boolean,isDeleted:boolean}):Promise<any>{
-      //Eliminar assets invitados administrador
-      //Eliminar suscripciones invitados administrador
+  async updateArrayUsers(
+    users: User[],
+    status: { isActive: boolean; isDeleted: boolean },
+  ): Promise<any> {
+    //Eliminar assets invitados administrador
+    //Eliminar suscripciones invitados administrador
     const usersIds = users.map((user) => user.id);
-      let assetsIds: string[] =[]
-      if (usersIds.length!==0) {
-        await this.userRepository
+    let assetsIds: string[] = [];
+    if (usersIds.length !== 0) {
+      await this.userRepository
         .createQueryBuilder()
         .update()
         .set(status)
@@ -956,14 +1104,14 @@ export class UserService {
           usersIds,
         })
         .execute();
-        const suscriptions: Suscription[] =
-          await this.suscripctionRepository.find({
-            where: {
-              user: In(usersIds),
-            },
-          });
-          const suscriptionsIds = suscriptions.map((suscription) => suscription.id);
-          await this.suscriptionRepository
+      const suscriptions: Suscription[] =
+        await this.suscripctionRepository.find({
+          where: {
+            user: In(usersIds),
+          },
+        });
+      const suscriptionsIds = suscriptions.map((suscription) => suscription.id);
+      await this.suscriptionRepository
         .createQueryBuilder()
         .update()
         .set(status)
@@ -971,23 +1119,23 @@ export class UserService {
           suscriptionsIds,
         })
         .execute();
-        const assetsChildrens: Asset[] = await this.assetRepository.find({
-          where: {
-            user: In(usersIds),
-          },
-        });
-        assetsIds = assetsChildrens.map((asset) => asset.id);
-        if (assetsIds.length>0) {
-          await this.assetRepository
-            .createQueryBuilder()
-            .update()
-            .set(status)
-            .where('id IN (:...allAssetsIds)', {
-              assetsIds,
-            })
-            .execute();
-        }
+      const assetsChildrens: Asset[] = await this.assetRepository.find({
+        where: {
+          user: In(usersIds),
+        },
+      });
+      assetsIds = assetsChildrens.map((asset) => asset.id);
+      if (assetsIds.length > 0) {
+        await this.assetRepository
+          .createQueryBuilder()
+          .update()
+          .set(status)
+          .where('id IN (:...allAssetsIds)', {
+            assetsIds,
+          })
+          .execute();
       }
+    }
   }
 
   async suspendUserAdmin(pauseAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
@@ -1008,7 +1156,10 @@ export class UserService {
       if (!admin) {
         return { status: 2, msg: 'admin not found' };
       }
-      await this.updateArrayUsers(admin.users,{isActive:pauseAdminUserDTO.status,isDeleted:false})
+      await this.updateArrayUsers(admin.users, {
+        isActive: pauseAdminUserDTO.status,
+        isDeleted: false,
+      });
       const suscription: Suscription = await this.suscriptionRepository.findOne(
         {
           where: {

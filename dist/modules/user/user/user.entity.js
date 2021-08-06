@@ -20,6 +20,7 @@ const token_entity_1 = require("../token/token.entity");
 const superadmin_entity_1 = require("./superadmin.entity");
 const suscription_entity_1 = require("../../suscription/suscription.entity");
 const asset_entity_1 = require("../../asset/asset.entity");
+const status_entity_1 = require("../status/status.entity");
 let User = class User {
     createUuid() {
         this.uuid = uuid_1.v4();
@@ -45,6 +46,13 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "avatar", void 0);
 __decorate([
+    typeorm_1.Column({
+        type: 'text',
+        default: 'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+    }),
+    __metadata("design:type", String)
+], User.prototype, "thumbnail", void 0);
+__decorate([
     typeorm_1.Column({ length: 250 }),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
@@ -60,6 +68,10 @@ __decorate([
     typeorm_1.ManyToOne((type) => role_entity_1.Role, (role) => role.user),
     __metadata("design:type", role_entity_1.Role)
 ], User.prototype, "role", void 0);
+__decorate([
+    typeorm_1.ManyToOne((type) => status_entity_1.Status, (status) => status.user),
+    __metadata("design:type", status_entity_1.Status)
+], User.prototype, "status", void 0);
 __decorate([
     typeorm_1.ManyToOne(() => admin_entity_1.Admin, (admin) => admin.users),
     __metadata("design:type", admin_entity_1.Admin)

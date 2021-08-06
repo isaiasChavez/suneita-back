@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AssetController = void 0;
 const common_1 = require("@nestjs/common");
 const class_validator_1 = require("class-validator");
+const user_dto_1 = require("../user/user/user.dto");
 const asset_dto_1 = require("./asset.dto");
 const asset_service_1 = require("./asset.service");
 let AssetController = class AssetController {
@@ -60,7 +61,7 @@ __decorate([
     common_1.Get(),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [asset_dto_1.GetAssetDTO]),
+    __metadata("design:paramtypes", [user_dto_1.SimpleRequest]),
     __metadata("design:returntype", Promise)
 ], AssetController.prototype, "getAllAssetsByUser", null);
 __decorate([

@@ -6,15 +6,18 @@ import { Token } from '../token/token.entity';
 import { SuperAdmin } from './superadmin.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
+import { Status } from '../status/status.entity';
 export declare class User {
     id: string;
     name: string;
     lastname: string;
     avatar: string;
+    thumbnail: string;
     email: string;
     password: string;
     type: Type;
     role: Role;
+    status: Status;
     admin: Admin;
     superadmin: SuperAdmin;
     uuid: string;

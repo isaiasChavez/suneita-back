@@ -4,6 +4,7 @@ export declare class Sesion {
     id: string;
     loggedInAt: Date;
     playerId: string;
+    isFromCMS: boolean;
     admin: Admin;
     superadmin: Admin;
     user: User;

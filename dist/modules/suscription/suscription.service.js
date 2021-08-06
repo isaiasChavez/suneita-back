@@ -23,29 +23,15 @@ let SuscriptionService = class SuscriptionService {
         this.adminRepository = adminRepository;
         this.suscriptionRepository = suscriptionRepository;
     }
-    async update(updateSuscriptionDTO) {
+    async update(suscription, updateSuscriptionDTO, user, isAdmin, isGuest) {
         try {
-            let admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: updateSuscriptionDTO.adminUuid
-                }
-            });
-            console.log({ admin });
-            if (!admin) {
-                return {
-                    status: 1
-                };
-            }
-            const suscription = await this.suscriptionRepository.findOne({
-                where: {
-                    admin
-                }
-            });
-            console.log({ suscription });
             if (!suscription) {
-                return {
-                    status: 1
-                };
+                suscription = await this.suscriptionRepository.findOne({
+                    where: {
+                        admin: isAdmin ? user : null,
+                        user: isGuest ? user : null
+                    }
+                });
             }
             if (updateSuscriptionDTO.finishedAt) {
                 suscription.finishedAt = new Date(updateSuscriptionDTO.finishedAt);

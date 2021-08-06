@@ -1,3 +1,4 @@
+import { SimpleRequest } from '../user/user.dto';
 export declare class ReuestSesionDTO {
     constructor({ email, password }: {
         email: any;
@@ -20,8 +21,17 @@ export declare class PasswordRecovery {
     password: string;
     token: string;
 }
-export declare class ReuestSesionLogOutDTO {
+export declare class ReuestSesionLogOutDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, email, isFromCMS, }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        userUuid: any;
+        type: any;
+        email: any;
+        isFromCMS: any;
+    });
     readonly email: string;
+    readonly isFromCMS: boolean;
 }
 export declare class SesionTokenDTO {
     usuario: {

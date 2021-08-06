@@ -3,8 +3,6 @@ import {
     Column,
     PrimaryGeneratedColumn,
     ManyToOne,
-    OneToMany,
-    ManyToMany,
     CreateDateColumn,
     UpdateDateColumn,
     BeforeInsert,
@@ -23,7 +21,7 @@ export class Asset {
     @Column({ length: 300, nullable: false })
     url: string;
 
-    @Column({ length: 300, nullable: true, default:'' })
+    @Column({ length: 300, nullable: true, default:'https://spacegeneral.sfo2.digitaloceanspaces.com/ocupath/ocupath/jimmy-dean-DyQiNSgrM58-unsplash.jpg' })
     thumbnail: string;
 
     @Column({ type: "uuid", nullable: false })

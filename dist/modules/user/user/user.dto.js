@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeleteUserDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.ConfirmUserPassword = exports.SimpleRequest = exports.FindUserChildrens = exports.InviteUserDTO = exports.InviteAdminDTO = exports.UserDTO = void 0;
+exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.SimpleRequest = exports.FindUserChildrens = exports.InviteUserDTO = exports.InviteAdminDTO = exports.UserDTO = void 0;
 const class_validator_1 = require("class-validator");
 class UserDTO {
     constructor({ email, uuid, name, avatar, isActive, lastname }) {
@@ -150,9 +150,10 @@ __decorate([
 ], FindUserChildrens.prototype, "type", void 0);
 exports.FindUserChildrens = FindUserChildrens;
 class SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, type }) {
+    constructor({ adminUuid, superAdminUuid, userUuid, type }) {
         this.adminUuid = adminUuid;
         this.superAdminUuid = superAdminUuid;
+        this.userUuid = userUuid;
         this.type = type;
     }
 }
@@ -167,6 +168,12 @@ __decorate([
     class_validator_1.IsNotEmpty(),
     class_validator_1.IsOptional(),
     __metadata("design:type", String)
+], SimpleRequest.prototype, "userUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
 ], SimpleRequest.prototype, "superAdminUuid", void 0);
 __decorate([
     class_validator_1.IsNumber(),
@@ -174,6 +181,21 @@ __decorate([
     __metadata("design:type", Number)
 ], SimpleRequest.prototype, "type", void 0);
 exports.SimpleRequest = SimpleRequest;
+class ChangeName extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type });
+        this.name = name;
+    }
+}
+__decorate([
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], ChangeName.prototype, "name", void 0);
+exports.ChangeName = ChangeName;
 class ConfirmUserPassword {
     constructor({ email, password }) {
         this.email = email;
@@ -193,6 +215,21 @@ __decorate([
     __metadata("design:type", String)
 ], ConfirmUserPassword.prototype, "password", void 0);
 exports.ConfirmUserPassword = ConfirmUserPassword;
+class SetSesionAppId extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, playerId }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type });
+        this.playerId = playerId;
+    }
+}
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], SetSesionAppId.prototype, "playerId", void 0);
+exports.SetSesionAppId = SetSesionAppId;
 class CreateSuperAdminDTO {
     constructor({ name, lastname, email, password, passwordmaster }) {
         this.name = name;
@@ -233,31 +270,21 @@ __decorate([
     __metadata("design:type", String)
 ], CreateSuperAdminDTO.prototype, "password", void 0);
 exports.CreateSuperAdminDTO = CreateSuperAdminDTO;
-class UpdateUserAdminDTO {
-    constructor({ superAdminUuid, adminUuid, name, lastname, avatar, startedAt, finishedAt, cost, business, }) {
-        this.superAdminUuid = superAdminUuid;
-        this.adminUuid = adminUuid;
-        this.name = name;
-        this.lastname = lastname;
-        this.avatar = avatar;
-        this.startedAt = startedAt;
-        this.finishedAt = finishedAt;
-        this.cost = cost;
-        this.business = business;
+class UpdateUserAdminDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, business, adminUuidToUpdate }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type });
+        this.name = name ? name : null;
+        this.lastname = lastname ? lastname : null;
+        this.startedAt = startedAt ? startedAt : null;
+        this.finishedAt = finishedAt ? finishedAt : null;
+        this.cost = cost ? cost : null;
+        this.business = business ? business : null;
+        this.adminUuidToUpdate = adminUuidToUpdate;
     }
 }
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsString(),
-    __metadata("design:type", String)
-], UpdateUserAdminDTO.prototype, "superAdminUuid", void 0);
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsString(),
-    __metadata("design:type", String)
-], UpdateUserAdminDTO.prototype, "adminUuid", void 0);
 __decorate([
     class_validator_1.IsOptional(),
     class_validator_1.IsString(),
@@ -272,9 +299,10 @@ __decorate([
 ], UpdateUserAdminDTO.prototype, "lastname", void 0);
 __decorate([
     class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
     class_validator_1.MaxLength(200),
     __metadata("design:type", String)
-], UpdateUserAdminDTO.prototype, "avatar", void 0);
+], UpdateUserAdminDTO.prototype, "business", void 0);
 __decorate([
     class_validator_1.IsOptional(),
     class_validator_1.IsDateString(),
@@ -293,60 +321,89 @@ __decorate([
     __metadata("design:type", Number)
 ], UpdateUserAdminDTO.prototype, "cost", void 0);
 __decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
     class_validator_1.IsOptional(),
-    class_validator_1.IsString(),
-    class_validator_1.MaxLength(200),
     __metadata("design:type", String)
-], UpdateUserAdminDTO.prototype, "business", void 0);
+], UpdateUserAdminDTO.prototype, "adminUuidToUpdate", void 0);
 exports.UpdateUserAdminDTO = UpdateUserAdminDTO;
-class UpdateUserDTO {
-    constructor({ userUuid, adminUuid, name, lastname, avatar }) {
-        this.userUuid = userUuid;
-        this.adminUuid = adminUuid;
+class UpdateGuestDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, userUuidToUpdate }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type });
         this.name = name;
         this.lastname = lastname;
-        this.avatar = avatar;
+        this.startedAt = startedAt;
+        this.finishedAt = finishedAt;
+        this.cost = parseFloat(cost);
+        this.userUuidToUpdate = userUuidToUpdate;
     }
 }
 __decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
     class_validator_1.IsString(),
     __metadata("design:type", String)
-], UpdateUserDTO.prototype, "userUuid", void 0);
+], UpdateGuestDTO.prototype, "name", void 0);
 __decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsString(),
-    __metadata("design:type", String)
-], UpdateUserDTO.prototype, "adminUuid", void 0);
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsString(),
-    __metadata("design:type", String)
-], UpdateUserDTO.prototype, "superAdminUuid", void 0);
-__decorate([
-    class_validator_1.IsString(),
     class_validator_1.MaxLength(100),
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], UpdateGuestDTO.prototype, "lastname", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsDateString(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], UpdateGuestDTO.prototype, "startedAt", void 0);
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsDateString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], UpdateGuestDTO.prototype, "finishedAt", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber(),
+    class_validator_1.IsPositive(),
+    __metadata("design:type", Number)
+], UpdateGuestDTO.prototype, "cost", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], UpdateGuestDTO.prototype, "userUuidToUpdate", void 0);
+exports.UpdateGuestDTO = UpdateGuestDTO;
+class UpdateUserDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type });
+        this.name = name;
+        this.avatar = avatar;
+        this.thumbnail = thumbnail;
+    }
+}
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
     __metadata("design:type", String)
 ], UpdateUserDTO.prototype, "name", void 0);
 __decorate([
+    class_validator_1.IsOptional(),
     class_validator_1.IsString(),
     class_validator_1.MaxLength(150),
     __metadata("design:type", String)
 ], UpdateUserDTO.prototype, "avatar", void 0);
 __decorate([
+    class_validator_1.IsOptional(),
     class_validator_1.IsString(),
     class_validator_1.MaxLength(150),
     __metadata("design:type", String)
 ], UpdateUserDTO.prototype, "thumbnail", void 0);
-__decorate([
-    class_validator_1.MaxLength(100),
-    class_validator_1.IsString(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", String)
-], UpdateUserDTO.prototype, "lastname", void 0);
 exports.UpdateUserDTO = UpdateUserDTO;
 class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }) {
@@ -373,6 +430,70 @@ __decorate([
     __metadata("design:type", Boolean)
 ], DeleteAdminUserDTO.prototype, "status", void 0);
 exports.DeleteAdminUserDTO = DeleteAdminUserDTO;
+class GetUserDetailDTO {
+    constructor({ adminUuid, superAdminUuid, type, userUuidToGet }) {
+        this.adminUuid = adminUuid;
+        this.userUuidToGet = userUuidToGet;
+        this.type = type;
+        this.superAdminUuid = superAdminUuid;
+    }
+}
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", Number)
+], GetUserDetailDTO.prototype, "superAdminUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", Number)
+], GetUserDetailDTO.prototype, "adminUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsString(),
+    __metadata("design:type", Number)
+], GetUserDetailDTO.prototype, "userUuidToGet", void 0);
+__decorate([
+    class_validator_1.IsNumber(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", Number)
+], GetUserDetailDTO.prototype, "type", void 0);
+exports.GetUserDetailDTO = GetUserDetailDTO;
+class GetAdminDetailDTO {
+    constructor({ adminUuid, superAdminUuid, type, adminUuidToGet }) {
+        this.superAdminUuid = superAdminUuid;
+        this.adminUuid = adminUuid;
+        this.adminUuidToGet = adminUuidToGet;
+        this.type = type;
+    }
+}
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", Number)
+], GetAdminDetailDTO.prototype, "superAdminUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", Number)
+], GetAdminDetailDTO.prototype, "adminUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsString(),
+    __metadata("design:type", Number)
+], GetAdminDetailDTO.prototype, "adminUuidToGet", void 0);
+__decorate([
+    class_validator_1.IsNumber(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", Number)
+], GetAdminDetailDTO.prototype, "type", void 0);
+exports.GetAdminDetailDTO = GetAdminDetailDTO;
 class DeleteUserDTO {
     constructor({ adminUuid, superAdminUuid, type, userUuidToChange, status }) {
         this.userUuidToChange = userUuidToChange;
