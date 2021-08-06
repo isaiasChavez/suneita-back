@@ -51,19 +51,19 @@ AppModule = AppModule_1 = __decorate([
                 useFactory: () => ({
                     transport: {
                         pool: true,
-                        host: 'smtp.ethereal.email',
-                        port: 587,
+                        host: 'box1128.bluehost.com',
+                        port: 465,
                         secure: false,
                         auth: {
-                            user: 'felipa.bashirian45@ethereal.email',
-                            pass: '88uUVA7cryaXT7hmye'
+                            user: 'bioderma@inmersys.com',
+                            pass: 'Bioderma1234.'
                         },
                         tls: {
                             rejectUnauthorized: false,
                         },
                     },
                     defaults: {
-                        from: '"Bioderma" <noreplay@bioderma.mx>',
+                        from: '"Ocupath" <noreplay@ocupath.mx>',
                     },
                     template: {
                         dir: __dirname + "/templates",

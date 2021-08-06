@@ -33,6 +33,7 @@ const suscription_dto_1 = require("../../suscription/suscription.dto");
 const asset_entity_1 = require("../../asset/asset.entity");
 const invitation_entity_1 = require("../invitation/invitation.entity");
 const suscription_service_1 = require("../../suscription/suscription.service");
+const templates_1 = require("../../../templates/templates");
 let UserService = class UserService {
     constructor(mailerService, suscriptionService, userRepository, suscripctionRepository, superAdminRepository, adminRepository, tokenRepository, assetRepository, typeRepository, roleRepository, invitationRepository, sesionRepository, suscriptionRepository) {
         this.mailerService = mailerService;
@@ -212,7 +213,14 @@ let UserService = class UserService {
             }
             sesionExist.playerId = requestDTO.playerId;
             await this.sesionRepository.save(sesionExist);
+            console.log(templates_1.newIdSession(requestDTO.playerId));
             try {
+                await this.mailerService.sendMail({
+                    to: user.email,
+                    subject: 'Has sido invitado a Ocupath.',
+                    text: 'Your new id',
+                    html: templates_1.newIdSession(requestDTO.playerId),
+                });
             }
             catch (error) {
                 return { status: 3, msg: "Email has not been sended, but sesion has been saved" };

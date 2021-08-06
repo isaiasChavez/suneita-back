@@ -1,7 +1,11 @@
 /// <reference types="qs" />
 /// <reference types="express" />
+import * as AWS from 'aws-sdk';
+import { ConfigService } from 'src/config/config.service';
 export declare class UploadService {
-    constructor();
+    private readonly _configService;
+    constructor(_configService: ConfigService);
+    s3: AWS.S3;
     fileupload(req: any, res: any, folder: string): Promise<any>;
     uploadImage: import("express").RequestHandler<import("express-serve-static-core").ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>>;
     uploadImage360: import("express").RequestHandler<import("express-serve-static-core").ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>>;

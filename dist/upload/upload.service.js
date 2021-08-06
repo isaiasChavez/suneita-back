@@ -18,62 +18,64 @@ const multer = require("multer");
 const AWS = require("aws-sdk");
 const multerS3 = require("multer-s3");
 const s3Storage = require("multer-sharp-s3");
-const AWS_S3_BUCKET_NAME = 'bioderma-space';
-const s3 = new AWS.S3({
-    endpoint: 'sfo2.digitaloceanspaces.com',
-    accessKeyId: 'ZSBKUIMMILMJDX65O7UX',
-    secretAccessKey: 'eK1JtgpKaFgCYUU7H3/aiRf0eNfJ+ijUrZCfTuwGdn0',
-});
+const config_keys_1 = require("../config/config.keys");
+const config_service_1 = require("../config/config.service");
 let UploadService = class UploadService {
-    constructor() {
+    constructor(_configService) {
+        this._configService = _configService;
+        this.s3 = new AWS.S3({
+            endpoint: this._configService.get(config_keys_1.Configuration.S3_ENDPOINT),
+            accessKeyId: this._configService.get(config_keys_1.Configuration.AWS_ACCESS_KEY),
+            secretAccessKey: this._configService.get(config_keys_1.Configuration.AWS_SECRET_ACCESS_KEY),
+        });
         this.uploadImage = multer({
             storage: multerS3({
-                s3: s3,
-                bucket: AWS_S3_BUCKET_NAME,
+                s3: this.s3,
+                bucket: this._configService.get(config_keys_1.Configuration.BUCKET_NAME),
                 contentType: multerS3.AUTO_CONTENT_TYPE,
                 acl: 'public-read',
                 key: function (request, file, cb) {
-                    cb(null, `capacitacion/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
+                    cb(null, `image/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
                 },
             }),
         }).array('upload', 1);
         this.uploadImage360 = multer({
             storage: multerS3({
-                s3: s3,
-                bucket: AWS_S3_BUCKET_NAME,
+                s3: this.s3,
+                bucket: this._configService.get(config_keys_1.Configuration.BUCKET_NAME),
                 contentType: multerS3.AUTO_CONTENT_TYPE,
                 acl: 'public-read',
                 key: function (request, file, cb) {
-                    cb(null, `productos/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
+                    cb(null, `image360/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
                 },
             }),
         }).array('upload', 1);
         this.uploadVideo = multer({
             storage: multerS3({
-                s3: s3,
-                bucket: AWS_S3_BUCKET_NAME,
+                s3: this.s3,
+                bucket: this._configService.get(config_keys_1.Configuration.BUCKET_NAME),
                 contentType: multerS3.AUTO_CONTENT_TYPE,
                 acl: 'public-read',
                 key: function (request, file, cb) {
-                    cb(null, `campanas/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
+                    cb(null, `video/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
                 },
             }),
         }).array('upload', 1);
         this.uploadVideo360 = multer({
             storage: multerS3({
-                s3: s3,
-                bucket: AWS_S3_BUCKET_NAME,
+                s3: this.s3,
+                bucket: this._configService.get(config_keys_1.Configuration.BUCKET_NAME),
                 contentType: multerS3.AUTO_CONTENT_TYPE,
                 acl: 'public-read',
                 key: function (request, file, cb) {
-                    cb(null, `blog/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
+                    cb(null, `video360/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
                 },
             }),
         }).array('upload');
         this.uploadUser = multer({
             storage: s3Storage({
-                s3: s3,
-                Bucket: AWS_S3_BUCKET_NAME,
+                s3: this.s3,
+                Bucket: this._configService.get(config_keys_1.Configuration.BUCKET_NAME),
                 ACL: 'public-read',
                 Key: function (request, file, cb) {
                     cb(null, `users/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
@@ -84,12 +86,13 @@ let UploadService = class UploadService {
                 },
             }),
         }).array('upload', 1);
+        this._configService.get = this._configService.get.bind(this);
     }
     async fileupload(req, res, folder) {
         try {
             switch (folder) {
                 case '1':
-                    this.uploadImage(req, res, function (error) {
+                    this.uploadImage(req, res, (error) => {
                         if (error) {
                             console.log(error);
                             return res
@@ -97,15 +100,15 @@ let UploadService = class UploadService {
                                 .json(`Failed to upload pdf file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/capacitacion/'), urlToReturn.lenght);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/image/'), urlToReturn.lenght);
                         return res
                             .status(201)
-                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            .json('https://ocupath.fra1.digitaloceanspaces.com' +
                             urlToReturn);
                     });
                     break;
                 case '2':
-                    this.uploadImage360(req, res, function (error) {
+                    this.uploadImage360(req, res, (error) => {
                         if (error) {
                             console.log(error);
                             return res
@@ -113,15 +116,15 @@ let UploadService = class UploadService {
                                 .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/productos/'), urlToReturn.lenght);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/image360/'), urlToReturn.lenght);
                         return res
                             .status(201)
-                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            .json('https://ocupath.fra1.digitaloceanspaces.com' +
                             urlToReturn);
                     });
                     break;
                 case '3':
-                    this.uploadVideo(req, res, function (error) {
+                    this.uploadVideo(req, res, (error) => {
                         if (error) {
                             console.log(error);
                             return res
@@ -129,15 +132,15 @@ let UploadService = class UploadService {
                                 .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/campanas/'), urlToReturn.lenght);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/video/'), urlToReturn.lenght);
                         return res
                             .status(201)
-                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            .json('https://ocupath.fra1.digitaloceanspaces.com' +
                             urlToReturn);
                     });
                     break;
                 case '4':
-                    this.uploadVideo360(req, res, function (error) {
+                    this.uploadVideo360(req, res, (error) => {
                         if (error) {
                             console.log('req.files:', req.files);
                             console.log('Multer Error:', error);
@@ -146,15 +149,15 @@ let UploadService = class UploadService {
                                 .json(`Failed to upload image file: ${error}`);
                         }
                         let urlToReturn = req.files[0].location;
-                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/blog/'), urlToReturn.lenght);
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/video360/'), urlToReturn.lenght);
                         return res
                             .status(201)
-                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            .json('https://ocupath.fra1.digitaloceanspaces.com' +
                             urlToReturn);
                     });
                     break;
                 case '5':
-                    this.uploadUser(req, res, function (error) {
+                    this.uploadUser(req, res, (error) => {
                         if (error) {
                             console.log(error);
                             return res
@@ -165,7 +168,7 @@ let UploadService = class UploadService {
                         urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/users/'), urlToReturn.lenght);
                         return res
                             .status(201)
-                            .json('https://bioderma-space.sfo2.cdn.digitaloceanspaces.com' +
+                            .json('https://ocupath.fra1.digitaloceanspaces.com' +
                             urlToReturn);
                     });
                     break;
@@ -188,7 +191,7 @@ __decorate([
 ], UploadService.prototype, "fileupload", null);
 UploadService = __decorate([
     common_1.Injectable(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [config_service_1.ConfigService])
 ], UploadService);
 exports.UploadService = UploadService;
 //# sourceMappingURL=upload.service.js.map

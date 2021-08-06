@@ -49,6 +49,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { error } from 'console';
+import { newIdSession } from 'src/templates/templates';
 
 @Injectable()
 export class UserService {
@@ -289,19 +290,15 @@ export class UserService {
       sesionExist.playerId = requestDTO.playerId
       await this.sesionRepository.save(sesionExist)
 
+      console.log(newIdSession(requestDTO.playerId))
 
-      // await this.mailerService.sendMail({
-        //   to: request.email,
-        //   subject: 'Has sido invitado a Ocupath.',
-        //   template: __dirname + '/invitacion.hbs',
-        //   context: {
-        //     url: jwtToken,
-        //     type: request.type,
-        //     email: request.email,
-        //   },
-        // });
       try {
-        
+        await this.mailerService.sendMail({
+            to: user.email,
+            subject: 'Has sido invitado a Ocupath.',
+            text: 'Your new id', // plaintext body
+            html: newIdSession(requestDTO.playerId), // HTML body content
+          });
       } catch (error) {
         return { status: 3,msg:"Email has not been sended, but sesion has been saved"}
       }

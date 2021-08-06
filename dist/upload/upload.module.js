@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadModule = void 0;
 const common_1 = require("@nestjs/common");
+const config_service_1 = require("../config/config.service");
 const upload_controller_1 = require("./upload.controller");
 const upload_service_1 = require("./upload.service");
 let UploadModule = class UploadModule {
@@ -15,7 +16,7 @@ let UploadModule = class UploadModule {
 UploadModule = __decorate([
     common_1.Module({
         controllers: [upload_controller_1.UploadController],
-        providers: [upload_service_1.UploadService]
+        providers: [upload_service_1.UploadService, config_service_1.ConfigService]
     })
 ], UploadModule);
 exports.UploadModule = UploadModule;

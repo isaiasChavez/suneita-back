@@ -14,6 +14,7 @@ class ConfigService {
                 process.exit(0);
             }
             this.envConfig = dotenv_1.parse(fs.readFileSync(envFilePath));
+            console.log("this.envConfig:", this.envConfig);
         }
         else {
             this.envConfig = {
