@@ -474,18 +474,9 @@ export class SesionService {
           superAdmin: null,
         });
 
-        const jwtToken = await jwt.sign(
-          { token: newToken.id },
-          process.env.TOKEN_SECRET,
-        );
         
-        await this.mailerService.sendMail({
-          to: Configuration.EMAIL_ETHEREAL,
-          from: 'noreply@ocupath.com', // sender address
-            subject: 'Has sido invitado a Ocupath.',
-            text: 'Your new id', // plaintext body
-            html: newResetPassTemplate(jwtToken), // HTML body content
-        });
+        
+       
 
         const registerToken = await this.tokenRepository.save(newToken);
 
@@ -496,7 +487,13 @@ export class SesionService {
             expiresIn: 7200000,
           },
         );
-        console.log({registerToken,token})
+        await this.mailerService.sendMail({
+          to: Configuration.EMAIL_ETHEREAL,
+          from: 'noreply@ocupath.com', // sender address
+            subject: 'Nueva solicitud de recuperación de contraseña',
+            text: 'Has solicitado la recuperación de tu contraseña', // plaintext body
+            html: newResetPassTemplate(token), // HTML body content
+        });
         // Se envia correo
         // await this.mailerService.sendMail({
         //     to: requestEmail,
