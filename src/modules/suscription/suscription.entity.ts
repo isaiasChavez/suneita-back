@@ -58,6 +58,9 @@ export class Suscription {
     @Column({ nullable: false, default: true })
     isActive: boolean;
 
+    @Column({ nullable: false, default: false })
+    isWaiting: boolean;
+
 
     @CreateDateColumn()
     createdAt: Date;

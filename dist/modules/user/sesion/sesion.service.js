@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const sesion_entity_1 = require("./sesion.entity");
+const config_keys_1 = require("../../../config/config.keys");
 const bcrypt = require("bcrypt");
 const types_1 = require("../../../types");
 const type_entity_1 = require("../type/type.entity");
@@ -30,9 +31,11 @@ const suscription_entity_1 = require("../../suscription/suscription.entity");
 const asset_entity_1 = require("../../asset/asset.entity");
 const mailer_1 = require("@nestjs-modules/mailer");
 const user_service_1 = require("../user/user.service");
+const templates_1 = require("../../../templates/templates");
+const status_entity_1 = require("../status/status.entity");
 const jwt = require('jsonwebtoken');
 let SesionService = class SesionService {
-    constructor(mailerService, userService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+    constructor(mailerService, userService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, statusRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
         this.mailerService = mailerService;
         this.userService = userService;
         this.sesionRepository = sesionRepository;
@@ -41,6 +44,7 @@ let SesionService = class SesionService {
         this.suscriptionRepository = suscriptionRepository;
         this.adminRepository = adminRepository;
         this.roleRepository = roleRepository;
+        this.statusRepository = statusRepository;
         this.assetRepository = assetRepository;
         this.superAdminRepository = superAdminRepository;
         this.tokenRepository = tokenRepository;
@@ -239,6 +243,7 @@ let SesionService = class SesionService {
     }
     async RequesLogout(reuestSesionLogOutDTO) {
         try {
+            console.log({ reuestSesionLogOutDTO });
             const { isFromCMS } = reuestSesionLogOutDTO;
             const { isAdmin, isSuperAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO);
             let response = null;
@@ -418,7 +423,13 @@ let SesionService = class SesionService {
                 const token = await jwt.sign({ tokenid: registerToken.id }, process.env.TOKEN_SECRET, {
                     expiresIn: 7200000,
                 });
-                console.log({ registerToken, token });
+                await this.mailerService.sendMail({
+                    to: config_keys_1.Configuration.EMAIL_ETHEREAL,
+                    from: 'noreply@ocupath.com',
+                    subject: 'Nueva solicitud de recuperación de contraseña',
+                    text: 'Has solicitado la recuperación de tu contraseña',
+                    html: templates_1.newResetPassTemplate(token),
+                });
                 return {
                     status: 0,
                 };
@@ -507,6 +518,7 @@ let SesionService = class SesionService {
                 },
             });
             const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
+            const userStatus = await this.statusRepository.findOne(1);
             const admin = this.adminRepository.create({
                 superadmin: invitation.superAdmin,
                 role: adminRole,
@@ -516,6 +528,7 @@ let SesionService = class SesionService {
                 email: createAdminDTO.email,
                 password: userPassword,
                 business: invitation.company,
+                status: userStatus
             });
             await this.adminRepository.save(admin);
             const newAdmin = await this.adminRepository.findOne({
@@ -525,6 +538,7 @@ let SesionService = class SesionService {
             });
             const userSuscription = this.suscriptionRepository.create({
                 admin: newAdmin,
+                user: null,
                 cost: invitation.cost,
                 invitations: invitation.invitations,
                 startedAt: new Date(invitation.startedAt),
@@ -579,6 +593,7 @@ let SesionService = class SesionService {
                 },
             });
             const userPassword = await bcrypt.hash(createUserDTO.password, 12);
+            const userStatus = await this.statusRepository.findOne(1);
             const user = this.userRepository.create({
                 admin: invitation.admin,
                 superadmin: invitation.superAdmin,
@@ -588,6 +603,7 @@ let SesionService = class SesionService {
                 lastname: createUserDTO.lastname,
                 email: createUserDTO.email,
                 password: userPassword,
+                status: userStatus
             });
             await this.userRepository.save(user);
             if (invitation.superAdmin) {
@@ -625,12 +641,14 @@ SesionService = __decorate([
     __param(5, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
     __param(6, typeorm_1.InjectRepository(admin_entity_1.Admin)),
     __param(7, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(8, typeorm_1.InjectRepository(asset_entity_1.Asset)),
-    __param(9, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
-    __param(10, typeorm_1.InjectRepository(token_entity_1.Token)),
-    __param(11, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __param(8, typeorm_1.InjectRepository(status_entity_1.Status)),
+    __param(9, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(10, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
+    __param(11, typeorm_1.InjectRepository(token_entity_1.Token)),
+    __param(12, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
     __metadata("design:paramtypes", [mailer_1.MailerService,
         user_service_1.UserService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

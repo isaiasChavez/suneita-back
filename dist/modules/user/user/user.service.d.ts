@@ -6,13 +6,15 @@ import { Role } from '../role/role.entity';
 import { Sesion } from '../sesion/sesion.entity';
 import { InviteUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, ChangeName, UpdateGuestDTO, SetSesionAppId } from './user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Roles, Types, TypesNumbers } from 'src/types';
+import { Roles, Types, TypesNumbers, Statuses } from 'src/types';
 import { SuperAdmin } from './superadmin.entity';
 import { Admin } from './admin.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
+import { AddNewSuscriptionSuscriptionDTO } from 'src/modules/suscription/suscription.dto';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
+import { ReuestSesionLogOutDTO } from '../sesion/sesion.dto';
 export declare class UserService {
     private readonly mailerService;
     private readonly suscriptionService;
@@ -30,6 +32,7 @@ export declare class UserService {
     constructor(mailerService: MailerService, suscriptionService: SuscriptionService, userRepository: Repository<User>, suscripctionRepository: Repository<Suscription>, superAdminRepository: Repository<SuperAdmin>, adminRepository: Repository<Admin>, tokenRepository: Repository<Token>, assetRepository: Repository<Asset>, typeRepository: Repository<Type>, roleRepository: Repository<Role>, invitationRepository: Repository<Invitation>, sesionRepository: Repository<Sesion>, suscriptionRepository: Repository<Suscription>);
     roles: Roles;
     types: Types;
+    statusNumbers: Statuses;
     typesNumbers: TypesNumbers;
     invite(request: InviteUserDTO): Promise<any>;
     findAllUsers(uuid: number): Promise<any>;
@@ -42,6 +45,7 @@ export declare class UserService {
     createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any>;
     updateGuest(updateGuestDTO: UpdateGuestDTO): Promise<any>;
     updateAdmin(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any>;
+    addNewPeriod(addNewSuscription: AddNewSuscriptionSuscriptionDTO): Promise<any>;
     getWhoIsRequesting(request: SimpleRequest): Promise<{
         isAdmin: boolean;
         isSuperAdmin: boolean;
@@ -59,4 +63,5 @@ export declare class UserService {
     }): Promise<any>;
     suspendUserAdmin(pauseAdminUserDTO: DeleteAdminUserDTO): Promise<any>;
     suspendUser(pauseUserDTO: DeleteUserDTO): Promise<any>;
+    RequesLogout(reuestSesionLogOutDTO: ReuestSesionLogOutDTO): Promise<any>;
 }

@@ -3,6 +3,11 @@ export declare type Roles = {
     ADMIN: string;
     USER: string;
 };
+export declare type Statuses = {
+    ACTIVE: number;
+    INACTIVE: number;
+    EXPIRED: number;
+};
 export declare type Types = {
     SUPERADMIN: string;
     ADMIN: string;

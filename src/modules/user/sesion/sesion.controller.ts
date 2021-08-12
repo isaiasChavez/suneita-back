@@ -86,6 +86,7 @@ export class SesionController {
   async Logout(
     @Body() requestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
+    console.log({requestSesionLogOutDTO})
     return await this.sesionService.RequesLogout(requestSesionLogOutDTO);
   }
   @Get('des/:email')

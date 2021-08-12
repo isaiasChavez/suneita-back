@@ -68,6 +68,10 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Suscription.prototype, "isActive", void 0);
 __decorate([
+    typeorm_1.Column({ nullable: false, default: false }),
+    __metadata("design:type", Boolean)
+], Suscription.prototype, "isWaiting", void 0);
+__decorate([
     typeorm_1.CreateDateColumn(),
     __metadata("design:type", Date)
 ], Suscription.prototype, "createdAt", void 0);

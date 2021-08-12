@@ -55,15 +55,14 @@ export class ReuestSesionLogOutDTO extends SimpleRequest {
     superAdminUuid,
     userUuid,
     type,
-    email,
     isFromCMS,
   }) {
     super({adminUuid,
       superAdminUuid,
       userUuid,
       type})
-    this.email = email;
     this.isFromCMS = isFromCMS;
+    
   }
   readonly email: string;
   readonly isFromCMS: boolean;

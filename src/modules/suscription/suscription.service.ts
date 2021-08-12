@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from '../user/user/admin.entity';
 import { User } from '../user/user/user.entity';
-import { UpdateSuscriptionDTO } from './suscription.dto';
+import { UserService } from '../user/user/user.service';
+import { AddNewSuscriptionSuscriptionDTO, UpdateSuscriptionDTO } from './suscription.dto';
 import { Suscription } from './suscription.entity';
 
 @Injectable()
 export class SuscriptionService {
     constructor(
+
         @InjectRepository(Admin) private adminRepository: Repository<Admin>,
         @InjectRepository(Suscription) private suscriptionRepository: Repository<Suscription>,
     ) {
@@ -81,5 +83,35 @@ export class SuscriptionService {
         }
     }
 
+    async add(newSuscription: AddNewSuscriptionSuscriptionDTO): Promise<any> {
+        try { 
+            
+            // const suscription: Suscription = await this.suscriptionRepository.findOne({
+            //     where: {
+            //         admin
+            //     }
+            // })
+            // if (!suscription) {
+            //     return {
+            //         status: 1
+            //     }
+            // }
+            // const susTemp = this.suscriptionRepository.create({});
+            // suscription.isActive = false
+            // suscription.isDeleted = true
+            // suscription.finishedAt = susTemp.createdAt
+            // this.suscriptionRepository.save(suscription)
+
+        } catch (err) {
+            console.log("SuscriptionService - delete: ", err);
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    error: "Error adding  suscription",
+                },
+                500
+            );
+        }
+    }
 
 }

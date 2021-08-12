@@ -17,6 +17,8 @@ const common_1 = require("@nestjs/common");
 const user_service_1 = require("./user.service");
 const user_dto_1 = require("./user.dto");
 const class_validator_1 = require("class-validator");
+const suscription_dto_1 = require("../../suscription/suscription.dto");
+const sesion_dto_1 = require("../sesion/sesion.dto");
 let UserController = class UserController {
     constructor(userService) {
         this.userService = userService;
@@ -110,6 +112,19 @@ let UserController = class UserController {
         try {
             await class_validator_1.validateOrReject(newConfirmUserPassword);
             return await this.userService.confirmPassword(confirmUserPassword);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
+    async addNewPeriod(addNewSuscription) {
+        let newaddNewSuscription = new suscription_dto_1.AddNewSuscriptionSuscriptionDTO(addNewSuscription);
+        try {
+            await class_validator_1.validateOrReject(newaddNewSuscription);
+            return await this.userService.addNewPeriod(newaddNewSuscription);
         }
         catch (errors) {
             console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
@@ -222,6 +237,10 @@ let UserController = class UserController {
             };
         }
     }
+    async Logout(requestSesionLogOutDTO) {
+        console.log({ requestSesionLogOutDTO });
+        return await this.userService.RequesLogout(requestSesionLogOutDTO);
+    }
 };
 __decorate([
     common_1.Post("invite"),
@@ -280,6 +299,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "confirmUserPassword", null);
 __decorate([
+    common_1.Put('addperiod'),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [suscription_dto_1.AddNewSuscriptionSuscriptionDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "addNewPeriod", null);
+__decorate([
     common_1.Put('admin'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
@@ -335,6 +361,13 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.DeleteUserDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "suspendUser", null);
+__decorate([
+    common_1.Post('logout'),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [sesion_dto_1.ReuestSesionLogOutDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "Logout", null);
 UserController = __decorate([
     common_1.Controller("user"),
     __metadata("design:paramtypes", [user_service_1.UserService])

@@ -26,6 +26,8 @@ import {
     SetSesionAppId,
 } from "./user.dto";
 import { validateOrReject } from "class-validator";
+import { AddNewSuscriptionSuscriptionDTO } from "src/modules/suscription/suscription.dto";
+import { ReuestSesionLogOutDTO } from "../sesion/sesion.dto";
 
 @Controller("user")
 export class UserController {
@@ -149,6 +151,22 @@ export class UserController {
 
     
    
+    @Put('addperiod')
+    async addNewPeriod(@Body() addNewSuscription: AddNewSuscriptionSuscriptionDTO): Promise<any> {
+        let newaddNewSuscription = new AddNewSuscriptionSuscriptionDTO(addNewSuscription)
+        try {
+            
+            await validateOrReject(newaddNewSuscription);
+            return await this.userService.addNewPeriod(newaddNewSuscription);
+
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+
 
     @Put('admin')
     async updateAdmin(@Body() updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {
@@ -264,6 +282,13 @@ export class UserController {
         }
     }
 
+    @Post('logout')
+    async Logout(
+      @Body() requestSesionLogOutDTO: ReuestSesionLogOutDTO,
+    ): Promise<any> {
+      console.log({requestSesionLogOutDTO})
+      return await this.userService.RequesLogout(requestSesionLogOutDTO);
+    }
 
 
 

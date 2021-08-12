@@ -11,6 +11,7 @@ export declare class Suscription {
     invitations: number;
     isDeleted: boolean;
     isActive: boolean;
+    isWaiting: boolean;
     createdAt: Date;
     updatedAt: Date;
     createUuid(): void;

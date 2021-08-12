@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Admin } from '../user/user/admin.entity';
 import { User } from '../user/user/user.entity';
-import { UpdateSuscriptionDTO } from './suscription.dto';
+import { AddNewSuscriptionSuscriptionDTO, UpdateSuscriptionDTO } from './suscription.dto';
 import { Suscription } from './suscription.entity';
 export declare class SuscriptionService {
     private adminRepository;
@@ -9,4 +9,5 @@ export declare class SuscriptionService {
     constructor(adminRepository: Repository<Admin>, suscriptionRepository: Repository<Suscription>);
     update(suscription: Suscription, updateSuscriptionDTO: UpdateSuscriptionDTO, user: Admin | User, isAdmin: boolean, isGuest: boolean): Promise<any>;
     delete(userId: number): Promise<any>;
+    add(newSuscription: AddNewSuscriptionSuscriptionDTO): Promise<any>;
 }

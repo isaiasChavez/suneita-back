@@ -75,6 +75,7 @@ let SesionController = class SesionController {
         return await this.sesionService.requestPasswordReset(email);
     }
     async Logout(requestSesionLogOutDTO) {
+        console.log({ requestSesionLogOutDTO });
         return await this.sesionService.RequesLogout(requestSesionLogOutDTO);
     }
     async Decifring(email) {

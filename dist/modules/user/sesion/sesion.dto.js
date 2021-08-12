@@ -62,12 +62,11 @@ __decorate([
 ], PasswordRecovery.prototype, "token", void 0);
 exports.PasswordRecovery = PasswordRecovery;
 class ReuestSesionLogOutDTO extends user_dto_1.SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, email, isFromCMS, }) {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, isFromCMS, }) {
         super({ adminUuid,
             superAdminUuid,
             userUuid,
             type });
-        this.email = email;
         this.isFromCMS = isFromCMS;
     }
 }

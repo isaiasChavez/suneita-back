@@ -84,6 +84,17 @@ let SuscriptionService = class SuscriptionService {
             }, 500);
         }
     }
+    async add(newSuscription) {
+        try {
+        }
+        catch (err) {
+            console.log("SuscriptionService - delete: ", err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: "Error adding  suscription",
+            }, 500);
+        }
+    }
 };
 SuscriptionService = __decorate([
     common_1.Injectable(),

@@ -3,6 +3,11 @@ export type Roles = {
   ADMIN: string;
   USER: string;
 };
+export type Statuses = {
+  ACTIVE: number;
+  INACTIVE: number;
+  EXPIRED: number;
+};
 export type Types = {
   SUPERADMIN: string;
   ADMIN: string;

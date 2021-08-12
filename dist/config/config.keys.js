@@ -9,5 +9,7 @@ var Configuration;
     Configuration["AWS_SECRET_ACCESS_KEY"] = "AWS_SECRET_ACCESS_KEY";
     Configuration["S3_ENDPOINT"] = "S3_ENDPOINT";
     Configuration["BUCKED_ENDPOINT"] = "BUCKED_ENDPOINT";
+    Configuration["EMAIL_ETHEREAL"] = "jimmy.hauck12@ethereal.email";
+    Configuration["PASS_ETHEREAL"] = "C9saJjpghXBVJYDGaa";
 })(Configuration = exports.Configuration || (exports.Configuration = {}));
 //# sourceMappingURL=config.keys.js.map

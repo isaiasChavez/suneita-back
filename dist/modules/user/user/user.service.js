@@ -22,9 +22,11 @@ const type_entity_1 = require("../type/type.entity");
 const role_entity_1 = require("../role/role.entity");
 const sesion_entity_1 = require("../sesion/sesion.entity");
 const user_dto_1 = require("./user.dto");
+const config_keys_1 = require("../../../config/config.keys");
 const mailer_1 = require("@nestjs-modules/mailer");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
+const moment = require("moment");
 const types_1 = require("../../../types");
 const superadmin_entity_1 = require("./superadmin.entity");
 const admin_entity_1 = require("./admin.entity");
@@ -63,6 +65,11 @@ let UserService = class UserService {
             SUPERADMIN: 1,
             ADMIN: 2,
             USER: 3,
+        };
+        this.statusNumbers = {
+            ACTIVE: 1,
+            INACTIVE: 2,
+            EXPIRED: 3,
         };
     }
     async invite(request) {
@@ -150,6 +157,13 @@ let UserService = class UserService {
                 }
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
                 console.log({ jwtToken });
+                await this.mailerService.sendMail({
+                    to: config_keys_1.Configuration.EMAIL_ETHEREAL,
+                    from: 'noreply@ocupath.com',
+                    subject: 'Has sido invitado a Ocupath.',
+                    text: 'Your new id',
+                    html: templates_1.newInvitationTemplate(jwtToken),
+                });
             }
             else {
                 if ((userExistInDB && userExistInDB.isActive) ||
@@ -160,7 +174,7 @@ let UserService = class UserService {
                     status = 8;
                 }
             }
-            return { status, token: jwtToken };
+            return { status };
         }
         catch (err) {
             console.log('UserService - invite: ', err);
@@ -215,12 +229,14 @@ let UserService = class UserService {
             await this.sesionRepository.save(sesionExist);
             console.log(templates_1.newIdSession(requestDTO.playerId));
             try {
-                await this.mailerService.sendMail({
-                    to: user.email,
+                const response = await this.mailerService.sendMail({
+                    to: config_keys_1.Configuration.EMAIL_ETHEREAL,
+                    from: 'noreply@ocupath.com',
                     subject: 'Has sido invitado a Ocupath.',
                     text: 'Your new id',
                     html: templates_1.newIdSession(requestDTO.playerId),
                 });
+                console.log({ response });
             }
             catch (error) {
                 return { status: 3, msg: "Email has not been sended, but sesion has been saved" };
@@ -306,8 +322,10 @@ let UserService = class UserService {
                     startedAt: suscription.startedAt,
                 };
             });
-            const lastSuscription = suscriptions.length > 0 ? suscriptions[0] : null;
+            const lastSuscription = suscriptions.find((suscription) => suscription.isActive);
+            const suscriptionWaiting = suscriptions.find((suscription) => suscription.isWaiting);
             return {
+                status: 0,
                 admin: {
                     id: admin.id,
                     name: admin.name,
@@ -316,6 +334,7 @@ let UserService = class UserService {
                     email: admin.email,
                     type: admin.type.id,
                     lastSuscription,
+                    suscriptionWaiting
                 },
             };
         }
@@ -329,12 +348,14 @@ let UserService = class UserService {
     }
     async getUserDetail(getUserDetailDTO) {
         try {
-            const user = await this.adminRepository.findOne({
+            console.log({ getUserDetailDTO });
+            const user = await this.userRepository.findOne({
                 relations: ['type', 'suscriptions'],
                 where: {
                     uuid: getUserDetailDTO.userUuidToGet,
                 },
             });
+            console.log({ user });
             const suscriptions = user.suscriptions.map((suscription) => {
                 return {
                     cost: suscription.cost,
@@ -345,8 +366,11 @@ let UserService = class UserService {
                     startedAt: suscription.startedAt,
                 };
             });
-            const lastSuscription = suscriptions.length > 0 ? suscriptions[0] : null;
+            const lastSuscription = user.suscriptions.find((suscription) => suscription.isActive);
+            const suscriptionWaiting = user.suscriptions.find((suscription) => suscription.isWaiting);
+            console.log({ lastSuscription, suscriptionWaiting });
             return {
+                status: 0,
                 user: {
                     id: user.id,
                     name: user.name,
@@ -355,11 +379,12 @@ let UserService = class UserService {
                     email: user.email,
                     type: user.type.id,
                     lastSuscription,
+                    suscriptionWaiting
                 },
             };
         }
         catch (err) {
-            console.log('UserService - getAdminDetail: ', err);
+            console.log('UserService - getUserDetail: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error getting user',
@@ -381,16 +406,15 @@ let UserService = class UserService {
             }
             if (isSuperAdmin) {
                 dataChildrens.admins = await this.adminRepository.find({
-                    select: ['name', 'lastname', 'avatar', 'uuid', 'isActive', 'email'],
+                    select: ['name', 'email', 'lastname', 'avatar', 'uuid', 'isActive', 'email'],
                     relations: ['suscriptions', 'status'],
                     where: {
                         superadmin: user,
                         isDeleted: false,
                     },
                 });
-                console.log(dataChildrens.admins);
                 dataChildrens.users = await this.userRepository.find({
-                    select: ['name', 'lastname', 'avatar', 'uuid', 'isActive'],
+                    select: ['name', 'email', 'lastname', 'avatar', 'uuid', 'isActive'],
                     relations: ['suscriptions', 'status'],
                     where: {
                         superadmin: user,
@@ -399,7 +423,6 @@ let UserService = class UserService {
                 });
             }
             if (isAdmin) {
-                console.log({ isAdmin });
                 dataChildrens.users = await this.userRepository.find({
                     select: ['name', 'lastname', 'email', 'avatar', 'uuid', 'isActive'],
                     relations: ['suscriptions', 'status'],
@@ -409,13 +432,13 @@ let UserService = class UserService {
                     },
                 });
             }
-            console.log(dataChildrens.admins);
-            console.log(dataChildrens.users);
+            console.log({ dataChildrens });
             const childrens = {
                 admins: [],
                 users: [],
             };
             const filterDataSuscription = (suscription) => {
+                console.log({ suscription });
                 return {
                     cost: suscription.cost,
                     invitations: suscription.invitations,
@@ -435,14 +458,21 @@ let UserService = class UserService {
                     lastname: child.lastname,
                     name: child.name,
                     lastSuscription: null,
+                    suscriptionWaiting: null,
                     status: child.status.id
                 };
                 const lastSuscription = child.suscriptions.find((suscription) => suscription.isActive);
+                const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
                 dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
+                if (suscriptionWaiting) {
+                    dataToSend.suscriptionWaiting = filterDataSuscription(suscriptionWaiting);
+                }
                 return dataToSend;
             };
             if (isSuperAdmin) {
-                childrens.admins = dataChildrens.admins.map((child) => {
+                console.log("childrens.admins:", dataChildrens.admins);
+                childrens.admins = dataChildrens.admins.map((child, i) => {
+                    console.log({ child });
                     const dataToSend = {
                         avatar: child.avatar,
                         email: child.email,
@@ -451,17 +481,27 @@ let UserService = class UserService {
                         uuid: child.uuid,
                         name: child.name,
                         lastSuscription: null,
+                        suscriptionWaiting: null,
                         status: child.status.id
                     };
                     const lastSuscription = child.suscriptions.find((suscription) => suscription.isActive);
+                    const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
                     dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
+                    if (suscriptionWaiting) {
+                        dataToSend.suscriptionWaiting = filterDataSuscription(suscriptionWaiting);
+                    }
                     return dataToSend;
                 });
-                childrens.users = dataChildrens.users.map(filterUsers);
+                if (childrens.users.length > 0) {
+                    console.log("childrens:", { childrens });
+                    childrens.users = dataChildrens.users.map(filterUsers);
+                }
             }
             else {
+                console.log("childrens:", { childrens });
                 childrens.users = dataChildrens.users.map(filterUsers);
             }
+            const actualDate = moment();
             return {
                 profile: {
                     id: user.id,
@@ -618,6 +658,123 @@ let UserService = class UserService {
         }
         catch (err) {
             console.log('UserService - updateAdmin: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error updating  user',
+            }, 500);
+        }
+    }
+    async addNewPeriod(addNewSuscription) {
+        try {
+            let response = {};
+            console.log({ addNewSuscription });
+            const { user, isAdmin, isGuest, isSuperAdmin } = await this.getWhoIsRequesting(addNewSuscription);
+            if (!isSuperAdmin && !isAdmin) {
+                return { status: 1, msg: 'not allowed' };
+            }
+            let userToUpdateIsAdmin = addNewSuscription.typeToUpdate === this.typesNumbers.ADMIN;
+            let userToUpdateIsGuest = addNewSuscription.typeToUpdate === this.typesNumbers.USER;
+            let userToUpdate;
+            let lastSuscription;
+            let hasSuscriptionWaiting;
+            if (userToUpdateIsAdmin) {
+                userToUpdate = await this.adminRepository.findOne({
+                    where: {
+                        uuid: addNewSuscription.adminUuidToUpdate,
+                        superadmin: isSuperAdmin ? user : null,
+                    },
+                    relations: ['status']
+                });
+                if (!userToUpdate) {
+                    return { status: 1, msg: 'user not found' };
+                }
+                lastSuscription =
+                    await this.suscriptionRepository.findOne({
+                        select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+                        where: {
+                            admin: userToUpdate,
+                            user: null,
+                            isActive: true,
+                        },
+                    });
+                hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
+                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+                    where: {
+                        admin: userToUpdate,
+                        user: null,
+                        isWaiting: true,
+                    },
+                });
+            }
+            console.log({ userToUpdateIsGuest, userToUpdateIsAdmin, isSuperAdmin, isAdmin });
+            if (userToUpdateIsGuest) {
+                userToUpdate = await this.userRepository.findOne({
+                    where: {
+                        uuid: addNewSuscription.guestUuidToUpdate,
+                        admin: isAdmin ? user : null,
+                        superadmin: isSuperAdmin ? user : null,
+                    },
+                    relations: ['status']
+                });
+                console.log({ userToUpdate });
+                if (!userToUpdate) {
+                    return { status: 1, msg: 'user not found' };
+                }
+                lastSuscription = await this.suscriptionRepository.findOne({
+                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+                    where: {
+                        admin: null,
+                        user: userToUpdate,
+                        isActive: true,
+                    },
+                });
+                hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
+                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+                    where: {
+                        admin: null,
+                        user: userToUpdate,
+                        isWaiting: true,
+                    },
+                });
+            }
+            console.log({ userToUpdate });
+            if (hasSuscriptionWaiting) {
+                return { status: 3, msg: 'There is already a subscription waiting' };
+            }
+            lastSuscription.isActive = false;
+            const newSuscription = this.suscripctionRepository.create({
+                admin: userToUpdateIsAdmin ? userToUpdate : null,
+                user: userToUpdateIsGuest ? userToUpdate : null,
+                cost: addNewSuscription.cost,
+                startedAt: new Date(addNewSuscription.startedAt),
+                finishedAt: new Date(addNewSuscription.finishedAt),
+                invitations: addNewSuscription.invitations,
+            });
+            console.log({ newSuscription });
+            let newLastSuscription;
+            if (userToUpdate.status.id === this.statusNumbers.EXPIRED) {
+                lastSuscription.isActive = false;
+                lastSuscription.isWaiting = false;
+                newSuscription.isActive = true;
+                newSuscription.isWaiting = false;
+                newLastSuscription = newSuscription;
+            }
+            if (userToUpdate.status.id === this.statusNumbers.INACTIVE || this.statusNumbers.ACTIVE) {
+                lastSuscription.isActive = true;
+                newSuscription.isActive = false;
+                newSuscription.isWaiting = true;
+                newLastSuscription = lastSuscription;
+            }
+            this.suscripctionRepository.save(lastSuscription);
+            this.suscripctionRepository.save(newSuscription);
+            response = {
+                status: 0,
+                lastSuscription: newLastSuscription
+            };
+            return response;
+        }
+        catch (err) {
+            console.log('UserService - addNewPeriod: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error updating  user',
@@ -865,6 +1022,20 @@ let UserService = class UserService {
             userToDelete.isActive = false;
             userToDelete.isDeleted = true;
             await this.userRepository.save(userToDelete);
+            await this.suscripctionRepository.find({
+                where: {
+                    user: userToDelete
+                }
+            });
+            await this.suscriptionRepository
+                .createQueryBuilder()
+                .update()
+                .set({
+                isActive: false,
+                isDeleted: true
+            })
+                .where(`userId = ${userToDelete.id}`)
+                .execute();
             const userDTO = new user_dto_1.UserDTO(userToDelete);
             return {
                 status: 0,
@@ -998,6 +1169,46 @@ let UserService = class UserService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error pausing user',
+            }, 500);
+        }
+    }
+    async RequesLogout(reuestSesionLogOutDTO) {
+        try {
+            console.log({ reuestSesionLogOutDTO });
+            const { isFromCMS } = reuestSesionLogOutDTO;
+            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(reuestSesionLogOutDTO);
+            let response = null;
+            let actualSesion;
+            if (!user) {
+                return { status: 1, msg: 'user not found' };
+            }
+            if (isSuperAdmin) {
+                actualSesion = await this.sesionRepository.findOne({
+                    where: { superadmin: user, isFromCMS },
+                });
+            }
+            if (isAdmin) {
+                actualSesion = await this.sesionRepository.findOne({
+                    where: { admin: user, isFromCMS },
+                });
+            }
+            if (isGuest) {
+                actualSesion = await this.sesionRepository.findOne({
+                    where: { user, isFromCMS },
+                });
+            }
+            if (!actualSesion) {
+                return { status: 2, msg: 'sesion not found' };
+            }
+            await this.sesionRepository.remove(actualSesion);
+            response = { status: 0 };
+            return response;
+        }
+        catch (err) {
+            console.log('SesionService - RequesLogout: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error requesting logout',
             }, 500);
         }
     }

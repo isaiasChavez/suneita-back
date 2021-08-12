@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSuscriptionDTO = void 0;
+exports.AddNewSuscriptionSuscriptionDTO = exports.UpdateSuscriptionDTO = void 0;
 const class_validator_1 = require("class-validator");
+const user_dto_1 = require("../user/user/user.dto");
 class UpdateSuscriptionDTO {
     constructor({ adminUuid, startedAt, finishedAt, cost, business }) {
         this.adminUuid = adminUuid;
@@ -46,4 +47,60 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateSuscriptionDTO.prototype, "business", void 0);
 exports.UpdateSuscriptionDTO = UpdateSuscriptionDTO;
+class AddNewSuscriptionSuscriptionDTO extends user_dto_1.SimpleRequest {
+    constructor({ userUuid, adminUuid, superAdminUuid, type, invitations, cost, startedAt, finishedAt, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate }) {
+        super({ adminUuid,
+            userUuid,
+            superAdminUuid,
+            type });
+        this.invitations = parseInt(invitations);
+        this.cost = parseFloat(cost);
+        this.startedAt = startedAt;
+        this.finishedAt = finishedAt;
+        this.typeToUpdate = typeToUpdate;
+        this.guestUuidToUpdate = guestUuidToUpdate;
+        this.adminUuidToUpdate = adminUuidToUpdate;
+    }
+}
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber(),
+    __metadata("design:type", Number)
+], AddNewSuscriptionSuscriptionDTO.prototype, "invitations", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber(),
+    class_validator_1.IsPositive(),
+    __metadata("design:type", Number)
+], AddNewSuscriptionSuscriptionDTO.prototype, "cost", void 0);
+__decorate([
+    class_validator_1.IsDateString(),
+    class_validator_1.IsString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], AddNewSuscriptionSuscriptionDTO.prototype, "startedAt", void 0);
+__decorate([
+    class_validator_1.IsString(),
+    class_validator_1.IsDateString(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", String)
+], AddNewSuscriptionSuscriptionDTO.prototype, "finishedAt", void 0);
+__decorate([
+    class_validator_1.IsNumber(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", Number)
+], AddNewSuscriptionSuscriptionDTO.prototype, "typeToUpdate", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], AddNewSuscriptionSuscriptionDTO.prototype, "adminUuidToUpdate", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], AddNewSuscriptionSuscriptionDTO.prototype, "guestUuidToUpdate", void 0);
+exports.AddNewSuscriptionSuscriptionDTO = AddNewSuscriptionSuscriptionDTO;
 //# sourceMappingURL=suscription.dto.js.map

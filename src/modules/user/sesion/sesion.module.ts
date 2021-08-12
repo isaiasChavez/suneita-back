@@ -14,6 +14,7 @@ import { Suscription } from 'src/modules/suscription/suscription.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { UserService } from '../user/user.service';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
+import { Status } from '../status/status.entity';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SuscriptionService } from 'src/modules/suscription/suscription.service'
     TypeOrmModule.forFeature([Role]),
     TypeOrmModule.forFeature([Suscription]),
     TypeOrmModule.forFeature([Asset]),
+    TypeOrmModule.forFeature([Status]),
 
   ],
   controllers: [SesionController],

@@ -22,12 +22,11 @@ export declare class PasswordRecovery {
     token: string;
 }
 export declare class ReuestSesionLogOutDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, email, isFromCMS, }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, isFromCMS, }: {
         adminUuid: any;
         superAdminUuid: any;
         userUuid: any;
         type: any;
-        email: any;
         isFromCMS: any;
     });
     readonly email: string;

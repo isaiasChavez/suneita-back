@@ -26,6 +26,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { SimpleRequest } from '../user/user.dto';
 import { UserService } from '../user/user.service';
 import { newResetPassTemplate } from 'src/templates/templates';
+import { Status } from '../status/status.entity';
 const jwt = require('jsonwebtoken');
 @Injectable()
 export class SesionService {
@@ -38,6 +39,7 @@ export class SesionService {
     @InjectRepository(Suscription) private suscriptionRepository: Repository<Suscription>,
     @InjectRepository(Admin) private adminRepository: Repository<Admin>,
     @InjectRepository(Role) private roleRepository: Repository<Role>,
+    @InjectRepository(Status) private statusRepository: Repository<Status>,
     @InjectRepository(Asset) private assetRepository: Repository<Asset>,
     @InjectRepository(SuperAdmin)
     private superAdminRepository: Repository<SuperAdmin>,
@@ -265,6 +267,7 @@ export class SesionService {
     reuestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
     try {
+      console.log({reuestSesionLogOutDTO})
       const {isFromCMS} = reuestSesionLogOutDTO
       const {isAdmin,isSuperAdmin,isGuest,user} =  await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO)
       let response = null;
@@ -605,9 +608,9 @@ export class SesionService {
         },
       });
       const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
+      const userStatus = await this.statusRepository.findOne(1)
 
       const admin = this.adminRepository.create({
-
         superadmin: invitation.superAdmin,
         role: adminRole,
         type: adminType,
@@ -616,6 +619,7 @@ export class SesionService {
         email: createAdminDTO.email,
         password: userPassword,
         business: invitation.company,
+        status:userStatus
       });
 
       await this.adminRepository.save(admin);
@@ -627,6 +631,7 @@ export class SesionService {
 
       const userSuscription = this.suscriptionRepository.create({
         admin: newAdmin,
+        user:null,
         cost: invitation.cost,
         invitations:invitation.invitations,
         startedAt: new Date(invitation.startedAt),
@@ -686,6 +691,8 @@ export class SesionService {
         },
       });
       const userPassword = await bcrypt.hash(createUserDTO.password, 12);
+      const userStatus = await this.statusRepository.findOne(1)
+
       const user = this.userRepository.create({
         admin: invitation.admin,
         superadmin: invitation.superAdmin,
@@ -695,6 +702,7 @@ export class SesionService {
         lastname: createUserDTO.lastname,
         email: createUserDTO.email,
         password: userPassword,
+        status:userStatus
       });
       
       await this.userRepository.save(user);
