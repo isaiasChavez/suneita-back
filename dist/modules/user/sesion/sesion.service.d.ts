@@ -47,6 +47,11 @@ export declare class SesionService {
         isGuest: boolean;
         user: SuperAdmin | Admin | User;
     }>;
+    checkExpiredSuscriptions(user: Admin | User | SuperAdmin, isAdmin: boolean, isGuest: boolean): Promise<{
+        hasSuscriptionActiveExpired: boolean;
+        currentSuscriptionActive: Suscription;
+        currentSuscriptionWaiting: Suscription | null;
+    }>;
     createAdmin(createAdminDTO: CreateAdminDTO): Promise<any>;
     createGuest(createUserDTO: CreateUserDTO): Promise<any>;
 }

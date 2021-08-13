@@ -26,7 +26,6 @@ const config_keys_1 = require("../../../config/config.keys");
 const mailer_1 = require("@nestjs-modules/mailer");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
-const moment = require("moment");
 const types_1 = require("../../../types");
 const superadmin_entity_1 = require("./superadmin.entity");
 const admin_entity_1 = require("./admin.entity");
@@ -36,8 +35,9 @@ const asset_entity_1 = require("../../asset/asset.entity");
 const invitation_entity_1 = require("../invitation/invitation.entity");
 const suscription_service_1 = require("../../suscription/suscription.service");
 const templates_1 = require("../../../templates/templates");
+const status_entity_1 = require("../status/status.entity");
 let UserService = class UserService {
-    constructor(mailerService, suscriptionService, userRepository, suscripctionRepository, superAdminRepository, adminRepository, tokenRepository, assetRepository, typeRepository, roleRepository, invitationRepository, sesionRepository, suscriptionRepository) {
+    constructor(mailerService, suscriptionService, userRepository, suscripctionRepository, superAdminRepository, adminRepository, tokenRepository, assetRepository, typeRepository, roleRepository, statusRepository, invitationRepository, sesionRepository, suscriptionRepository) {
         this.mailerService = mailerService;
         this.suscriptionService = suscriptionService;
         this.userRepository = userRepository;
@@ -48,6 +48,7 @@ let UserService = class UserService {
         this.assetRepository = assetRepository;
         this.typeRepository = typeRepository;
         this.roleRepository = roleRepository;
+        this.statusRepository = statusRepository;
         this.invitationRepository = invitationRepository;
         this.sesionRepository = sesionRepository;
         this.suscriptionRepository = suscriptionRepository;
@@ -213,17 +214,17 @@ let UserService = class UserService {
         try {
             const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO);
             if (!user) {
-                return { status: 1, msg: "User does not exist" };
+                return { status: 1, msg: 'User does not exist' };
             }
             const sesionExist = await this.sesionRepository.findOne({
                 where: {
                     admin: isAdmin ? user : null,
                     user: isGuest ? user : null,
                     isFromCMS: false,
-                }
+                },
             });
             if (!sesionExist) {
-                return { status: 2, msg: "sesion does not exist" };
+                return { status: 2, msg: 'sesion does not exist' };
             }
             sesionExist.playerId = requestDTO.playerId;
             await this.sesionRepository.save(sesionExist);
@@ -239,7 +240,10 @@ let UserService = class UserService {
                 console.log({ response });
             }
             catch (error) {
-                return { status: 3, msg: "Email has not been sended, but sesion has been saved" };
+                return {
+                    status: 3,
+                    msg: 'Email has not been sended, but sesion has been saved',
+                };
             }
             return { status: 0 };
         }
@@ -334,7 +338,7 @@ let UserService = class UserService {
                     email: admin.email,
                     type: admin.type.id,
                     lastSuscription,
-                    suscriptionWaiting
+                    suscriptionWaiting,
                 },
             };
         }
@@ -355,7 +359,6 @@ let UserService = class UserService {
                     uuid: getUserDetailDTO.userUuidToGet,
                 },
             });
-            console.log({ user });
             const suscriptions = user.suscriptions.map((suscription) => {
                 return {
                     cost: suscription.cost,
@@ -368,7 +371,6 @@ let UserService = class UserService {
             });
             const lastSuscription = user.suscriptions.find((suscription) => suscription.isActive);
             const suscriptionWaiting = user.suscriptions.find((suscription) => suscription.isWaiting);
-            console.log({ lastSuscription, suscriptionWaiting });
             return {
                 status: 0,
                 user: {
@@ -379,7 +381,7 @@ let UserService = class UserService {
                     email: user.email,
                     type: user.type.id,
                     lastSuscription,
-                    suscriptionWaiting
+                    suscriptionWaiting,
                 },
             };
         }
@@ -404,15 +406,30 @@ let UserService = class UserService {
                     msg: 'User not found',
                 };
             }
+            await this.clearSuscriptionsExpired();
             if (isSuperAdmin) {
-                dataChildrens.admins = await this.adminRepository.find({
-                    select: ['name', 'email', 'lastname', 'avatar', 'uuid', 'isActive', 'email'],
-                    relations: ['suscriptions', 'status'],
-                    where: {
-                        superadmin: user,
-                        isDeleted: false,
-                    },
-                });
+                try {
+                    dataChildrens.admins = await this.adminRepository.find({
+                        select: [
+                            'name',
+                            'email',
+                            'lastname',
+                            'avatar',
+                            'uuid',
+                            'isActive',
+                            'email',
+                        ],
+                        relations: ['suscriptions', 'status'],
+                        where: {
+                            superadmin: user,
+                            isDeleted: false,
+                        },
+                    });
+                }
+                catch (error) {
+                    console.log('Error en el query');
+                    console.log({ error });
+                }
                 dataChildrens.users = await this.userRepository.find({
                     select: ['name', 'email', 'lastname', 'avatar', 'uuid', 'isActive'],
                     relations: ['suscriptions', 'status'],
@@ -432,13 +449,11 @@ let UserService = class UserService {
                     },
                 });
             }
-            console.log({ dataChildrens });
             const childrens = {
                 admins: [],
                 users: [],
             };
             const filterDataSuscription = (suscription) => {
-                console.log({ suscription });
                 return {
                     cost: suscription.cost,
                     invitations: suscription.invitations,
@@ -459,20 +474,19 @@ let UserService = class UserService {
                     name: child.name,
                     lastSuscription: null,
                     suscriptionWaiting: null,
-                    status: child.status.id
+                    status: child.status.id,
                 };
                 const lastSuscription = child.suscriptions.find((suscription) => suscription.isActive);
                 const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
                 dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
                 if (suscriptionWaiting) {
-                    dataToSend.suscriptionWaiting = filterDataSuscription(suscriptionWaiting);
+                    dataToSend.suscriptionWaiting =
+                        filterDataSuscription(suscriptionWaiting);
                 }
                 return dataToSend;
             };
             if (isSuperAdmin) {
-                console.log("childrens.admins:", dataChildrens.admins);
                 childrens.admins = dataChildrens.admins.map((child, i) => {
-                    console.log({ child });
                     const dataToSend = {
                         avatar: child.avatar,
                         email: child.email,
@@ -482,26 +496,22 @@ let UserService = class UserService {
                         name: child.name,
                         lastSuscription: null,
                         suscriptionWaiting: null,
-                        status: child.status.id
+                        status: child.status.id,
                     };
                     const lastSuscription = child.suscriptions.find((suscription) => suscription.isActive);
                     const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
                     dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
                     if (suscriptionWaiting) {
-                        dataToSend.suscriptionWaiting = filterDataSuscription(suscriptionWaiting);
+                        dataToSend.suscriptionWaiting =
+                            filterDataSuscription(suscriptionWaiting);
                     }
                     return dataToSend;
                 });
-                if (childrens.users.length > 0) {
-                    console.log("childrens:", { childrens });
-                    childrens.users = dataChildrens.users.map(filterUsers);
-                }
-            }
-            else {
-                console.log("childrens:", { childrens });
                 childrens.users = dataChildrens.users.map(filterUsers);
             }
-            const actualDate = moment();
+            else {
+                childrens.users = dataChildrens.users.map(filterUsers);
+            }
             return {
                 profile: {
                     id: user.id,
@@ -519,6 +529,142 @@ let UserService = class UserService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error getting user',
+            }, 500);
+        }
+    }
+    async clearSuscriptionsExpired() {
+        try {
+            const querySuscriptionsExpired = (type) => `suscription.finishedAt < :date AND suscription.isActive = true AND ${type}.isActive = true`;
+            const querySuscriptionsWaiting = (type) => ` suscription.isWaiting = true AND ${type}.isActive = true AND ${type}.id IN (:...${type}sExpiredIds)`;
+            const adminsExpired = await this.suscriptionRepository
+                .createQueryBuilder('suscription')
+                .innerJoinAndSelect('suscription.admin', 'admin')
+                .select('suscription.id', 'suscriptionId')
+                .addSelect('admin.id', 'adminId')
+                .where(querySuscriptionsExpired('admin'), { date: new Date() })
+                .execute();
+            const guestExpired = await this.suscriptionRepository
+                .createQueryBuilder('suscription')
+                .innerJoinAndSelect('suscription.user', 'user')
+                .select('suscription.id', 'suscriptionId')
+                .addSelect('user.id', 'userId')
+                .where(querySuscriptionsExpired('user'), { date: new Date() })
+                .execute();
+            const adminsExpiredIds = adminsExpired.map((suscription) => suscription.adminId);
+            const usersExpiredIds = guestExpired.map((suscription) => suscription.userId);
+            console.log({ adminsExpired, guestExpired });
+            console.log({ adminsExpiredIds, usersExpiredIds });
+            const suscriptionsAdminExpiredIds = adminsExpired.map((suscription) => suscription.suscriptionId);
+            const suscriptionsGuestExpiredIds = guestExpired.map((suscription) => suscription.suscriptionId);
+            const sucriptionsAdminWaiting = await this.suscriptionRepository
+                .createQueryBuilder('suscription')
+                .innerJoinAndSelect('suscription.admin', 'admin')
+                .select('suscription.id', 'suscriptionId')
+                .addSelect('admin.id', 'adminId')
+                .where(querySuscriptionsWaiting('admin'), { adminsExpiredIds })
+                .execute();
+            const sucriptionsUserWaiting = await this.suscriptionRepository
+                .createQueryBuilder('suscription')
+                .innerJoinAndSelect('suscription.user', 'user')
+                .select('suscription.id', 'suscriptionId')
+                .addSelect('user.id', 'userId')
+                .where(querySuscriptionsWaiting('user'), { usersExpiredIds })
+                .execute();
+            const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map((suscription) => suscription.adminId);
+            const usersWithSuscriptionsWaitingIds = sucriptionsUserWaiting.map((suscription) => suscription.userId);
+            const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter((adminId) => {
+                if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
+                    return adminId;
+                }
+            });
+            const usersWithNotSuscWaitingButExpiredIds = usersExpiredIds.filter((userId) => {
+                if (!usersWithSuscriptionsWaitingIds.includes(userId)) {
+                    return userId;
+                }
+            });
+            const expiredStatus = await this.statusRepository.findOne({
+                where: {
+                    name: 'EXPIRED',
+                },
+            });
+            console.log({ suscriptionsAdminExpiredIds });
+            await this.adminRepository
+                .createQueryBuilder()
+                .update()
+                .set({
+                status: expiredStatus,
+            })
+                .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)', {
+                adminsWithNotSuscWaitingButExpiredIds,
+            })
+                .execute();
+            await this.userRepository
+                .createQueryBuilder()
+                .update()
+                .set({
+                status: expiredStatus,
+            })
+                .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)', {
+                usersWithNotSuscWaitingButExpiredIds,
+            })
+                .execute();
+            if (adminsWithSuscriptionsWaitingIds.length > 0) {
+                const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
+                    .createQueryBuilder('suscription')
+                    .innerJoin('suscription.admin', 'admin')
+                    .update()
+                    .set({
+                    isActive: false,
+                })
+                    .where('isActive = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)', { adminsWithSuscriptionsWaitingIds })
+                    .execute();
+                const responseUpdateSuscriptionNAdmin = await this.suscriptionRepository
+                    .createQueryBuilder('suscription')
+                    .innerJoin('suscription.admin', 'admin')
+                    .update()
+                    .set({
+                    isActive: true,
+                    isWaiting: false,
+                })
+                    .where('isWaiting = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)', { adminsWithSuscriptionsWaitingIds })
+                    .execute();
+                console.log({
+                    responseUpdateSuscriptionNAdmin,
+                    responseUpdateSuscriptionAdmin,
+                });
+            }
+            if (usersWithSuscriptionsWaitingIds.length > 0) {
+                const responseUpdateSuscriptionUser = await this.suscriptionRepository
+                    .createQueryBuilder('suscription')
+                    .innerJoin('suscription.user', 'user')
+                    .update()
+                    .set({
+                    isActive: false,
+                })
+                    .where('isActive = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)', { usersWithSuscriptionsWaitingIds })
+                    .execute();
+                const responseUpdateSuscriptionNUser = await this.suscriptionRepository
+                    .createQueryBuilder('suscription')
+                    .innerJoin('suscription.user', 'user')
+                    .update()
+                    .set({
+                    isActive: true,
+                    isWaiting: false,
+                })
+                    .where('isWaiting = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)', { usersWithSuscriptionsWaitingIds })
+                    .execute();
+                console.log({
+                    responseUpdateSuscriptionUser,
+                    responseUpdateSuscriptionNUser,
+                });
+            }
+            return { status: 0 };
+        }
+        catch (err) {
+            console.log('UserService - create: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error cleaning Suscriptions Expired ',
             }, 500);
         }
     }
@@ -672,8 +818,8 @@ let UserService = class UserService {
             if (!isSuperAdmin && !isAdmin) {
                 return { status: 1, msg: 'not allowed' };
             }
-            let userToUpdateIsAdmin = addNewSuscription.typeToUpdate === this.typesNumbers.ADMIN;
-            let userToUpdateIsGuest = addNewSuscription.typeToUpdate === this.typesNumbers.USER;
+            const userToUpdateIsAdmin = addNewSuscription.typeToUpdate === this.typesNumbers.ADMIN;
+            const userToUpdateIsGuest = addNewSuscription.typeToUpdate === this.typesNumbers.USER;
             let userToUpdate;
             let lastSuscription;
             let hasSuscriptionWaiting;
@@ -683,20 +829,19 @@ let UserService = class UserService {
                         uuid: addNewSuscription.adminUuidToUpdate,
                         superadmin: isSuperAdmin ? user : null,
                     },
-                    relations: ['status']
+                    relations: ['status'],
                 });
                 if (!userToUpdate) {
                     return { status: 1, msg: 'user not found' };
                 }
-                lastSuscription =
-                    await this.suscriptionRepository.findOne({
-                        select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
-                        where: {
-                            admin: userToUpdate,
-                            user: null,
-                            isActive: true,
-                        },
-                    });
+                lastSuscription = await this.suscriptionRepository.findOne({
+                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+                    where: {
+                        admin: userToUpdate,
+                        user: null,
+                        isActive: true,
+                    },
+                });
                 hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
                     select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
                     where: {
@@ -706,7 +851,12 @@ let UserService = class UserService {
                     },
                 });
             }
-            console.log({ userToUpdateIsGuest, userToUpdateIsAdmin, isSuperAdmin, isAdmin });
+            console.log({
+                userToUpdateIsGuest,
+                userToUpdateIsAdmin,
+                isSuperAdmin,
+                isAdmin,
+            });
             if (userToUpdateIsGuest) {
                 userToUpdate = await this.userRepository.findOne({
                     where: {
@@ -714,7 +864,7 @@ let UserService = class UserService {
                         admin: isAdmin ? user : null,
                         superadmin: isSuperAdmin ? user : null,
                     },
-                    relations: ['status']
+                    relations: ['status'],
                 });
                 console.log({ userToUpdate });
                 if (!userToUpdate) {
@@ -759,7 +909,8 @@ let UserService = class UserService {
                 newSuscription.isWaiting = false;
                 newLastSuscription = newSuscription;
             }
-            if (userToUpdate.status.id === this.statusNumbers.INACTIVE || this.statusNumbers.ACTIVE) {
+            if (userToUpdate.status.id === this.statusNumbers.INACTIVE ||
+                this.statusNumbers.ACTIVE) {
                 lastSuscription.isActive = true;
                 newSuscription.isActive = false;
                 newSuscription.isWaiting = true;
@@ -769,7 +920,7 @@ let UserService = class UserService {
             this.suscripctionRepository.save(newSuscription);
             response = {
                 status: 0,
-                lastSuscription: newLastSuscription
+                lastSuscription: newLastSuscription,
             };
             return response;
         }
@@ -950,6 +1101,12 @@ let UserService = class UserService {
             await this.updateArrayUsers(admin.users, {
                 isActive: false,
                 isDeleted: true,
+            }, {
+                isActive: false,
+                isDeleted: true,
+            }, {
+                isActive: false,
+                isDeleted: true,
             });
             const assetsAdmin = await this.assetRepository.find({
                 where: {
@@ -1022,17 +1179,12 @@ let UserService = class UserService {
             userToDelete.isActive = false;
             userToDelete.isDeleted = true;
             await this.userRepository.save(userToDelete);
-            await this.suscripctionRepository.find({
-                where: {
-                    user: userToDelete
-                }
-            });
             await this.suscriptionRepository
                 .createQueryBuilder()
                 .update()
                 .set({
                 isActive: false,
-                isDeleted: true
+                isDeleted: true,
             })
                 .where(`userId = ${userToDelete.id}`)
                 .execute();
@@ -1050,32 +1202,34 @@ let UserService = class UserService {
             }, 500);
         }
     }
-    async updateArrayUsers(users, status) {
+    async updateArrayUsers(users, statusUser, statusSuscription, statusAsset) {
         const usersIds = users.map((user) => user.id);
         let assetsIds = [];
         if (usersIds.length !== 0) {
             await this.userRepository
                 .createQueryBuilder()
                 .update()
-                .set(status)
+                .set(statusUser)
                 .where('id IN (:...usersIds)', {
                 usersIds,
             })
                 .execute();
-            const suscriptions = await this.suscripctionRepository.find({
-                where: {
-                    user: typeorm_2.In(usersIds),
-                },
-            });
-            const suscriptionsIds = suscriptions.map((suscription) => suscription.id);
-            await this.suscriptionRepository
-                .createQueryBuilder()
-                .update()
-                .set(status)
-                .where('id IN (:...suscriptionsIds)', {
-                suscriptionsIds,
-            })
-                .execute();
+            if (statusSuscription) {
+                const suscriptions = await this.suscripctionRepository.find({
+                    where: {
+                        user: typeorm_2.In(usersIds),
+                    },
+                });
+                const suscriptionsIds = suscriptions.map((suscription) => suscription.id);
+                await this.suscriptionRepository
+                    .createQueryBuilder()
+                    .update()
+                    .set(statusSuscription)
+                    .where('id IN (:...suscriptionsIds)', {
+                    suscriptionsIds,
+                })
+                    .execute();
+            }
             const assetsChildrens = await this.assetRepository.find({
                 where: {
                     user: typeorm_2.In(usersIds),
@@ -1086,8 +1240,8 @@ let UserService = class UserService {
                 await this.assetRepository
                     .createQueryBuilder()
                     .update()
-                    .set(status)
-                    .where('id IN (:...allAssetsIds)', {
+                    .set(statusAsset)
+                    .where('id IN (:...assetsIds)', {
                     assetsIds,
                 })
                     .execute();
@@ -1111,19 +1265,13 @@ let UserService = class UserService {
             if (!admin) {
                 return { status: 2, msg: 'admin not found' };
             }
+            console.log('===========');
+            console.log(admin.users);
+            console.log('===========');
             await this.updateArrayUsers(admin.users, {
                 isActive: pauseAdminUserDTO.status,
                 isDeleted: false,
-            });
-            const suscription = await this.suscriptionRepository.findOne({
-                where: {
-                    admin,
-                },
-            });
-            if (suscription) {
-                suscription.isActive = pauseAdminUserDTO.status;
-                await this.suscriptionRepository.save(suscription);
-            }
+            }, null, { isActive: pauseAdminUserDTO.status, isDeleted: false });
             admin.isActive = pauseAdminUserDTO.status;
             await this.adminRepository.save(admin);
             const userDTO = new user_dto_1.UserDTO(admin);
@@ -1154,11 +1302,6 @@ let UserService = class UserService {
             if (!user) {
                 return { status: 2, msg: 'user not found' };
             }
-            const suscription = await this.suscriptionRepository.findOne({
-                where: {
-                    user,
-                },
-            });
             user.isActive = pauseUserDTO.status;
             await this.userRepository.save(user);
             const userDTO = new user_dto_1.UserDTO(user);
@@ -1229,11 +1372,13 @@ UserService = __decorate([
     __param(7, typeorm_1.InjectRepository(asset_entity_1.Asset)),
     __param(8, typeorm_1.InjectRepository(type_entity_1.Type)),
     __param(9, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(10, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
-    __param(11, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
-    __param(12, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(10, typeorm_1.InjectRepository(status_entity_1.Status)),
+    __param(11, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __param(12, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
+    __param(13, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
     __metadata("design:paramtypes", [mailer_1.MailerService,
         suscription_service_1.SuscriptionService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

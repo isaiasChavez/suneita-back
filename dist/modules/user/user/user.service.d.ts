@@ -15,6 +15,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { ReuestSesionLogOutDTO } from '../sesion/sesion.dto';
+import { Status } from '../status/status.entity';
 export declare class UserService {
     private readonly mailerService;
     private readonly suscriptionService;
@@ -26,10 +27,11 @@ export declare class UserService {
     private assetRepository;
     private typeRepository;
     private roleRepository;
+    private statusRepository;
     private invitationRepository;
     private sesionRepository;
     private suscriptionRepository;
-    constructor(mailerService: MailerService, suscriptionService: SuscriptionService, userRepository: Repository<User>, suscripctionRepository: Repository<Suscription>, superAdminRepository: Repository<SuperAdmin>, adminRepository: Repository<Admin>, tokenRepository: Repository<Token>, assetRepository: Repository<Asset>, typeRepository: Repository<Type>, roleRepository: Repository<Role>, invitationRepository: Repository<Invitation>, sesionRepository: Repository<Sesion>, suscriptionRepository: Repository<Suscription>);
+    constructor(mailerService: MailerService, suscriptionService: SuscriptionService, userRepository: Repository<User>, suscripctionRepository: Repository<Suscription>, superAdminRepository: Repository<SuperAdmin>, adminRepository: Repository<Admin>, tokenRepository: Repository<Token>, assetRepository: Repository<Asset>, typeRepository: Repository<Type>, roleRepository: Repository<Role>, statusRepository: Repository<Status>, invitationRepository: Repository<Invitation>, sesionRepository: Repository<Sesion>, suscriptionRepository: Repository<Suscription>);
     roles: Roles;
     types: Types;
     statusNumbers: Statuses;
@@ -42,6 +44,7 @@ export declare class UserService {
     getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any>;
     getUserDetail(getUserDetailDTO: GetUserDetailDTO): Promise<any>;
     findUserChildrens(findUserChildrensDTO: SimpleRequest): Promise<any>;
+    clearSuscriptionsExpired(): Promise<any>;
     createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any>;
     updateGuest(updateGuestDTO: UpdateGuestDTO): Promise<any>;
     updateAdmin(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any>;
@@ -57,7 +60,13 @@ export declare class UserService {
     getTypeAndUser(type: number, adminUuid: string, superAdminUuid: string): Promise<any>;
     deleteUserAdmin(deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any>;
     deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any>;
-    updateArrayUsers(users: User[], status: {
+    updateArrayUsers(users: User[], statusUser: {
+        isActive: boolean;
+        isDeleted: boolean;
+    }, statusSuscription: {
+        isActive: boolean;
+        isDeleted: boolean;
+    }, statusAsset: {
         isActive: boolean;
         isDeleted: boolean;
     }): Promise<any>;

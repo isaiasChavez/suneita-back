@@ -81,11 +81,23 @@ export class SesionService {
           status: 1,
           msg: `email does't exist`,
         };
-      } 
-
+      }
       const match = await bcrypt.compare(requestDTO.password, user.password);
-
       if (match) {
+
+        
+      if (isAdmin||isGuest) {
+        const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
+        console.log({statusSuscription})
+        if (statusSuscription.hasSuscriptionActiveExpired) {
+          return { 
+            status:3, 
+            msg:"Suscription has expired"
+          }
+        }
+      }
+
+
         let sesionExist: Sesion;
 
         if (isSuperAdmin) {
@@ -177,6 +189,9 @@ export class SesionService {
           msg: `email does't exist`,
         };
       }
+
+
+
       const match = await bcrypt.compare(requestDTO.password, user.password);
       let response
       if (match) {
@@ -564,6 +579,61 @@ export class SesionService {
     }
   }
 
+
+    async checkExpiredSuscriptions(user:Admin|User|SuperAdmin,isAdmin:boolean,isGuest:boolean): Promise<{hasSuscriptionActiveExpired:boolean,currentSuscriptionActive:Suscription,
+      currentSuscriptionWaiting:Suscription|null}> {
+    try {
+      
+      let currentSuscriptionActive:Suscription = null
+      let currentSuscriptionWaiting:Suscription = null
+
+      const suscriptionActive:Suscription = await  this.suscriptionRepository.findOne({
+        where: {
+          isActive:true,
+        admin: isAdmin ?user:null,
+        user:isGuest ?user:null
+        }
+      })
+
+      const suscriptionWaiting:Suscription = await this.suscriptionRepository.findOne({
+        where: {
+          isActive:false,
+          isWaiting:true,
+        admin: isAdmin ?user:null,
+        user:isGuest ?user:null
+        }
+      })
+
+      let hasSuscriptionActiveExpired = suscriptionActive.finishedAt < new Date()  
+
+      if (hasSuscriptionActiveExpired&&suscriptionWaiting) {
+        suscriptionActive.isActive = false
+        suscriptionWaiting.isActive = true
+        suscriptionWaiting.isWaiting = false
+        await this.superAdminRepository.save([suscriptionActive,suscriptionWaiting])
+        currentSuscriptionActive = suscriptionWaiting
+        hasSuscriptionActiveExpired = false
+      }else{
+        currentSuscriptionActive = suscriptionActive
+        currentSuscriptionWaiting = suscriptionWaiting
+      }
+      console.log({currentSuscriptionActive,currentSuscriptionWaiting,hasSuscriptionActiveExpired})
+
+      return {
+        currentSuscriptionActive,
+        currentSuscriptionWaiting,
+        hasSuscriptionActiveExpired}
+    } catch (err) {
+      console.log('SesionService - checkExpiredSuscriptions: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error checking Expired Suscriptions  user',
+        },
+        500,
+      );
+    }
+  }
 
   async createAdmin(createAdminDTO: CreateAdminDTO): Promise<any> {
     try {

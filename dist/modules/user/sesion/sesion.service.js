@@ -79,6 +79,16 @@ let SesionService = class SesionService {
             }
             const match = await bcrypt.compare(requestDTO.password, user.password);
             if (match) {
+                if (isAdmin || isGuest) {
+                    const statusSuscription = await this.checkExpiredSuscriptions(user, isAdmin, isGuest);
+                    console.log({ statusSuscription });
+                    if (statusSuscription.hasSuscriptionActiveExpired) {
+                        return {
+                            status: 3,
+                            msg: "Suscription has expired"
+                        };
+                    }
+                }
                 let sesionExist;
                 if (isSuperAdmin) {
                     sesionExist = await this.sesionRepository.findOne({
@@ -476,6 +486,53 @@ let SesionService = class SesionService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error Changing Name  user',
+            }, 500);
+        }
+    }
+    async checkExpiredSuscriptions(user, isAdmin, isGuest) {
+        try {
+            let currentSuscriptionActive = null;
+            let currentSuscriptionWaiting = null;
+            const suscriptionActive = await this.suscriptionRepository.findOne({
+                where: {
+                    isActive: true,
+                    admin: isAdmin ? user : null,
+                    user: isGuest ? user : null
+                }
+            });
+            const suscriptionWaiting = await this.suscriptionRepository.findOne({
+                where: {
+                    isActive: false,
+                    isWaiting: true,
+                    admin: isAdmin ? user : null,
+                    user: isGuest ? user : null
+                }
+            });
+            let hasSuscriptionActiveExpired = suscriptionActive.finishedAt < new Date();
+            if (hasSuscriptionActiveExpired && suscriptionWaiting) {
+                suscriptionActive.isActive = false;
+                suscriptionWaiting.isActive = true;
+                suscriptionWaiting.isWaiting = false;
+                await this.superAdminRepository.save([suscriptionActive, suscriptionWaiting]);
+                currentSuscriptionActive = suscriptionWaiting;
+                hasSuscriptionActiveExpired = false;
+            }
+            else {
+                currentSuscriptionActive = suscriptionActive;
+                currentSuscriptionWaiting = suscriptionWaiting;
+            }
+            console.log({ currentSuscriptionActive, currentSuscriptionWaiting, hasSuscriptionActiveExpired });
+            return {
+                currentSuscriptionActive,
+                currentSuscriptionWaiting,
+                hasSuscriptionActiveExpired
+            };
+        }
+        catch (err) {
+            console.log('SesionService - checkExpiredSuscriptions: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error checking Expired Suscriptions  user',
             }, 500);
         }
     }

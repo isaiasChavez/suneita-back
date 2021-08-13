@@ -14,6 +14,7 @@ const suscription_service_1 = require("../suscription/suscription.service");
 const invitation_entity_1 = require("../user/invitation/invitation.entity");
 const role_entity_1 = require("../user/role/role.entity");
 const sesion_entity_1 = require("../user/sesion/sesion.entity");
+const status_entity_1 = require("../user/status/status.entity");
 const token_entity_1 = require("../user/token/token.entity");
 const type_entity_1 = require("../user/type/type.entity");
 const admin_entity_1 = require("../user/user/admin.entity");
@@ -41,6 +42,7 @@ AssetModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([role_entity_1.Role]),
             typeorm_1.TypeOrmModule.forFeature([sesion_entity_1.Sesion]),
             typeorm_1.TypeOrmModule.forFeature([invitation_entity_1.Invitation]),
+            typeorm_1.TypeOrmModule.forFeature([status_entity_1.Status]),
             type_asset_module_1.TypeAssetModule,
         ],
         controllers: [asset_controller_1.AssetController],

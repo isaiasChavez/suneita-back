@@ -5,6 +5,7 @@ import { SuscriptionService } from '../suscription/suscription.service';
 import { Invitation } from '../user/invitation/invitation.entity';
 import { Role } from '../user/role/role.entity';
 import { Sesion } from '../user/sesion/sesion.entity';
+import { Status } from '../user/status/status.entity';
 import { Token } from '../user/token/token.entity';
 import { Type } from '../user/type/type.entity';
 import { Admin } from '../user/user/admin.entity';
@@ -30,6 +31,7 @@ import { TypeAssetModule } from './type-asset/type-asset.module';
     TypeOrmModule.forFeature([Role]),
     TypeOrmModule.forFeature([Sesion]),
     TypeOrmModule.forFeature([Invitation]),
+    TypeOrmModule.forFeature([Status]),
     TypeAssetModule,
   ],
   controllers: [AssetController],
