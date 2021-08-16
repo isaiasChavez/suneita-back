@@ -53,7 +53,7 @@ AppModule = AppModule_1 = __decorate([
                         pool: true,
                         host: 'box1128.bluehost.com',
                         port: 465,
-                        secure: false,
+                        secure: true,
                         auth: {
                             user: 'ocupath@inmersys.com',
                             pass: 'flt&*^TGfAGU'

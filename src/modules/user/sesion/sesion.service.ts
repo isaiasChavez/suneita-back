@@ -477,8 +477,10 @@ export class SesionService {
 
   async requestPasswordReset(requestEmail: string): Promise<any> {
     try {
+      console.log({requestEmail})
       let response = { status: 0 };
       const {isAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestEmail)
+      console.log({isAdmin,isGuest,user})
       if (user) {        
         //Verificar si ya existe un token antes que este
         let existToken:Token
@@ -514,13 +516,14 @@ export class SesionService {
             expiresIn: 7200000,
           },
         );
-        await this.mailerService.sendMail({
+       const resoponseEmail=  await this.mailerService.sendMail({
           to: user.email,
           from: 'noreply@ocupath.com', // sender address
             subject: 'Nueva solicitud de recuperación de contraseña',
             text: 'Has solicitado la recuperación de tu contraseña', // plaintext body
             html: newResetPassTemplate(token), // HTML body content
         });
+        console.log({resoponseEmail})
         // Se envia correo
         // await this.mailerService.sendMail({
         //     to: requestEmail,

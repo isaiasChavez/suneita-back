@@ -218,7 +218,7 @@ export class UserService {
         console.log({ jwtToken });
 
         await this.mailerService.sendMail({
-          to: Configuration.EMAIL_ETHEREAL,
+          to: request.email,
           from: 'noreply@ocupath.com', // sender address
           subject: 'Has sido invitado a Ocupath.',
           text: 'Your new id', // plaintext body

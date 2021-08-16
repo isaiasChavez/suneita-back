@@ -415,8 +415,10 @@ let SesionService = class SesionService {
     }
     async requestPasswordReset(requestEmail) {
         try {
+            console.log({ requestEmail });
             let response = { status: 0 };
             const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestEmail);
+            console.log({ isAdmin, isGuest, user });
             if (user) {
                 let existToken;
                 existToken = await this.tokenRepository.findOne({
@@ -440,13 +442,14 @@ let SesionService = class SesionService {
                 const token = await jwt.sign({ tokenid: registerToken.id }, process.env.TOKEN_SECRET, {
                     expiresIn: 7200000,
                 });
-                await this.mailerService.sendMail({
+                const resoponseEmail = await this.mailerService.sendMail({
                     to: user.email,
                     from: 'noreply@ocupath.com',
                     subject: 'Nueva solicitud de recuperación de contraseña',
                     text: 'Has solicitado la recuperación de tu contraseña',
                     html: templates_1.newResetPassTemplate(token),
                 });
+                console.log({ resoponseEmail });
                 return {
                     status: 0,
                 };

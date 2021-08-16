@@ -30,7 +30,7 @@ import { StatusModule } from './modules/user/status/status.module';
           pool: true,
           host: 'box1128.bluehost.com',//process.env.SMTP_HOST,
           port: 465,//process.env.SMTP_PORT, // 587,
-          secure:false, //true, // false,
+          secure:true, //true, // false,
           auth: {
             user:'ocupath@inmersys.com',// process.env.SMTP_USER, // 'nicola.bruen@ethereal.email',
             pass: 'flt&*^TGfAGU'//process.env.SMTP_PASS, // 'a3UQAZ3E4yZMu9JG74'

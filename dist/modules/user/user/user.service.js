@@ -159,7 +159,7 @@ let UserService = class UserService {
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
                 console.log({ jwtToken });
                 await this.mailerService.sendMail({
-                    to: config_keys_1.Configuration.EMAIL_ETHEREAL,
+                    to: request.email,
                     from: 'noreply@ocupath.com',
                     subject: 'Has sido invitado a Ocupath.',
                     text: 'Your new id',
