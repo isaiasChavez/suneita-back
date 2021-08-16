@@ -84,11 +84,9 @@ export class SesionService {
       }
       const match = await bcrypt.compare(requestDTO.password, user.password);
       if (match) {
-
         
       if (isAdmin||isGuest) {
         const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
-        console.log({statusSuscription})
         if (statusSuscription.hasSuscriptionActiveExpired) {
           return { 
             status:3, 
@@ -195,6 +193,17 @@ export class SesionService {
       const match = await bcrypt.compare(requestDTO.password, user.password);
       let response
       if (match) {
+        
+        if (isAdmin||isGuest) {
+          const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
+          if (statusSuscription.hasSuscriptionActiveExpired) {
+            return { 
+              status:3, 
+              msg:"Suscription has expired"
+            }
+          }
+        }
+
         let sesionExist: Sesion;
         if (isSuperAdmin) {
           sesionExist = await this.sesionRepository.findOne({
@@ -506,7 +515,7 @@ export class SesionService {
           },
         );
         await this.mailerService.sendMail({
-          to: Configuration.EMAIL_ETHEREAL,
+          to: user.email,
           from: 'noreply@ocupath.com', // sender address
             subject: 'Nueva solicitud de recuperación de contraseña',
             text: 'Has solicitado la recuperación de tu contraseña', // plaintext body
@@ -777,7 +786,6 @@ export class SesionService {
       
       await this.userRepository.save(user);
 
-      if (invitation.superAdmin) {
         const newUser:User = await this.userRepository.findOne({
         where: {
           email: user.email,
@@ -791,7 +799,7 @@ export class SesionService {
         finishedAt: new Date(invitation.finishedAt),
       });
       await this.suscriptionRepository.save(userSuscription);
-      }
+      
       await this.invitationRepository.remove(invitation)
       return { status: 0 };
     } catch (err) {

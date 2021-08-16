@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const sesion_entity_1 = require("./sesion.entity");
-const config_keys_1 = require("../../../config/config.keys");
 const bcrypt = require("bcrypt");
 const types_1 = require("../../../types");
 const type_entity_1 = require("../type/type.entity");
@@ -81,7 +80,6 @@ let SesionService = class SesionService {
             if (match) {
                 if (isAdmin || isGuest) {
                     const statusSuscription = await this.checkExpiredSuscriptions(user, isAdmin, isGuest);
-                    console.log({ statusSuscription });
                     if (statusSuscription.hasSuscriptionActiveExpired) {
                         return {
                             status: 3,
@@ -176,6 +174,15 @@ let SesionService = class SesionService {
             const match = await bcrypt.compare(requestDTO.password, user.password);
             let response;
             if (match) {
+                if (isAdmin || isGuest) {
+                    const statusSuscription = await this.checkExpiredSuscriptions(user, isAdmin, isGuest);
+                    if (statusSuscription.hasSuscriptionActiveExpired) {
+                        return {
+                            status: 3,
+                            msg: "Suscription has expired"
+                        };
+                    }
+                }
                 let sesionExist;
                 if (isSuperAdmin) {
                     sesionExist = await this.sesionRepository.findOne({
@@ -434,7 +441,7 @@ let SesionService = class SesionService {
                     expiresIn: 7200000,
                 });
                 await this.mailerService.sendMail({
-                    to: config_keys_1.Configuration.EMAIL_ETHEREAL,
+                    to: user.email,
                     from: 'noreply@ocupath.com',
                     subject: 'Nueva solicitud de recuperación de contraseña',
                     text: 'Has solicitado la recuperación de tu contraseña',
@@ -663,21 +670,19 @@ let SesionService = class SesionService {
                 status: userStatus
             });
             await this.userRepository.save(user);
-            if (invitation.superAdmin) {
-                const newUser = await this.userRepository.findOne({
-                    where: {
-                        email: user.email,
-                    },
-                });
-                const userSuscription = this.suscriptionRepository.create({
-                    user: newUser,
-                    cost: invitation.cost,
-                    invitations: 0,
-                    startedAt: new Date(invitation.startedAt),
-                    finishedAt: new Date(invitation.finishedAt),
-                });
-                await this.suscriptionRepository.save(userSuscription);
-            }
+            const newUser = await this.userRepository.findOne({
+                where: {
+                    email: user.email,
+                },
+            });
+            const userSuscription = this.suscriptionRepository.create({
+                user: newUser,
+                cost: invitation.cost,
+                invitations: 0,
+                startedAt: new Date(invitation.startedAt),
+                finishedAt: new Date(invitation.finishedAt),
+            });
+            await this.suscriptionRepository.save(userSuscription);
             await this.invitationRepository.remove(invitation);
             return { status: 0 };
         }

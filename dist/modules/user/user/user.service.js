@@ -438,6 +438,7 @@ let UserService = class UserService {
                         isDeleted: false,
                     },
                 });
+                console.log({ dataChildrens });
             }
             if (isAdmin) {
                 dataChildrens.users = await this.userRepository.find({
@@ -449,10 +450,14 @@ let UserService = class UserService {
                     },
                 });
             }
+            console.log({ dataChildrens });
             const childrens = {
                 admins: [],
                 users: [],
             };
+            if (dataChildrens.admins.length === 0 && dataChildrens.users.length === 0) {
+                return { status: 2, msg: 'User has not data' };
+            }
             const filterDataSuscription = (suscription) => {
                 return {
                     cost: suscription.cost,
@@ -486,33 +491,43 @@ let UserService = class UserService {
                 return dataToSend;
             };
             if (isSuperAdmin) {
-                childrens.admins = dataChildrens.admins.map((child, i) => {
-                    const dataToSend = {
-                        avatar: child.avatar,
-                        email: child.email,
-                        isActive: child.isActive,
-                        lastname: child.lastname,
-                        uuid: child.uuid,
-                        name: child.name,
-                        lastSuscription: null,
-                        suscriptionWaiting: null,
-                        status: child.status.id,
-                    };
-                    const lastSuscription = child.suscriptions.find((suscription) => suscription.isActive);
-                    const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
-                    dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
-                    if (suscriptionWaiting) {
-                        dataToSend.suscriptionWaiting =
-                            filterDataSuscription(suscriptionWaiting);
-                    }
-                    return dataToSend;
-                });
-                childrens.users = dataChildrens.users.map(filterUsers);
+                if (dataChildrens.admins.length > 0) {
+                    console.log("1");
+                    childrens.admins = dataChildrens.admins.map((child, i) => {
+                        const dataToSend = {
+                            avatar: child.avatar,
+                            email: child.email,
+                            isActive: child.isActive,
+                            lastname: child.lastname,
+                            uuid: child.uuid,
+                            name: child.name,
+                            lastSuscription: null,
+                            suscriptionWaiting: null,
+                            status: child.status.id,
+                        };
+                        const lastSuscription = child.suscriptions.find((suscription) => suscription.isActive);
+                        const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
+                        dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
+                        if (suscriptionWaiting) {
+                            dataToSend.suscriptionWaiting =
+                                filterDataSuscription(suscriptionWaiting);
+                        }
+                        return dataToSend;
+                    });
+                    console.log({ childrens });
+                }
+                if (dataChildrens.users.length > 0) {
+                    childrens.users = dataChildrens.users.map(filterUsers);
+                }
             }
             else {
-                childrens.users = dataChildrens.users.map(filterUsers);
+                console.log("No es superadmin");
+                if (dataChildrens.users.length > 0) {
+                    childrens.users = dataChildrens.users.map(filterUsers);
+                }
             }
             return {
+                status: 0,
                 profile: {
                     id: user.id,
                     name: user.name,
@@ -550,118 +565,127 @@ let UserService = class UserService {
                 .addSelect('user.id', 'userId')
                 .where(querySuscriptionsExpired('user'), { date: new Date() })
                 .execute();
-            const adminsExpiredIds = adminsExpired.map((suscription) => suscription.adminId);
-            const usersExpiredIds = guestExpired.map((suscription) => suscription.userId);
-            console.log({ adminsExpired, guestExpired });
-            console.log({ adminsExpiredIds, usersExpiredIds });
-            const suscriptionsAdminExpiredIds = adminsExpired.map((suscription) => suscription.suscriptionId);
-            const suscriptionsGuestExpiredIds = guestExpired.map((suscription) => suscription.suscriptionId);
-            const sucriptionsAdminWaiting = await this.suscriptionRepository
-                .createQueryBuilder('suscription')
-                .innerJoinAndSelect('suscription.admin', 'admin')
-                .select('suscription.id', 'suscriptionId')
-                .addSelect('admin.id', 'adminId')
-                .where(querySuscriptionsWaiting('admin'), { adminsExpiredIds })
-                .execute();
-            const sucriptionsUserWaiting = await this.suscriptionRepository
-                .createQueryBuilder('suscription')
-                .innerJoinAndSelect('suscription.user', 'user')
-                .select('suscription.id', 'suscriptionId')
-                .addSelect('user.id', 'userId')
-                .where(querySuscriptionsWaiting('user'), { usersExpiredIds })
-                .execute();
-            const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map((suscription) => suscription.adminId);
-            const usersWithSuscriptionsWaitingIds = sucriptionsUserWaiting.map((suscription) => suscription.userId);
-            const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter((adminId) => {
-                if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
-                    return adminId;
-                }
-            });
-            const usersWithNotSuscWaitingButExpiredIds = usersExpiredIds.filter((userId) => {
-                if (!usersWithSuscriptionsWaitingIds.includes(userId)) {
-                    return userId;
-                }
-            });
-            const expiredStatus = await this.statusRepository.findOne({
-                where: {
-                    name: 'EXPIRED',
-                },
-            });
-            console.log({ suscriptionsAdminExpiredIds });
-            await this.adminRepository
-                .createQueryBuilder()
-                .update()
-                .set({
-                status: expiredStatus,
-            })
-                .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)', {
-                adminsWithNotSuscWaitingButExpiredIds,
-            })
-                .execute();
-            await this.userRepository
-                .createQueryBuilder()
-                .update()
-                .set({
-                status: expiredStatus,
-            })
-                .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)', {
-                usersWithNotSuscWaitingButExpiredIds,
-            })
-                .execute();
-            if (adminsWithSuscriptionsWaitingIds.length > 0) {
-                const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
-                    .createQueryBuilder('suscription')
-                    .innerJoin('suscription.admin', 'admin')
-                    .update()
-                    .set({
-                    isActive: false,
-                })
-                    .where('isActive = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)', { adminsWithSuscriptionsWaitingIds })
-                    .execute();
-                const responseUpdateSuscriptionNAdmin = await this.suscriptionRepository
-                    .createQueryBuilder('suscription')
-                    .innerJoin('suscription.admin', 'admin')
-                    .update()
-                    .set({
-                    isActive: true,
-                    isWaiting: false,
-                })
-                    .where('isWaiting = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)', { adminsWithSuscriptionsWaitingIds })
-                    .execute();
-                console.log({
-                    responseUpdateSuscriptionNAdmin,
-                    responseUpdateSuscriptionAdmin,
+            let expiredStatus;
+            const hasAdminsExpired = adminsExpired.length > 0;
+            const hasGuestExpired = guestExpired.length > 0;
+            if (hasAdminsExpired || hasGuestExpired) {
+                expiredStatus = await this.statusRepository.findOne({
+                    where: {
+                        name: 'EXPIRED',
+                    },
                 });
             }
-            if (usersWithSuscriptionsWaitingIds.length > 0) {
-                const responseUpdateSuscriptionUser = await this.suscriptionRepository
+            if (hasAdminsExpired) {
+                const adminsExpiredIds = adminsExpired.map((suscription) => suscription.adminId);
+                const sucriptionsAdminWaiting = await this.suscriptionRepository
                     .createQueryBuilder('suscription')
-                    .innerJoin('suscription.user', 'user')
-                    .update()
-                    .set({
-                    isActive: false,
-                })
-                    .where('isActive = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)', { usersWithSuscriptionsWaitingIds })
+                    .innerJoinAndSelect('suscription.admin', 'admin')
+                    .select('suscription.id', 'suscriptionId')
+                    .addSelect('admin.id', 'adminId')
+                    .where(querySuscriptionsWaiting('admin'), { adminsExpiredIds })
                     .execute();
-                const responseUpdateSuscriptionNUser = await this.suscriptionRepository
-                    .createQueryBuilder('suscription')
-                    .innerJoin('suscription.user', 'user')
-                    .update()
-                    .set({
-                    isActive: true,
-                    isWaiting: false,
-                })
-                    .where('isWaiting = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)', { usersWithSuscriptionsWaitingIds })
-                    .execute();
-                console.log({
-                    responseUpdateSuscriptionUser,
-                    responseUpdateSuscriptionNUser,
+                const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map((suscription) => suscription.adminId);
+                const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter((adminId) => {
+                    if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
+                        return adminId;
+                    }
                 });
+                if (adminsWithNotSuscWaitingButExpiredIds.length > 0) {
+                    await this.adminRepository
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                        status: expiredStatus,
+                    })
+                        .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)', {
+                        adminsWithNotSuscWaitingButExpiredIds,
+                    })
+                        .execute();
+                }
+                console.log({ adminsWithSuscriptionsWaitingIds, adminsWithNotSuscWaitingButExpiredIds });
+                if (adminsWithSuscriptionsWaitingIds.length > 0) {
+                    const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
+                        .createQueryBuilder('suscription')
+                        .innerJoin('suscription.admin', 'admin')
+                        .update()
+                        .set({
+                        isActive: false,
+                    })
+                        .where('isActive = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)', { adminsWithSuscriptionsWaitingIds })
+                        .execute();
+                    const responseUpdateSuscriptionNAdmin = await this.suscriptionRepository
+                        .createQueryBuilder('suscription')
+                        .innerJoin('suscription.admin', 'admin')
+                        .update()
+                        .set({
+                        isActive: true,
+                        isWaiting: false,
+                    })
+                        .where('isWaiting = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)', { adminsWithSuscriptionsWaitingIds })
+                        .execute();
+                    console.log({
+                        responseUpdateSuscriptionNAdmin,
+                        responseUpdateSuscriptionAdmin,
+                    });
+                }
+            }
+            if (hasGuestExpired) {
+                const usersExpiredIds = guestExpired.map((suscription) => suscription.userId);
+                const sucriptionsUserWaiting = await this.suscriptionRepository
+                    .createQueryBuilder('suscription')
+                    .innerJoinAndSelect('suscription.user', 'user')
+                    .select('suscription.id', 'suscriptionId')
+                    .addSelect('user.id', 'userId')
+                    .where(querySuscriptionsWaiting('user'), { usersExpiredIds })
+                    .execute();
+                const usersWithSuscriptionsWaitingIds = sucriptionsUserWaiting.map((suscription) => suscription.userId);
+                const usersWithNotSuscWaitingButExpiredIds = usersExpiredIds.filter((userId) => {
+                    if (!usersWithSuscriptionsWaitingIds.includes(userId)) {
+                        return userId;
+                    }
+                });
+                if (usersWithNotSuscWaitingButExpiredIds.length > 0) {
+                    await this.userRepository
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                        status: expiredStatus,
+                    })
+                        .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)', {
+                        usersWithNotSuscWaitingButExpiredIds,
+                    })
+                        .execute();
+                }
+                if (usersWithSuscriptionsWaitingIds.length > 0) {
+                    const responseUpdateSuscriptionUser = await this.suscriptionRepository
+                        .createQueryBuilder('suscription')
+                        .innerJoin('suscription.user', 'user')
+                        .update()
+                        .set({
+                        isActive: false,
+                    })
+                        .where('isActive = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)', { usersWithSuscriptionsWaitingIds })
+                        .execute();
+                    const responseUpdateSuscriptionNUser = await this.suscriptionRepository
+                        .createQueryBuilder('suscription')
+                        .innerJoin('suscription.user', 'user')
+                        .update()
+                        .set({
+                        isActive: true,
+                        isWaiting: false,
+                    })
+                        .where('isWaiting = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)', { usersWithSuscriptionsWaitingIds })
+                        .execute();
+                    console.log({
+                        responseUpdateSuscriptionUser,
+                        responseUpdateSuscriptionNUser,
+                    });
+                }
             }
             return { status: 0 };
         }
         catch (err) {
-            console.log('UserService - create: ', err);
+            console.log('UserService - clearSuscriptionsExpired: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error cleaning Suscriptions Expired ',
@@ -813,8 +837,7 @@ let UserService = class UserService {
     async addNewPeriod(addNewSuscription) {
         try {
             let response = {};
-            console.log({ addNewSuscription });
-            const { user, isAdmin, isGuest, isSuperAdmin } = await this.getWhoIsRequesting(addNewSuscription);
+            const { user, isAdmin, isSuperAdmin } = await this.getWhoIsRequesting(addNewSuscription);
             if (!isSuperAdmin && !isAdmin) {
                 return { status: 1, msg: 'not allowed' };
             }
@@ -827,7 +850,7 @@ let UserService = class UserService {
                 userToUpdate = await this.adminRepository.findOne({
                     where: {
                         uuid: addNewSuscription.adminUuidToUpdate,
-                        superadmin: isSuperAdmin ? user : null,
+                        superadmin: user,
                     },
                     relations: ['status'],
                 });
@@ -840,6 +863,7 @@ let UserService = class UserService {
                         admin: userToUpdate,
                         user: null,
                         isActive: true,
+                        isWaiting: false,
                     },
                 });
                 hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
@@ -848,15 +872,10 @@ let UserService = class UserService {
                         admin: userToUpdate,
                         user: null,
                         isWaiting: true,
+                        isActive: false,
                     },
                 });
             }
-            console.log({
-                userToUpdateIsGuest,
-                userToUpdateIsAdmin,
-                isSuperAdmin,
-                isAdmin,
-            });
             if (userToUpdateIsGuest) {
                 userToUpdate = await this.userRepository.findOne({
                     where: {
@@ -866,12 +885,10 @@ let UserService = class UserService {
                     },
                     relations: ['status'],
                 });
-                console.log({ userToUpdate });
                 if (!userToUpdate) {
                     return { status: 1, msg: 'user not found' };
                 }
                 lastSuscription = await this.suscriptionRepository.findOne({
-                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
                     where: {
                         admin: null,
                         user: userToUpdate,
@@ -887,7 +904,7 @@ let UserService = class UserService {
                     },
                 });
             }
-            console.log({ userToUpdate });
+            console.log({ userToUpdate, hasSuscriptionWaiting, lastSuscription });
             if (hasSuscriptionWaiting) {
                 return { status: 3, msg: 'There is already a subscription waiting' };
             }

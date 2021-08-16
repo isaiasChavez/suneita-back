@@ -6,7 +6,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository,In } from 'typeorm';
 import { User } from './user.entity';
 import { Token } from '../token/token.entity';
 import { Type } from '../type/type.entity';
@@ -55,13 +55,13 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { error } from 'console';
-import { newIdSession, newInvitationTemplate } from 'src/templates/templates';
+import { newIdSession,newInvitationTemplate } from 'src/templates/templates';
 import { ReuestSesionLogOutDTO } from '../sesion/sesion.dto';
 import { Status } from '../status/status.entity';
 
 @Injectable()
 export class UserService {
-  constructor(
+  constructor (
     private readonly mailerService: MailerService,
     private readonly suscriptionService: SuscriptionService,
     @InjectRepository(User) private userRepository: Repository<User>,
@@ -122,7 +122,7 @@ export class UserService {
       let adminExistInDB: Admin;
       if (!userExistInDB) {
         adminExistInDB = await this.adminRepository.findOne({
-          where: { email: request.email, isDeleted: false },
+          where: { email: request.email,isDeleted: false },
         });
       }
       if (!userExistInDB && !adminExistInDB) {
@@ -236,7 +236,7 @@ export class UserService {
       }
       return { status };
     } catch (err) {
-      console.log('UserService - invite: ', err);
+      console.log('UserService - invite: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -255,7 +255,7 @@ export class UserService {
         },
       });
       const users = await this.userRepository.find({
-        select: ['id', 'name', 'email'],
+        select: ['id','name','email'],
         relations: ['type'],
         where: {
           isActive: true,
@@ -265,7 +265,7 @@ export class UserService {
 
       return { users };
     } catch (err) {
-      console.log('UserService - findAll: ', err);
+      console.log('UserService - findAll: ',err);
 
       throw new HttpException(
         {
@@ -279,11 +279,11 @@ export class UserService {
 
   async setSesionOfApp(requestDTO: SetSesionAppId): Promise<any> {
     try {
-      const { isAdmin, isSuperAdmin, isGuest, user } =
+      const { isAdmin,isSuperAdmin,isGuest,user } =
         await this.getWhoIsRequesting(requestDTO);
 
       if (!user) {
-        return { status: 1, msg: 'User does not exist' };
+        return { status: 1,msg: 'User does not exist' };
       }
       const sesionExist: Sesion = await this.sesionRepository.findOne({
         where: {
@@ -294,7 +294,7 @@ export class UserService {
       });
 
       if (!sesionExist) {
-        return { status: 2, msg: 'sesion does not exist' };
+        return { status: 2,msg: 'sesion does not exist' };
       }
       sesionExist.playerId = requestDTO.playerId;
       await this.sesionRepository.save(sesionExist);
@@ -319,7 +319,7 @@ export class UserService {
 
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - confirmPassword: ', err);
+      console.log('UserService - confirmPassword: ',err);
 
       throw new HttpException(
         {
@@ -337,7 +337,7 @@ export class UserService {
 
       const userExist = await this.userRepository.findOne({
         where: { email: requestDTO.email },
-        select: ['id', 'name', 'email', 'password'],
+        select: ['id','name','email','password'],
       });
 
       if (userExist) {
@@ -355,7 +355,7 @@ export class UserService {
 
       return response;
     } catch (err) {
-      console.log('UserService - confirmPassword: ', err);
+      console.log('UserService - confirmPassword: ',err);
 
       throw new HttpException(
         {
@@ -390,7 +390,7 @@ export class UserService {
         },
       });
     } catch (err) {
-      console.log('UserService - findUserDetail: ', err);
+      console.log('UserService - findUserDetail: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -404,7 +404,7 @@ export class UserService {
   async getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any> {
     try {
       const admin = await this.adminRepository.findOne({
-        relations: ['type', 'suscriptions'],
+        relations: ['type','suscriptions'],
         where: {
           uuid: getAdminDetailDTO.adminUuidToGet,
         },
@@ -443,7 +443,7 @@ export class UserService {
         },
       };
     } catch (err) {
-      console.log('UserService - getAdminDetail: ', err);
+      console.log('UserService - getAdminDetail: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -458,7 +458,7 @@ export class UserService {
       console.log({ getUserDetailDTO });
 
       const user = await this.userRepository.findOne({
-        relations: ['type', 'suscriptions'],
+        relations: ['type','suscriptions'],
         where: {
           uuid: getUserDetailDTO.userUuidToGet,
         },
@@ -493,7 +493,7 @@ export class UserService {
         },
       };
     } catch (err) {
-      console.log('UserService - getUserDetail: ', err);
+      console.log('UserService - getUserDetail: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -509,7 +509,7 @@ export class UserService {
         admins: [],
         users: [],
       };
-      const { user, isAdmin, isSuperAdmin } = await this.getWhoIsRequesting(
+      const { user,isAdmin,isSuperAdmin } = await this.getWhoIsRequesting(
         findUserChildrensDTO,
       );
 
@@ -519,7 +519,7 @@ export class UserService {
           msg: 'User not found',
         };
       }
-      
+
       await this.clearSuscriptionsExpired();
 
       if (isSuperAdmin) {
@@ -534,7 +534,7 @@ export class UserService {
               'isActive',
               'email',
             ],
-            relations: ['suscriptions', 'status'],
+            relations: ['suscriptions','status'],
             where: {
               superadmin: user,
               isDeleted: false,
@@ -545,42 +545,37 @@ export class UserService {
           console.log({ error });
         }
         dataChildrens.users = await this.userRepository.find({
-          select: ['name', 'email', 'lastname', 'avatar', 'uuid', 'isActive'],
-          relations: ['suscriptions', 'status'],
+          select: ['name','email','lastname','avatar','uuid','isActive'],
+          relations: ['suscriptions','status'],
           where: {
             superadmin: user,
             isDeleted: false,
           },
         });
+        console.log({dataChildrens})
       }
       if (isAdmin) {
         dataChildrens.users = await this.userRepository.find({
-          select: ['name', 'lastname', 'email', 'avatar', 'uuid', 'isActive'],
-          relations: ['suscriptions', 'status'],
+          select: ['name','lastname','email','avatar','uuid','isActive'],
+          relations: ['suscriptions','status'],
           where: {
             admin: user,
             isDeleted: false,
           },
         });
       }
-
-
-      type UserToSend = {
-        avatar: string;
-        email: string;
-        isActive: boolean;
-        uuid: string;
-        lastname: string;
-        name: string;
-        lastSuscription: Suscription;
-        suscriptionWaiting: Suscription | null;
-        status: number;
-      };
+      console.log({dataChildrens})
 
       const childrens = {
         admins: [],
         users: [],
       };
+
+      if (dataChildrens.admins.length === 0 && dataChildrens.users.length === 0) {
+        return { status: 2,msg: 'User has not data' }
+      }
+
+
       const filterDataSuscription = (suscription: Suscription) => {
         return {
           cost: suscription.cost,
@@ -604,7 +599,6 @@ export class UserService {
           suscriptionWaiting: null,
           status: child.status.id,
         };
-
         const lastSuscription: Suscription = child.suscriptions.find(
           (suscription: Suscription) => suscription.isActive,
         );
@@ -619,44 +613,54 @@ export class UserService {
         }
         return dataToSend;
       };
-
       if (isSuperAdmin) {
-        childrens.admins = dataChildrens.admins.map((child: Admin, i) => {
-          const dataToSend = {
-            avatar: child.avatar,
-            email: child.email,
-            isActive: child.isActive,
-            lastname: child.lastname,
-            uuid: child.uuid,
-            name: child.name,
-            lastSuscription: null,
-            suscriptionWaiting: null,
-            status: child.status.id,
-          };
 
-          const lastSuscription: Suscription = child.suscriptions.find(
-            (suscription: Suscription) => suscription.isActive,
-          );
-          const suscriptionWaiting: Suscription = child.suscriptions.find(
-            (suscription: Suscription) => suscription.isWaiting,
-          );
+        if (dataChildrens.admins.length>0) {
+          console.log("1")
 
-          dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
-          if (suscriptionWaiting) {
-            dataToSend.suscriptionWaiting =
-              filterDataSuscription(suscriptionWaiting);
-          }
-
-          return dataToSend;
-        });
-        childrens.users = dataChildrens.users.map(filterUsers);
+          childrens.admins = dataChildrens.admins.map((child: Admin,i) => {
+            const dataToSend = {
+              avatar: child.avatar,
+              email: child.email,
+              isActive: child.isActive,
+              lastname: child.lastname,
+              uuid: child.uuid,
+              name: child.name,
+              lastSuscription: null,
+              suscriptionWaiting: null,
+              status: child.status.id,
+            };
+  
+            const lastSuscription: Suscription = child.suscriptions.find(
+              (suscription: Suscription) => suscription.isActive,
+            );
+            const suscriptionWaiting: Suscription = child.suscriptions.find(
+              (suscription: Suscription) => suscription.isWaiting,
+            );
+  
+            dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
+            if (suscriptionWaiting) {
+              dataToSend.suscriptionWaiting =
+                filterDataSuscription(suscriptionWaiting);
+            }
+  
+            return dataToSend;
+          });
+          console.log({childrens})
+        }
+        if (dataChildrens.users.length>0) {
+          childrens.users = dataChildrens.users.map(filterUsers)
+        }
       } else {
-        childrens.users = dataChildrens.users.map(filterUsers);
+        console.log("No es superadmin")
+        if (dataChildrens.users.length>0) {
+          childrens.users = dataChildrens.users.map(filterUsers)
+        }
       }
 
- 
-
+      
       return {
+        status:0,
         profile: {
           id: user.id,
           name: user.name,
@@ -668,7 +672,7 @@ export class UserService {
         childrens,
       };
     } catch (err) {
-      console.log('UserService - findUserChildrens: ', err);
+      console.log('UserService - findUserChildrens: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -681,7 +685,6 @@ export class UserService {
 
   async clearSuscriptionsExpired(): Promise<any> {
     try {
-
       const querySuscriptionsExpired = (type: string) =>
         `suscription.finishedAt < :date AND suscription.isActive = true AND ${type}.isActive = true`;
       const querySuscriptionsWaiting = (type: string) =>
@@ -689,108 +692,77 @@ export class UserService {
 
       const adminsExpired = await this.suscriptionRepository
         .createQueryBuilder('suscription')
-        .innerJoinAndSelect('suscription.admin', 'admin')
-        .select('suscription.id', 'suscriptionId')
-        .addSelect('admin.id', 'adminId')
-        .where(querySuscriptionsExpired('admin'), { date: new Date() })
+        .innerJoinAndSelect('suscription.admin','admin')
+        .select('suscription.id','suscriptionId')
+        .addSelect('admin.id','adminId')
+        .where(querySuscriptionsExpired('admin'),{ date: new Date() })
         .execute();
 
       const guestExpired = await this.suscriptionRepository
         .createQueryBuilder('suscription')
-        .innerJoinAndSelect('suscription.user', 'user')
-        .select('suscription.id', 'suscriptionId')
-        .addSelect('user.id', 'userId')
-        .where(querySuscriptionsExpired('user'), { date: new Date() })
+        .innerJoinAndSelect('suscription.user','user')
+        .select('suscription.id','suscriptionId')
+        .addSelect('user.id','userId')
+        .where(querySuscriptionsExpired('user'),{ date: new Date() })
         .execute();
 
-      const adminsExpiredIds = adminsExpired.map(
-        (suscription) => suscription.adminId,
-      );
-      const usersExpiredIds = guestExpired.map(
-        (suscription) => suscription.userId,
-      );
+      let expiredStatus: Status
 
-      console.log({ adminsExpired, guestExpired });
-      console.log({ adminsExpiredIds, usersExpiredIds });
+      const hasAdminsExpired = adminsExpired.length > 0
+      const hasGuestExpired = guestExpired.length > 0
+      if (hasAdminsExpired || hasGuestExpired) {
+        expiredStatus = await this.statusRepository.findOne({
+          where: {
+            name: 'EXPIRED',
+          },
+        });
+      }
 
-      const suscriptionsAdminExpiredIds = adminsExpired.map(
-        (suscription) => suscription.suscriptionId,
-      );
-      const suscriptionsGuestExpiredIds = guestExpired.map(
-        (suscription) => suscription.suscriptionId,
-      );
-      const sucriptionsAdminWaiting = await this.suscriptionRepository
-        .createQueryBuilder('suscription')
-        .innerJoinAndSelect('suscription.admin', 'admin')
-        .select('suscription.id', 'suscriptionId')
-        .addSelect('admin.id', 'adminId')
-        .where(querySuscriptionsWaiting('admin'), { adminsExpiredIds })
-        .execute();
-      const sucriptionsUserWaiting = await this.suscriptionRepository
-        .createQueryBuilder('suscription')
-        .innerJoinAndSelect('suscription.user', 'user')
-        .select('suscription.id', 'suscriptionId')
-        .addSelect('user.id', 'userId')
-        .where(querySuscriptionsWaiting('user'), { usersExpiredIds })
-        .execute();
+      if (hasAdminsExpired) {
+        const adminsExpiredIds = adminsExpired.map(
+          (suscription) => suscription.adminId,
+        );
 
-      const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map(
-        (suscription) => suscription.adminId,
-      );
-      
-      const usersWithSuscriptionsWaitingIds = sucriptionsUserWaiting.map(
-        (suscription) => suscription.userId,
-      );
+        const sucriptionsAdminWaiting = await this.suscriptionRepository
+          .createQueryBuilder('suscription')
+          .innerJoinAndSelect('suscription.admin','admin')
+          .select('suscription.id','suscriptionId')
+          .addSelect('admin.id','adminId')
+          .where(querySuscriptionsWaiting('admin'),{ adminsExpiredIds })
+          .execute();
 
-      const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter(
-        (adminId) => {
-          if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
-            return adminId;
-          }
-        },
-      );
-
-      const usersWithNotSuscWaitingButExpiredIds = usersExpiredIds.filter(
-        (userId) => {
-          if (!usersWithSuscriptionsWaitingIds.includes(userId)) {
-            return userId;
-          }
-        },
-      );
-      const expiredStatus: Status = await this.statusRepository.findOne({
-        where: {
-          name: 'EXPIRED',
-        },
-      });
-
-      console.log({ suscriptionsAdminExpiredIds });
-
-      await this.adminRepository
-        .createQueryBuilder()
-        .update()
-        .set({
-          status: expiredStatus,
-        })
-        .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)', {
-          adminsWithNotSuscWaitingButExpiredIds,
-        })
-        .execute();
-      await this.userRepository
-        .createQueryBuilder()
-        .update()
-        .set({
-          status: expiredStatus,
-        })
-        .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)', {
-          usersWithNotSuscWaitingButExpiredIds,
-        })
-        .execute();
-
+        const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map(
+          (suscription) => suscription.adminId,
+        );
         
-        if (adminsWithSuscriptionsWaitingIds.length>0) {
+        const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter(
+          (adminId) => {
+            if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
+              return adminId;
+            }
+          },
+        );
+        if (adminsWithNotSuscWaitingButExpiredIds.length > 0) {
+
+          await this.adminRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              status: expiredStatus,
+            })
+            .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)',{
+              adminsWithNotSuscWaitingButExpiredIds,
+            })
+            .execute();
+          
+        }
+
+        console.log({adminsWithSuscriptionsWaitingIds,adminsWithNotSuscWaitingButExpiredIds})
+
+        if (adminsWithSuscriptionsWaitingIds.length > 0) {
           const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
             .createQueryBuilder('suscription')
-            .innerJoin('suscription.admin', 'admin')
+            .innerJoin('suscription.admin','admin')
             .update()
             .set({
               isActive: false,
@@ -800,64 +772,113 @@ export class UserService {
               { adminsWithSuscriptionsWaitingIds },
             )
             .execute();
-          
-        const responseUpdateSuscriptionNAdmin = await this.suscriptionRepository
-        .createQueryBuilder('suscription')
-        .innerJoin('suscription.admin', 'admin')
-        .update()
-        .set({
-          isActive: true,
-          isWaiting: false,
-        })
-        .where(
-          'isWaiting = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)',
-          { adminsWithSuscriptionsWaitingIds },
-          )
-          .execute();
+
+          const responseUpdateSuscriptionNAdmin = await this.suscriptionRepository
+            .createQueryBuilder('suscription')
+            .innerJoin('suscription.admin','admin')
+            .update()
+            .set({
+              isActive: true,
+              isWaiting: false,
+            })
+            .where(
+              'isWaiting = true AND admin.id IN (:...adminsWithSuscriptionsWaitingIds)',
+              { adminsWithSuscriptionsWaitingIds },
+            )
+            .execute();
           console.log({
             responseUpdateSuscriptionNAdmin,
             responseUpdateSuscriptionAdmin,
-            
           });
         }
-
-
-      if (usersWithSuscriptionsWaitingIds.length>0) {
-        const responseUpdateSuscriptionUser = await this.suscriptionRepository
+      }
+      if (hasGuestExpired) {
+        const usersExpiredIds = guestExpired.map(
+          (suscription) => suscription.userId,
+        );
+        const sucriptionsUserWaiting = await this.suscriptionRepository
           .createQueryBuilder('suscription')
-          .innerJoin('suscription.user', 'user')
-          .update()
-          .set({
-            isActive: false,
-          })
-          .where(
-            'isActive = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)',
-            { usersWithSuscriptionsWaitingIds },
-          )
+          .innerJoinAndSelect('suscription.user','user')
+          .select('suscription.id','suscriptionId')
+          .addSelect('user.id','userId')
+          .where(querySuscriptionsWaiting('user'),{ usersExpiredIds })
           .execute();
-        const responseUpdateSuscriptionNUser = await this.suscriptionRepository
-          .createQueryBuilder('suscription')
-          .innerJoin('suscription.user', 'user')
-          .update()
-          .set({
-            isActive: true,
-            isWaiting: false,
-          })
-          .where(
-            'isWaiting = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)',
-            { usersWithSuscriptionsWaitingIds },
-          )
-          .execute();
+        const usersWithSuscriptionsWaitingIds = sucriptionsUserWaiting.map(
+          (suscription) => suscription.userId,
+        );
+        const usersWithNotSuscWaitingButExpiredIds = usersExpiredIds.filter(
+          (userId) => {
+            if (!usersWithSuscriptionsWaitingIds.includes(userId)) {
+              return userId;
+            }
+          },
+        );
+
+        if (usersWithNotSuscWaitingButExpiredIds.length > 0) {
+          await this.userRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              status: expiredStatus,
+            })
+            .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)',{
+              usersWithNotSuscWaitingButExpiredIds,
+            })
+            .execute();
+        }
+        if (usersWithSuscriptionsWaitingIds.length > 0) {
+          const responseUpdateSuscriptionUser = await this.suscriptionRepository
+            .createQueryBuilder('suscription')
+            .innerJoin('suscription.user','user')
+            .update()
+            .set({
+              isActive: false,
+            })
+            .where(
+              'isActive = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)',
+              { usersWithSuscriptionsWaitingIds },
+            )
+            .execute();
+          const responseUpdateSuscriptionNUser = await this.suscriptionRepository
+            .createQueryBuilder('suscription')
+            .innerJoin('suscription.user','user')
+            .update()
+            .set({
+              isActive: true,
+              isWaiting: false,
+            })
+            .where(
+              'isWaiting = true AND user.id IN (:...usersWithSuscriptionsWaitingIds)',
+              { usersWithSuscriptionsWaitingIds },
+            )
+            .execute();
           console.log({
             responseUpdateSuscriptionUser,
             responseUpdateSuscriptionNUser,
           });
-        
+        }
       }
+
+      // const suscriptionsAdminExpiredIds = adminsExpired.map(
+      //   (suscription) => suscription.suscriptionId,
+      // );
+      // const suscriptionsGuestExpiredIds = guestExpired.map(
+      //   (suscription) => suscription.suscriptionId,
+      // );
+
+
+
+
+
+
+
+
+
+
 
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - create: ', err);
+      console.log('UserService - clearSuscriptionsExpired: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -901,7 +922,7 @@ export class UserService {
     });
 
     try {
-      const userPassword = await bcrypt.hash(createSuperAdminDTO.password, 12);
+      const userPassword = await bcrypt.hash(createSuperAdminDTO.password,12);
       const newUser = this.superAdminRepository.create({
         role: superAdminRole,
         type: superAdminType,
@@ -913,7 +934,7 @@ export class UserService {
       await this.superAdminRepository.save(newUser);
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - create: ', err);
+      console.log('UserService - create: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -928,15 +949,15 @@ export class UserService {
     try {
       let response = {};
 
-      const { isAdmin, isSuperAdmin, isGuest, user } =
+      const { isAdmin,isSuperAdmin,isGuest,user } =
         await this.getWhoIsRequesting(updateGuestDTO);
 
       if (!user) {
-        return { status: 1, msg: 'user requesting not found' };
+        return { status: 1,msg: 'user requesting not found' };
       }
 
       const guest: User = await this.userRepository.findOne({
-        relations: ['admin', 'superadmin'],
+        relations: ['admin','superadmin'],
         where: {
           uuid: updateGuestDTO.userUuidToUpdate,
           isActive: true,
@@ -946,7 +967,7 @@ export class UserService {
       });
 
       if (!guest) {
-        response = { status: 1, msg: 'user not found' };
+        response = { status: 1,msg: 'user not found' };
       }
 
       if (updateGuestDTO.name) {
@@ -969,7 +990,7 @@ export class UserService {
 
       // return response;
     } catch (err) {
-      console.log('UserService - updateAdmin: ', err);
+      console.log('UserService - updateAdmin: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -990,7 +1011,7 @@ export class UserService {
       } = await this.getWhoIsRequesting(updateUserAdminDTO);
 
       if (!superadmin) {
-        return { status: 1, msg: 'supadmin not found' };
+        return { status: 1,msg: 'supadmin not found' };
       }
       const admin = await this.adminRepository.findOne({
         relations: ['superadmin'],
@@ -1001,7 +1022,7 @@ export class UserService {
       });
 
       if (!admin) {
-        return { status: 1, msg: 'user not found' };
+        return { status: 1,msg: 'user not found' };
       }
 
       const updateSuscriptionDTO: UpdateSuscriptionDTO = {
@@ -1014,7 +1035,7 @@ export class UserService {
 
       const lastSuscription: Suscription =
         await this.suscriptionRepository.findOne({
-          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin,
             user: null,
@@ -1043,7 +1064,7 @@ export class UserService {
 
       return response;
     } catch (err) {
-      console.log('UserService - updateAdmin: ', err);
+      console.log('UserService - updateAdmin: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1059,12 +1080,10 @@ export class UserService {
   ): Promise<any> {
     try {
       let response = {};
-      console.log({ addNewSuscription });
-      const { user, isAdmin, isGuest, isSuperAdmin } =
+      const { user,isAdmin,isSuperAdmin } =
         await this.getWhoIsRequesting(addNewSuscription);
-
       if (!isSuperAdmin && !isAdmin) {
-        return { status: 1, msg: 'not allowed' };
+        return { status: 1,msg: 'not allowed' };
       }
 
       const userToUpdateIsAdmin: boolean =
@@ -1075,41 +1094,37 @@ export class UserService {
       let userToUpdate: Admin | User;
       let lastSuscription: Suscription;
       let hasSuscriptionWaiting: Suscription;
+
       if (userToUpdateIsAdmin) {
         userToUpdate = await this.adminRepository.findOne({
           where: {
             uuid: addNewSuscription.adminUuidToUpdate,
-            superadmin: isSuperAdmin ? user : null,
+            superadmin: user,
           },
           relations: ['status'],
         });
         if (!userToUpdate) {
-          return { status: 1, msg: 'user not found' };
+          return { status: 1,msg: 'user not found' };
         }
         lastSuscription = await this.suscriptionRepository.findOne({
-          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin: userToUpdate,
             user: null,
             isActive: true,
+            isWaiting: false,
           },
         });
         hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin: userToUpdate,
             user: null,
             isWaiting: true,
+            isActive: false,
           },
         });
       }
-
-      console.log({
-        userToUpdateIsGuest,
-        userToUpdateIsAdmin,
-        isSuperAdmin,
-        isAdmin,
-      });
 
       if (userToUpdateIsGuest) {
         userToUpdate = await this.userRepository.findOne({
@@ -1120,12 +1135,10 @@ export class UserService {
           },
           relations: ['status'],
         });
-        console.log({ userToUpdate });
         if (!userToUpdate) {
-          return { status: 1, msg: 'user not found' };
+          return { status: 1,msg: 'user not found' };
         }
         lastSuscription = await this.suscriptionRepository.findOne({
-          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
           where: {
             admin: null,
             user: userToUpdate,
@@ -1133,7 +1146,7 @@ export class UserService {
           },
         });
         hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
+          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin: null,
             user: userToUpdate,
@@ -1141,10 +1154,10 @@ export class UserService {
           },
         });
       }
-      console.log({ userToUpdate });
+      console.log({ userToUpdate,hasSuscriptionWaiting,lastSuscription });
 
       if (hasSuscriptionWaiting) {
-        return { status: 3, msg: 'There is already a subscription waiting' };
+        return { status: 3,msg: 'There is already a subscription waiting' };
       }
       lastSuscription.isActive = false;
       const newSuscription = this.suscripctionRepository.create({
@@ -1176,6 +1189,7 @@ export class UserService {
         newSuscription.isWaiting = true;
         newLastSuscription = lastSuscription;
       }
+
       this.suscripctionRepository.save(lastSuscription);
       this.suscripctionRepository.save(newSuscription);
 
@@ -1186,7 +1200,7 @@ export class UserService {
 
       return response;
     } catch (err) {
-      console.log('UserService - addNewPeriod: ', err);
+      console.log('UserService - addNewPeriod: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1233,9 +1247,9 @@ export class UserService {
         });
       }
 
-      return { isAdmin, isSuperAdmin, isGuest, user };
+      return { isAdmin,isSuperAdmin,isGuest,user };
     } catch (err) {
-      console.log('UserService - getWhoIsRequesting: ', err);
+      console.log('UserService - getWhoIsRequesting: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1248,7 +1262,7 @@ export class UserService {
 
   async updateName(changeNameDto: ChangeName): Promise<any> {
     try {
-      const { isAdmin, isSuperAdmin, isGuest, user } =
+      const { isAdmin,isSuperAdmin,isGuest,user } =
         await this.getWhoIsRequesting(changeNameDto);
 
       if (!user) {
@@ -1269,7 +1283,7 @@ export class UserService {
         status: 0,
       };
     } catch (err) {
-      console.log('UserService - ChangeName: ', err);
+      console.log('UserService - ChangeName: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1283,7 +1297,7 @@ export class UserService {
   async updateUser(updateUserDTO: UpdateUserDTO): Promise<any> {
     try {
       console.log({ updateUserDTO });
-      const { isAdmin, isSuperAdmin, isGuest, user } =
+      const { isAdmin,isSuperAdmin,isGuest,user } =
         await this.getWhoIsRequesting(updateUserDTO);
       if (!user) {
         return { status: 1 };
@@ -1317,7 +1331,7 @@ export class UserService {
         },
       };
     } catch (err) {
-      console.log('UserService - updateAdmin: ', err);
+      console.log('UserService - updateAdmin: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1364,7 +1378,7 @@ export class UserService {
         isAdmin,
       };
     } catch (err) {
-      console.log('UserService - deleteUser: ', err);
+      console.log('UserService - deleteUser: ',err);
 
       throw new HttpException(
         {
@@ -1384,16 +1398,16 @@ export class UserService {
       });
 
       if (!superAdmin) {
-        return { status: 1, msg: 'super not found' };
+        return { status: 1,msg: 'super not found' };
       }
 
       const admin: Admin = await this.adminRepository.findOne({
-        relations: ['users', 'assets'],
+        relations: ['users','assets'],
         where: { uuid: deleteAdminUserDTO.adminUuidToStop },
       });
 
       if (!admin) {
-        return { status: 2, msg: 'admin not found' };
+        return { status: 2,msg: 'admin not found' };
       }
       await this.updateArrayUsers(
         admin.users,
@@ -1425,7 +1439,7 @@ export class UserService {
             isActive: false,
             isDeleted: true,
           })
-          .where('id IN (:...assetsAdminIds)', {
+          .where('id IN (:...assetsAdminIds)',{
             assetsAdminIds,
           })
           .execute();
@@ -1436,9 +1450,9 @@ export class UserService {
 
       const userDTO = new UserDTO(admin);
 
-      return { status: 0, admin: userDTO };
+      return { status: 0,admin: userDTO };
     } catch (err) {
-      console.log('UserService - deleteUser: ', err);
+      console.log('UserService - deleteUser: ',err);
 
       throw new HttpException(
         {
@@ -1486,7 +1500,7 @@ export class UserService {
         },
       });
       if (!userToDelete) {
-        return { status: 2, msg: 'user not found' };
+        return { status: 2,msg: 'user not found' };
       }
 
       userToDelete.isActive = false;
@@ -1509,7 +1523,7 @@ export class UserService {
         user: userDTO,
       };
     } catch (err) {
-      console.log('UserService - deleteUser: ', err);
+      console.log('UserService - deleteUser: ',err);
 
       throw new HttpException(
         {
@@ -1535,7 +1549,7 @@ export class UserService {
         .createQueryBuilder()
         .update()
         .set(statusUser)
-        .where('id IN (:...usersIds)', {
+        .where('id IN (:...usersIds)',{
           usersIds,
         })
         .execute();
@@ -1553,7 +1567,7 @@ export class UserService {
           .createQueryBuilder()
           .update()
           .set(statusSuscription)
-          .where('id IN (:...suscriptionsIds)', {
+          .where('id IN (:...suscriptionsIds)',{
             suscriptionsIds,
           })
           .execute();
@@ -1569,7 +1583,7 @@ export class UserService {
           .createQueryBuilder()
           .update()
           .set(statusAsset)
-          .where('id IN (:...assetsIds)', {
+          .where('id IN (:...assetsIds)',{
             assetsIds,
           })
           .execute();
@@ -1585,7 +1599,7 @@ export class UserService {
         },
       });
       if (!superAdmin) {
-        return { status: 1, msg: 'super not found' };
+        return { status: 1,msg: 'super not found' };
       }
       const admin: Admin = await this.adminRepository.findOne({
         relations: ['users'],
@@ -1593,7 +1607,7 @@ export class UserService {
       });
 
       if (!admin) {
-        return { status: 2, msg: 'admin not found' };
+        return { status: 2,msg: 'admin not found' };
       }
       console.log('===========');
       console.log(admin.users);
@@ -1605,16 +1619,16 @@ export class UserService {
           isDeleted: false,
         },
         null,
-        { isActive: pauseAdminUserDTO.status, isDeleted: false },
+        { isActive: pauseAdminUserDTO.status,isDeleted: false },
       );
 
       admin.isActive = pauseAdminUserDTO.status;
       await this.adminRepository.save(admin);
       const userDTO = new UserDTO(admin);
 
-      return { status: 0, admin: userDTO };
+      return { status: 0,admin: userDTO };
     } catch (err) {
-      console.log('UserService - pauseUser: ', err);
+      console.log('UserService - pauseUser: ',err);
 
       throw new HttpException(
         {
@@ -1633,23 +1647,23 @@ export class UserService {
         },
       });
       if (!admin) {
-        return { status: 1, msg: 'admin not found' };
+        return { status: 1,msg: 'admin not found' };
       }
       const user = await this.userRepository.findOne({
         relations: ['admin'],
-        where: { uuid: pauseUserDTO.userUuidToChange, admin },
+        where: { uuid: pauseUserDTO.userUuidToChange,admin },
       });
       if (!user) {
-        return { status: 2, msg: 'user not found' };
+        return { status: 2,msg: 'user not found' };
       }
       user.isActive = pauseUserDTO.status;
 
       await this.userRepository.save(user);
       const userDTO = new UserDTO(user);
 
-      return { status: 0, user: userDTO };
+      return { status: 0,user: userDTO };
     } catch (err) {
-      console.log('UserService - pause user: ', err);
+      console.log('UserService - pause user: ',err);
 
       throw new HttpException(
         {
@@ -1667,37 +1681,37 @@ export class UserService {
     try {
       console.log({ reuestSesionLogOutDTO });
       const { isFromCMS } = reuestSesionLogOutDTO;
-      const { isAdmin, isSuperAdmin, isGuest, user } =
+      const { isAdmin,isSuperAdmin,isGuest,user } =
         await this.getWhoIsRequesting(reuestSesionLogOutDTO);
       let response = null;
       let actualSesion: Sesion;
       if (!user) {
-        return { status: 1, msg: 'user not found' };
+        return { status: 1,msg: 'user not found' };
       }
       if (isSuperAdmin) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { superadmin: user, isFromCMS },
+          where: { superadmin: user,isFromCMS },
         });
       }
       if (isAdmin) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { admin: user, isFromCMS },
+          where: { admin: user,isFromCMS },
         });
       }
       if (isGuest) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { user, isFromCMS },
+          where: { user,isFromCMS },
         });
       }
       if (!actualSesion) {
-        return { status: 2, msg: 'sesion not found' };
+        return { status: 2,msg: 'sesion not found' };
       }
       await this.sesionRepository.remove(actualSesion);
       response = { status: 0 };
 
       return response;
     } catch (err) {
-      console.log('SesionService - RequesLogout: ', err);
+      console.log('SesionService - RequesLogout: ',err);
 
       throw new HttpException(
         {
