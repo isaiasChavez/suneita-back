@@ -45,7 +45,9 @@ export declare class SesionService {
         isAdmin: boolean;
         isSuperAdmin: boolean;
         isGuest: boolean;
+        isGuestAdmin: boolean;
         user: SuperAdmin | Admin | User;
+        admin: Admin;
     }>;
     checkExpiredSuscriptions(user: Admin | User | SuperAdmin, isAdmin: boolean, isGuest: boolean): Promise<{
         hasSuscriptionActiveExpired: boolean;

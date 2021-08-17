@@ -1,4 +1,4 @@
-
+// https://ocupath-orbk9xws2-isaias.vercel.app/register/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6IjU1ZTc4ZTEzLTdlMTctNGMzMi04NjVkLTU0MjQ5MTg0MWE4YiIsImlhdCI6MTYyOTIxNDMzNH0.lITCd85l3UcmvXLS8edKLllbFEl-Cu9fkGTB742Av-w
 
 export const newIdSession = (id:string)=>{
 
@@ -122,7 +122,7 @@ export const newInvitationTemplate = (token:string)=>{
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;">
                                     Crea una cuenta accediendo a la siguiente ruta y disfruta de nuestra app movil.</p>
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
-                                        href="https://ocupath.netlify.app/register/${token}"
+                                        href="https://ocupath-orbk9xws2-isaias.vercel.app/register/${token}"
                                         
                                         target="_blank">Crear cuenta</a></p>
                             </td>
@@ -205,7 +205,7 @@ export const newResetPassTemplate = (token:string)=>{
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;">
                                     Accede al siguiente enlace para recuperar tu contraseña.</p>
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
-                                        href="https://ocupath.netlify.app/recovery/${token}"
+                                        href="https://ocupath-orbk9xws2-isaias.vercel.app/recovery/${token}"
                                         target="_blank">Recuperar mi contraseña</a></p>
                             </td>
                         </tr>

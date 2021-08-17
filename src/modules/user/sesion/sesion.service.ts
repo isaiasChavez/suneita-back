@@ -75,7 +75,8 @@ export class SesionService {
   async RequesLogin(requestDTO: ReuestSesionDTO): Promise<any> {
     try {
       let response = null;
-      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestDTO.email)
+      const {isAdmin,isSuperAdmin,isGuest,user,isGuestAdmin,admin} =  await this.getWhoIsRequesting(requestDTO.email)
+      console.log({isGuestAdmin,admin})
       if (!user) {
         return {
           status: 1,
@@ -85,8 +86,17 @@ export class SesionService {
       const match = await bcrypt.compare(requestDTO.password, user.password);
       if (match) {
         
-      if (isAdmin||isGuest) {
-        const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
+      if (isGuestAdmin) {
+        const statusSuscription = await this.checkExpiredSuscriptions(admin,true,false)
+        if (statusSuscription.hasSuscriptionActiveExpired) {
+          return { 
+            status:3, 
+            msg:"Suscription has expired"
+          }
+        }
+      }  
+      else if (isAdmin||isGuest) {
+          const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
         if (statusSuscription.hasSuscriptionActiveExpired) {
           return { 
             status:3, 
@@ -551,9 +561,10 @@ export class SesionService {
   }
 
 
-  async getWhoIsRequesting(email:string): Promise<{isAdmin:boolean,isSuperAdmin:boolean,isGuest:boolean,user:SuperAdmin|Admin|User}> {
+  async getWhoIsRequesting(email:string): Promise<{isAdmin:boolean,isSuperAdmin:boolean,isGuest:boolean,isGuestAdmin:boolean,user:SuperAdmin|Admin|User,admin:Admin}> {
     try {
-      let user: Admin | SuperAdmin | User;
+
+      let user: User| Admin | SuperAdmin ;
       user = await this.superAdminRepository.findOne({
         relations: ['type'],
         where: { email, isActive: true },
@@ -568,14 +579,28 @@ export class SesionService {
 
       if (!user) {
         user = await this.userRepository.findOne({
-          relations: ['type'],
+          relations: ['type','admin'],
           where: { email, isActive: true },
         });
       }
+      console.log("============")
+      console.log({user})
+
       const isSuperAdmin = user.type.id === this.typesNumbers.SUPERADMIN;
       const isAdmin = user.type.id === this.typesNumbers.ADMIN;
       const isGuest = user.type.id === this.typesNumbers.USER;
-      return {isAdmin,isSuperAdmin,isGuest,user}
+      let isGuestAdmin = false
+      let admin:Admin 
+      if (isGuest) {
+        user = user as User
+        isGuestAdmin = user.admin !== null;
+        if (isGuestAdmin) {
+          admin= user.admin
+        }
+      }
+      console.log({isGuestAdmin,user})
+
+      return {isAdmin,isSuperAdmin,isGuest,user,admin,isGuestAdmin}
     } catch (err) {
       console.log('SesionService - getWhoIsRequesting: ', err);
       throw new HttpException(
@@ -592,7 +617,7 @@ export class SesionService {
     async checkExpiredSuscriptions(user:Admin|User|SuperAdmin,isAdmin:boolean,isGuest:boolean): Promise<{hasSuscriptionActiveExpired:boolean,currentSuscriptionActive:Suscription,
       currentSuscriptionWaiting:Suscription|null}> {
     try {
-      
+
       let currentSuscriptionActive:Suscription = null
       let currentSuscriptionWaiting:Suscription = null
 
@@ -619,7 +644,7 @@ export class SesionService {
         suscriptionActive.isActive = false
         suscriptionWaiting.isActive = true
         suscriptionWaiting.isWaiting = false
-        await this.superAdminRepository.save([suscriptionActive,suscriptionWaiting])
+        await this.suscriptionRepository.save([suscriptionActive,suscriptionWaiting])
         currentSuscriptionActive = suscriptionWaiting
         hasSuscriptionActiveExpired = false
       }else{
