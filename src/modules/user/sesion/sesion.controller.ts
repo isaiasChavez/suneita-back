@@ -76,7 +76,7 @@ export class SesionController {
       };
     }
   }
-  @Post('requestreset/:email')
+  @Put('requestreset/:email')
   async requestPasswordReset(@Param('email') email): Promise<any> {
     console.log("requestPasswordReset")
     return await this.sesionService.requestPasswordReset(email);

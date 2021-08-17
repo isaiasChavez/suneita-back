@@ -137,7 +137,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "recoveryPassword", null);
 __decorate([
-    common_1.Post('requestreset/:email'),
+    common_1.Put('requestreset/:email'),
     __param(0, common_1.Param('email')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

@@ -300,9 +300,9 @@ export class UserService {
 
       try {
         const response = await this.mailerService.sendMail({
-          to: Configuration.EMAIL_ETHEREAL,
+          to: user.email,
           from: 'noreply@ocupath.com', // sender address
-          subject: 'Has sido invitado a Ocupath.',
+          subject: 'Tu nuevo ID Ocupath.',
           text: 'Your new id', // plaintext body
           html: newIdSession(requestDTO.playerId), // HTML body content
         });

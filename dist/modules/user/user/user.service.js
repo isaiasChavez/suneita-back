@@ -22,7 +22,6 @@ const type_entity_1 = require("../type/type.entity");
 const role_entity_1 = require("../role/role.entity");
 const sesion_entity_1 = require("../sesion/sesion.entity");
 const user_dto_1 = require("./user.dto");
-const config_keys_1 = require("../../../config/config.keys");
 const mailer_1 = require("@nestjs-modules/mailer");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
@@ -225,9 +224,9 @@ let UserService = class UserService {
             console.log(templates_1.newIdSession(requestDTO.playerId));
             try {
                 const response = await this.mailerService.sendMail({
-                    to: config_keys_1.Configuration.EMAIL_ETHEREAL,
+                    to: user.email,
                     from: 'noreply@ocupath.com',
-                    subject: 'Has sido invitado a Ocupath.',
+                    subject: 'Tu nuevo ID Ocupath.',
                     text: 'Your new id',
                     html: templates_1.newIdSession(requestDTO.playerId),
                 });
