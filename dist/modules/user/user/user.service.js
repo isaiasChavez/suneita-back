@@ -150,13 +150,15 @@ let UserService = class UserService {
                 }
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
                 console.log({ jwtToken });
-                await this.mailerService.sendMail({
+                console.log("Enviando ...");
+                const response = await this.mailerService.sendMail({
                     to: request.email,
                     from: 'noreply@ocupath.com',
                     subject: 'Has sido invitado a Ocupath.',
                     text: 'Your new id',
                     html: templates_1.newInvitationTemplate(jwtToken),
                 });
+                console.log("Response email invite", { response });
             }
             else {
                 if ((userExistInDB && userExistInDB.isActive) ||

@@ -298,12 +298,14 @@ let SesionService = class SesionService {
             }, 500);
         }
     }
-    async decifreToken(email) {
+    async decifreToken(token) {
         try {
+            console.log({ token });
             const dataInvitation = await this.invitationRepository.findOne({
-                where: { email },
+                where: { id: token },
                 relations: ['type'],
             });
+            console.log({ dataInvitation });
             if (!dataInvitation) {
                 return { status: 1 };
             }

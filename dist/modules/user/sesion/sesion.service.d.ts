@@ -37,7 +37,7 @@ export declare class SesionService {
     RequesLogin(requestDTO: ReuestSesionDTO): Promise<any>;
     RequesLoginFromApp(requestDTO: ReuestSesionDTO): Promise<any>;
     RequesLogout(reuestSesionLogOutDTO: ReuestSesionLogOutDTO): Promise<any>;
-    decifreToken(email: string): Promise<any>;
+    decifreToken(token: string): Promise<any>;
     validateIfExistToken(token: string): Promise<any>;
     passwordRecovery(requestDTO: PasswordRecovery): Promise<any>;
     requestPasswordReset(requestEmail: string): Promise<any>;

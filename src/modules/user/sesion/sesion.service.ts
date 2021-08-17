@@ -333,13 +333,15 @@ export class SesionService {
       );
     }
   }
-  async decifreToken(email: string): Promise<any> {
+  async decifreToken(token: string): Promise<any> {
     try {
+      console.log({token})
       const dataInvitation: Invitation =
         await this.invitationRepository.findOne({
-          where: { email },
+          where: { id:token },
           relations: ['type'],
         });
+      console.log({dataInvitation})
       if (!dataInvitation) {
         return { status: 1 };
       }
