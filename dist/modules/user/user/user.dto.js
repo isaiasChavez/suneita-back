@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.SimpleRequest = exports.FindUserChildrens = exports.InviteUserDTO = exports.InviteAdminDTO = exports.UserDTO = void 0;
+exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.FindUserChildrens = exports.InviteUserDTO = exports.SimpleRequest = exports.InviteAdminDTO = exports.UserDTO = void 0;
 const class_validator_1 = require("class-validator");
 class UserDTO {
     constructor({ email, uuid, name, avatar, isActive, lastname }) {
@@ -45,13 +45,47 @@ __decorate([
     __metadata("design:type", Number)
 ], InviteAdminDTO.prototype, "type", void 0);
 exports.InviteAdminDTO = InviteAdminDTO;
-class InviteUserDTO {
-    constructor({ adminUuid, superAdminUuid, company, name, invitations, cost, startedAt, finishedAt, email, type, typeToInvite, }) {
+class SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type }) {
         this.adminUuid = adminUuid;
-        this.company = company;
         this.superAdminUuid = superAdminUuid;
-        this.email = email;
+        this.userUuid = userUuid;
         this.type = type;
+    }
+}
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], SimpleRequest.prototype, "adminUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], SimpleRequest.prototype, "userUuid", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], SimpleRequest.prototype, "superAdminUuid", void 0);
+__decorate([
+    class_validator_1.IsNumber(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", Number)
+], SimpleRequest.prototype, "type", void 0);
+exports.SimpleRequest = SimpleRequest;
+class InviteUserDTO extends SimpleRequest {
+    constructor({ userUuid, adminUuid, superAdminUuid, type, company, name, invitations, cost, startedAt, finishedAt, email, typeToInvite, }) {
+        super({ adminUuid,
+            superAdminUuid,
+            userUuid,
+            type
+        });
+        this.company = company;
+        this.email = email;
         this.name = name;
         this.invitations = parseInt(invitations);
         this.cost = parseFloat(cost);
@@ -60,18 +94,6 @@ class InviteUserDTO {
         this.typeToInvite = typeToInvite;
     }
 }
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsOptional(),
-    __metadata("design:type", String)
-], InviteUserDTO.prototype, "adminUuid", void 0);
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsOptional(),
-    __metadata("design:type", String)
-], InviteUserDTO.prototype, "superAdminUuid", void 0);
 __decorate([
     class_validator_1.IsString(),
     class_validator_1.IsNotEmpty(),
@@ -117,11 +139,6 @@ __decorate([
     class_validator_1.IsNumber(),
     class_validator_1.IsNotEmpty(),
     __metadata("design:type", Number)
-], InviteUserDTO.prototype, "type", void 0);
-__decorate([
-    class_validator_1.IsNumber(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", Number)
 ], InviteUserDTO.prototype, "typeToInvite", void 0);
 exports.InviteUserDTO = InviteUserDTO;
 class FindUserChildrens {
@@ -149,38 +166,6 @@ __decorate([
     __metadata("design:type", Number)
 ], FindUserChildrens.prototype, "type", void 0);
 exports.FindUserChildrens = FindUserChildrens;
-class SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type }) {
-        this.adminUuid = adminUuid;
-        this.superAdminUuid = superAdminUuid;
-        this.userUuid = userUuid;
-        this.type = type;
-    }
-}
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsOptional(),
-    __metadata("design:type", String)
-], SimpleRequest.prototype, "adminUuid", void 0);
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsOptional(),
-    __metadata("design:type", String)
-], SimpleRequest.prototype, "userUuid", void 0);
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsNotEmpty(),
-    class_validator_1.IsOptional(),
-    __metadata("design:type", String)
-], SimpleRequest.prototype, "superAdminUuid", void 0);
-__decorate([
-    class_validator_1.IsNumber(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", Number)
-], SimpleRequest.prototype, "type", void 0);
-exports.SimpleRequest = SimpleRequest;
 class ChangeName extends SimpleRequest {
     constructor({ adminUuid, superAdminUuid, userUuid, type, name }) {
         super({ adminUuid,

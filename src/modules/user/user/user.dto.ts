@@ -53,32 +53,17 @@ export class InviteAdminDTO {
   @IsNotEmpty()
   type: number;
 }
-
-export class InviteUserDTO {
+export class SimpleRequest {
   constructor({
     adminUuid,
     superAdminUuid,
-    company,
-    name,
-    invitations,
-    cost,
-    startedAt,
-    finishedAt,
-    email,
-    type,
-    typeToInvite,
+    userUuid,
+    type
   }) {
     this.adminUuid = adminUuid;
-    this.company = company;
     this.superAdminUuid = superAdminUuid;
-    this.email = email;
-    this.type = type;
-    this.name = name;
-    this.invitations = parseInt(invitations);
-    this.cost = parseFloat(cost);
-    this.startedAt = startedAt;
-    this.finishedAt = finishedAt;
-    this.typeToInvite = typeToInvite;
+    this.userUuid = userUuid;
+    this.type = type
   }
 
   @IsUUID()
@@ -88,8 +73,45 @@ export class InviteUserDTO {
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
+  userUuid: string;
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
   superAdminUuid: string;
+  @IsNumber()
+  @IsNotEmpty()
+  type: number;
+}
 
+export class InviteUserDTO extends SimpleRequest{
+  constructor({
+    userUuid,
+    adminUuid,
+    superAdminUuid,
+    type,
+    company,
+    name,
+    invitations,
+    cost,
+    startedAt,
+    finishedAt,
+    email,
+    typeToInvite,
+  }) {
+    super({adminUuid,
+      superAdminUuid,
+      userUuid,
+      type
+    })
+    this.company = company;
+    this.email = email;
+    this.name = name;
+    this.invitations = parseInt(invitations);
+    this.cost = parseFloat(cost);
+    this.startedAt = startedAt;
+    this.finishedAt = finishedAt;
+    this.typeToInvite = typeToInvite;
+  }
   @IsString()
   @IsNotEmpty()
   @IsEmail()
@@ -124,10 +146,6 @@ export class InviteUserDTO {
 
   @IsNumber()
   @IsNotEmpty()
-  type: number;
-
-  @IsNumber()
-  @IsNotEmpty()
   typeToInvite: number;
 }
 
@@ -156,35 +174,7 @@ export class FindUserChildrens {
 }
 
 
-export class SimpleRequest {
-  constructor({
-    adminUuid,
-    superAdminUuid,
-    userUuid,
-    type
-  }) {
-    this.adminUuid = adminUuid;
-    this.superAdminUuid = superAdminUuid;
-    this.userUuid = userUuid;
-    this.type = type
-  }
 
-  @IsUUID()
-  @IsNotEmpty()
-  @IsOptional()
-  adminUuid: string;
-  @IsUUID()
-  @IsNotEmpty()
-  @IsOptional()
-  userUuid: string;
-  @IsUUID()
-  @IsNotEmpty()
-  @IsOptional()
-  superAdminUuid: string;
-  @IsNumber()
-  @IsNotEmpty()
-  type: number;
-}
 
 export class ChangeName extends SimpleRequest {
   constructor({

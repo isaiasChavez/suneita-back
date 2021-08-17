@@ -23,42 +23,6 @@ export declare class InviteAdminDTO {
     email: string;
     type: number;
 }
-export declare class InviteUserDTO {
-    constructor({ adminUuid, superAdminUuid, company, name, invitations, cost, startedAt, finishedAt, email, type, typeToInvite, }: {
-        adminUuid: any;
-        superAdminUuid: any;
-        company: any;
-        name: any;
-        invitations: any;
-        cost: any;
-        startedAt: any;
-        finishedAt: any;
-        email: any;
-        type: any;
-        typeToInvite: any;
-    });
-    adminUuid: string;
-    superAdminUuid: string;
-    email: string;
-    company: string;
-    name: string;
-    invitations: number;
-    cost: number;
-    startedAt: string;
-    finishedAt: string;
-    type: number;
-    typeToInvite: number;
-}
-export declare class FindUserChildrens {
-    constructor({ adminUuid, superAdminUuid, type }: {
-        adminUuid: any;
-        superAdminUuid: any;
-        type: any;
-    });
-    adminUuid: string;
-    superAdminUuid: string;
-    type: number;
-}
 export declare class SimpleRequest {
     constructor({ adminUuid, superAdminUuid, userUuid, type }: {
         adminUuid: any;
@@ -68,6 +32,40 @@ export declare class SimpleRequest {
     });
     adminUuid: string;
     userUuid: string;
+    superAdminUuid: string;
+    type: number;
+}
+export declare class InviteUserDTO extends SimpleRequest {
+    constructor({ userUuid, adminUuid, superAdminUuid, type, company, name, invitations, cost, startedAt, finishedAt, email, typeToInvite, }: {
+        userUuid: any;
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+        company: any;
+        name: any;
+        invitations: any;
+        cost: any;
+        startedAt: any;
+        finishedAt: any;
+        email: any;
+        typeToInvite: any;
+    });
+    email: string;
+    company: string;
+    name: string;
+    invitations: number;
+    cost: number;
+    startedAt: string;
+    finishedAt: string;
+    typeToInvite: number;
+}
+export declare class FindUserChildrens {
+    constructor({ adminUuid, superAdminUuid, type }: {
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+    });
+    adminUuid: string;
     superAdminUuid: string;
     type: number;
 }

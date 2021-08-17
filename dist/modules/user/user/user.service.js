@@ -97,34 +97,17 @@ let UserService = class UserService {
                 console.log({ invitation });
                 if (!invitation) {
                     let typeUserRequesting;
-                    let admin = null;
-                    let superAdmin = null;
-                    if (request.adminUuid) {
-                        typeUserRequesting = types_1.ADMIN;
-                        admin = await this.adminRepository.findOne({
-                            where: {
-                                uuid: request.adminUuid,
-                            },
-                        });
-                    }
-                    if (request.superAdminUuid) {
-                        typeUserRequesting = types_1.SUPER_ADMIN;
-                        superAdmin = await this.superAdminRepository.findOne({
-                            where: {
-                                uuid: request.superAdminUuid,
-                            },
-                        });
-                    }
-                    if (!admin && !superAdmin) {
+                    const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(request);
+                    if (!user) {
                         return {
                             status: 5,
                         };
                     }
                     let typeToInvite;
-                    if (request.typeToInvite === types_1.ADMIN) {
+                    if (request.typeToInvite === this.typesNumbers.ADMIN) {
                         typeToInvite = await this.typeRepository.findOne(types_1.ADMIN);
                     }
-                    if (request.typeToInvite === types_1.USER_NORMAL) {
+                    if (request.typeToInvite === this.typesNumbers.USER) {
                         typeToInvite = await this.typeRepository.findOne(types_1.USER_NORMAL);
                     }
                     const invitationBase = {
@@ -132,19 +115,28 @@ let UserService = class UserService {
                         cost: 0,
                         finishedAt: new Date(request.finishedAt),
                         startedAt: new Date(request.startedAt),
-                        admin,
-                        superAdmin,
+                        admin: isAdmin ? user : null,
+                        superAdmin: isSuperAdmin ? user : null,
                         type: typeToInvite,
                         company: null,
                         invitations: null,
                         name: null,
                     };
-                    if (typeToInvite.id === types_1.ADMIN) {
+                    if (typeToInvite.id === this.typesNumbers.ADMIN) {
                         invitationBase.company = request.company;
                         invitationBase.invitations = request.invitations;
                         invitationBase.cost = request.cost;
                     }
-                    if (typeToInvite.id === types_1.USER_NORMAL) {
+                    if (typeToInvite.id === this.typesNumbers.USER) {
+                        if (isAdmin) {
+                            const dateFinishAdmin = await this.suscripctionRepository.findOne({
+                                where: {
+                                    admin: user,
+                                    isActive: true,
+                                }
+                            });
+                            invitationBase.finishedAt = dateFinishAdmin.finishedAt;
+                        }
                         invitationBase.name = request.name;
                         invitationBase.cost = request.cost;
                     }
@@ -569,11 +561,7 @@ let UserService = class UserService {
             const hasAdminsExpired = adminsExpired.length > 0;
             const hasGuestExpired = guestExpired.length > 0;
             if (hasAdminsExpired || hasGuestExpired) {
-                expiredStatus = await this.statusRepository.findOne({
-                    where: {
-                        name: 'EXPIRED',
-                    },
-                });
+                expiredStatus = await this.statusRepository.findOne(this.statusNumbers.EXPIRED);
             }
             if (hasAdminsExpired) {
                 const adminsExpiredIds = adminsExpired.map((suscription) => suscription.adminId);
@@ -858,7 +846,6 @@ let UserService = class UserService {
                     return { status: 1, msg: 'user not found' };
                 }
                 lastSuscription = await this.suscriptionRepository.findOne({
-                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
                     where: {
                         admin: userToUpdate,
                         user: null,
@@ -867,7 +854,6 @@ let UserService = class UserService {
                     },
                 });
                 hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
                     where: {
                         admin: userToUpdate,
                         user: null,
@@ -896,7 +882,6 @@ let UserService = class UserService {
                     },
                 });
                 hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-                    select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
                     where: {
                         admin: null,
                         user: userToUpdate,
@@ -924,20 +909,40 @@ let UserService = class UserService {
                 lastSuscription.isWaiting = false;
                 newSuscription.isActive = true;
                 newSuscription.isWaiting = false;
-                newLastSuscription = newSuscription;
+                await this.suscripctionRepository.save(lastSuscription);
+                const newStatus = await this.statusRepository.findOne(this.statusNumbers.ACTIVE);
+                if (userToUpdateIsGuest) {
+                    await this.userRepository
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                        status: newStatus
+                    })
+                        .where("id = :id", { id: user.id })
+                        .execute();
+                }
+                if (userToUpdateIsAdmin) {
+                    await this.adminRepository
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                        status: newStatus
+                    })
+                        .where("id = :id", { id: user.id })
+                        .execute();
+                }
             }
             if (userToUpdate.status.id === this.statusNumbers.INACTIVE ||
                 this.statusNumbers.ACTIVE) {
                 lastSuscription.isActive = true;
                 newSuscription.isActive = false;
                 newSuscription.isWaiting = true;
-                newLastSuscription = lastSuscription;
+                await this.suscripctionRepository.save(lastSuscription);
             }
-            this.suscripctionRepository.save(lastSuscription);
-            this.suscripctionRepository.save(newSuscription);
+            await this.suscripctionRepository.save(newSuscription);
             response = {
                 status: 0,
-                lastSuscription: newLastSuscription,
+                lastSuscription,
             };
             return response;
         }
@@ -957,7 +962,7 @@ let UserService = class UserService {
             const isGuest = request.type === this.typesNumbers.USER;
             if (isAdmin) {
                 user = await this.adminRepository.findOne({
-                    relations: ['type'],
+                    relations: ['type', 'users'],
                     where: {
                         uuid: request.adminUuid,
                     },
@@ -965,7 +970,7 @@ let UserService = class UserService {
             }
             if (isSuperAdmin) {
                 user = await this.superAdminRepository.findOne({
-                    relations: ['type'],
+                    relations: ['type', 'users', 'admins'],
                     where: {
                         uuid: request.superAdminUuid,
                     },

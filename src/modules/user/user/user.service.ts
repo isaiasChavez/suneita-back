@@ -125,6 +125,7 @@ export class UserService {
           where: { email: request.email,isDeleted: false },
         });
       }
+
       if (!userExistInDB && !adminExistInDB) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
         const invitation = await this.invitationRepository.findOne({
@@ -134,36 +135,22 @@ export class UserService {
         if (!invitation) {
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
           let typeUserRequesting: number;
-          let admin: Admin = null;
-          let superAdmin: SuperAdmin = null;
 
-          if (request.adminUuid) {
-            typeUserRequesting = ADMIN;
-            admin = await this.adminRepository.findOne({
-              where: {
-                uuid: request.adminUuid,
-              },
-            });
-          }
-          if (request.superAdminUuid) {
-            typeUserRequesting = SUPER_ADMIN;
-            superAdmin = await this.superAdminRepository.findOne({
-              where: {
-                uuid: request.superAdminUuid,
-              },
-            });
-          }
-          if (!admin && !superAdmin) {
+          const { isAdmin,isSuperAdmin,isGuest,user } =
+          await this.getWhoIsRequesting(request);
+          
+          
+          if (!user) {
             return {
               status: 5,
             };
           }
 
           let typeToInvite: Type;
-          if (request.typeToInvite === ADMIN) {
+          if (request.typeToInvite === this.typesNumbers.ADMIN) {
             typeToInvite = await this.typeRepository.findOne(ADMIN);
           }
-          if (request.typeToInvite === USER_NORMAL) {
+          if (request.typeToInvite === this.typesNumbers.USER) {
             typeToInvite = await this.typeRepository.findOne(USER_NORMAL);
           }
 
@@ -173,8 +160,8 @@ export class UserService {
             cost: 0,
             finishedAt: new Date(request.finishedAt),
             startedAt: new Date(request.startedAt),
-            admin,
-            superAdmin,
+            admin:isAdmin?user:null,
+            superAdmin:isSuperAdmin?user:null,
             type: typeToInvite,
             company: null,
             invitations: null,
@@ -184,13 +171,22 @@ export class UserService {
           //Hay que tener en cuenta que el usuario y el super usuario pueden enviar invitaciones.
           //Y hay que diferenciar las del super, hay que hacer dos diferenciaciones.
 
-          if (typeToInvite.id === ADMIN) {
+          if (typeToInvite.id === this.typesNumbers.ADMIN) {
             invitationBase.company = request.company;
             invitationBase.invitations = request.invitations;
             invitationBase.cost = request.cost;
           }
 
-          if (typeToInvite.id === USER_NORMAL) {
+          if (typeToInvite.id === this.typesNumbers.USER) {
+            if (isAdmin) {
+              const dateFinishAdmin:Suscription =await this.suscripctionRepository.findOne({ 
+                where:{
+                  admin:user,
+                  isActive:true,
+                }
+              })
+              invitationBase.finishedAt = dateFinishAdmin.finishedAt
+            }
             invitationBase.name = request.name;
             invitationBase.cost = request.cost;
           }
@@ -216,14 +212,15 @@ export class UserService {
         );
         // Se envia correo
         console.log({ jwtToken });
-
-        await this.mailerService.sendMail({
+          console.log("Enviando ...")
+        const response = await this.mailerService.sendMail({
           to: request.email,
           from: 'noreply@ocupath.com', // sender address
           subject: 'Has sido invitado a Ocupath.',
           text: 'Your new id', // plaintext body
           html: newInvitationTemplate(jwtToken), // HTML body content
         });
+        console.log("Response email invite",{response})
       } else {
         if (
           (userExistInDB && userExistInDB.isActive) ||
@@ -711,11 +708,7 @@ export class UserService {
       const hasAdminsExpired = adminsExpired.length > 0
       const hasGuestExpired = guestExpired.length > 0
       if (hasAdminsExpired || hasGuestExpired) {
-        expiredStatus = await this.statusRepository.findOne({
-          where: {
-            name: 'EXPIRED',
-          },
-        });
+        expiredStatus = await this.statusRepository.findOne(this.statusNumbers.EXPIRED);
       }
 
       if (hasAdminsExpired) {
@@ -1107,7 +1100,6 @@ export class UserService {
           return { status: 1,msg: 'user not found' };
         }
         lastSuscription = await this.suscriptionRepository.findOne({
-          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin: userToUpdate,
             user: null,
@@ -1116,7 +1108,6 @@ export class UserService {
           },
         });
         hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin: userToUpdate,
             user: null,
@@ -1146,7 +1137,6 @@ export class UserService {
           },
         });
         hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-          select: ['cost','startedAt','finishedAt','isActive'],
           where: {
             admin: null,
             user: userToUpdate,
@@ -1174,11 +1164,36 @@ export class UserService {
       let newLastSuscription: Suscription;
 
       if (userToUpdate.status.id === this.statusNumbers.EXPIRED) {
+
         lastSuscription.isActive = false;
         lastSuscription.isWaiting = false;
+
         newSuscription.isActive = true;
         newSuscription.isWaiting = false;
-        newLastSuscription = newSuscription;
+        await this.suscripctionRepository.save(lastSuscription);
+
+        const newStatus:Status =await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
+        if (userToUpdateIsGuest) {
+          await this.userRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              status:newStatus
+            })
+            .where("id = :id", { id: user.id })            
+            .execute();
+        }
+        if (userToUpdateIsAdmin) {
+          await this.adminRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              status:newStatus
+            })
+            .where("id = :id", { id: user.id })            
+            .execute();
+        }
+          
       }
       if (
         userToUpdate.status.id === this.statusNumbers.INACTIVE ||
@@ -1187,15 +1202,14 @@ export class UserService {
         lastSuscription.isActive = true;
         newSuscription.isActive = false;
         newSuscription.isWaiting = true;
-        newLastSuscription = lastSuscription;
+        await this.suscripctionRepository.save(lastSuscription);
       }
 
-      this.suscripctionRepository.save(lastSuscription);
-      this.suscripctionRepository.save(newSuscription);
+      await this.suscripctionRepository.save(newSuscription);
 
       response = {
         status: 0,
-        lastSuscription: newLastSuscription,
+        lastSuscription,
       };
 
       return response;
@@ -1224,7 +1238,7 @@ export class UserService {
       const isGuest = request.type === this.typesNumbers.USER;
       if (isAdmin) {
         user = await this.adminRepository.findOne({
-          relations: ['type'],
+          relations: ['type','users'],
           where: {
             uuid: request.adminUuid,
           },
@@ -1232,7 +1246,7 @@ export class UserService {
       }
       if (isSuperAdmin) {
         user = await this.superAdminRepository.findOne({
-          relations: ['type'],
+          relations: ['type','users','admins'],
           where: {
             uuid: request.superAdminUuid,
           },

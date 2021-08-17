@@ -502,11 +502,6 @@ export class SesionService {
           admin: isAdmin ? user : null,
           superAdmin: null,
         });
-
-        
-        
-       
-
         const registerToken = await this.tokenRepository.save(newToken);
 
         const token = await jwt.sign(
