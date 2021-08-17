@@ -121,7 +121,7 @@ const newInvitationTemplate = (token) => {
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;">
                                     Crea una cuenta accediendo a la siguiente ruta y disfruta de nuestra app movil.</p>
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
-                                        href="https://ocupath-orbk9xws2-isaias.vercel.app/register/${token}"
+                                        href="https://ocupath.vercel.app/register/${token}"
                                         
                                         target="_blank">Crear cuenta</a></p>
                             </td>
@@ -203,7 +203,7 @@ const newResetPassTemplate = (token) => {
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;">
                                     Accede al siguiente enlace para recuperar tu contraseña.</p>
                                 <p style="font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
-                                        href="https://ocupath-orbk9xws2-isaias.vercel.app/recovery/${token}"
+                                        href="https://ocupath.vercel.app/recovery/${token}"
                                         target="_blank">Recuperar mi contraseña</a></p>
                             </td>
                         </tr>
