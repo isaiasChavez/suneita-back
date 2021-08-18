@@ -150,14 +150,20 @@ let UserService = class UserService {
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
                 console.log({ jwtToken });
                 console.log("Enviando ...");
-                const response = await this.mailerService.sendMail({
-                    to: request.email,
-                    from: 'noreply@ocupath.com',
-                    subject: 'Has sido invitado a Ocupath.',
-                    text: 'Your new id',
-                    html: templates_1.newInvitationTemplate(jwtToken),
-                });
-                console.log("Response email invite", { response });
+                try {
+                    await this.mailerService.sendMail({
+                        to: request.email,
+                        from: 'noreply@ocupath.com',
+                        subject: 'Has sido invitado a Ocupath.',
+                        text: 'Your new id',
+                        html: templates_1.newInvitationTemplate(jwtToken),
+                    });
+                }
+                catch (error) {
+                    return {
+                        status: 3, msg: 'there is not a email whith this address'
+                    };
+                }
             }
             else {
                 if ((userExistInDB && userExistInDB.isActive) ||
@@ -303,12 +309,14 @@ let UserService = class UserService {
     }
     async getAdminDetail(getAdminDetailDTO) {
         try {
+            console.log({ getAdminDetailDTO });
             const admin = await this.adminRepository.findOne({
                 relations: ['type', 'suscriptions'],
                 where: {
                     uuid: getAdminDetailDTO.adminUuidToGet,
                 },
             });
+            console.log({ admin }, admin.suscriptions);
             const suscriptions = admin.suscriptions.map((suscription) => {
                 return {
                     cost: suscription.cost,
@@ -317,10 +325,20 @@ let UserService = class UserService {
                     isActive: suscription.isActive,
                     isDeleted: suscription.isDeleted,
                     startedAt: suscription.startedAt,
+                    isWaiting: suscription.isWaiting,
                 };
             });
             const lastSuscription = suscriptions.find((suscription) => suscription.isActive);
             const suscriptionWaiting = suscriptions.find((suscription) => suscription.isWaiting);
+            console.log({ suscriptionWaiting, lastSuscription });
+            let cost;
+            let costWaiting = 0;
+            if (suscriptionWaiting) {
+                cost = suscriptionWaiting.cost;
+                costWaiting = parseInt(cost);
+            }
+            let totalCost = (lastSuscription.cost * 1) + (costWaiting * 1);
+            console.log({ totalCost });
             return {
                 status: 0,
                 admin: {
@@ -331,7 +349,8 @@ let UserService = class UserService {
                     email: admin.email,
                     type: admin.type.id,
                     lastSuscription,
-                    suscriptionWaiting,
+                    suscriptionWaiting: suscriptionWaiting ? suscriptionWaiting : null,
+                    totalCost
                 },
             };
         }

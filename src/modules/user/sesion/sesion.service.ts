@@ -489,11 +489,15 @@ export class SesionService {
 
   async requestPasswordReset(requestEmail: string): Promise<any> {
     try {
-      console.log({requestEmail})
+    
       let response = { status: 0 };
       const {isAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestEmail)
+
+
+      
       console.log({isAdmin,isGuest,user})
       if (user) {        
+
         //Verificar si ya existe un token antes que este
         let existToken:Token
           existToken = await this.tokenRepository.findOne({
@@ -563,7 +567,6 @@ export class SesionService {
 
   async getWhoIsRequesting(email:string): Promise<{isAdmin:boolean,isSuperAdmin:boolean,isGuest:boolean,isGuestAdmin:boolean,user:SuperAdmin|Admin|User,admin:Admin}> {
     try {
-
       let user: User| Admin | SuperAdmin ;
       user = await this.superAdminRepository.findOne({
         relations: ['type'],
@@ -576,15 +579,16 @@ export class SesionService {
           where: { email, isActive: true },
         });
       }
-
       if (!user) {
         user = await this.userRepository.findOne({
           relations: ['type','admin'],
           where: { email, isActive: true },
         });
       }
-      console.log("============")
-      console.log({user})
+      if (!user) {
+        return {isAdmin:null,isSuperAdmin:null,isGuest:null,user:null,admin:null,isGuestAdmin:null}
+      }
+     
 
       const isSuperAdmin = user.type.id === this.typesNumbers.SUPERADMIN;
       const isAdmin = user.type.id === this.typesNumbers.ADMIN;
@@ -606,7 +610,7 @@ export class SesionService {
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error Changing Name  user',
+          error: 'Error finding  user',
         },
         500,
       );

@@ -213,14 +213,21 @@ export class UserService {
         // Se envia correo
         console.log({ jwtToken });
           console.log("Enviando ...")
-        const response = await this.mailerService.sendMail({
-          to: request.email,
-          from: 'noreply@ocupath.com', // sender address
-          subject: 'Has sido invitado a Ocupath.',
-          text: 'Your new id', // plaintext body
-          html: newInvitationTemplate(jwtToken), // HTML body content
-        });
-        console.log("Response email invite",{response})
+        try {
+           await this.mailerService.sendMail({
+            to: request.email,
+            from: 'noreply@ocupath.com', // sender address
+            subject: 'Has sido invitado a Ocupath.',
+            text: 'Your new id', // plaintext body
+            html: newInvitationTemplate(jwtToken), // HTML body content
+          });
+        } catch (error) {
+            return { 
+              status:3, msg: 'there is not a email whith this address'
+            }
+        }
+
+        
       } else {
         if (
           (userExistInDB && userExistInDB.isActive) ||
@@ -400,13 +407,14 @@ export class UserService {
 
   async getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any> {
     try {
+      console.log({getAdminDetailDTO})
       const admin = await this.adminRepository.findOne({
         relations: ['type','suscriptions'],
         where: {
           uuid: getAdminDetailDTO.adminUuidToGet,
         },
       });
-
+      console.log({admin},admin.suscriptions)
       const suscriptions = admin.suscriptions.map(
         (suscription: Suscription) => {
           return {
@@ -416,15 +424,28 @@ export class UserService {
             isActive: suscription.isActive,
             isDeleted: suscription.isDeleted,
             startedAt: suscription.startedAt,
+            isWaiting: suscription.isWaiting,
           };
         },
-      );
-      const lastSuscription = suscriptions.find(
-        (suscription: Suscription) => suscription.isActive,
-      );
-      const suscriptionWaiting = suscriptions.find(
-        (suscription: Suscription) => suscription.isWaiting,
-      );
+        );
+        const lastSuscription = suscriptions.find(
+          (suscription: Suscription) => suscription.isActive,
+          );
+          const suscriptionWaiting = suscriptions.find(
+            (suscription: Suscription) => suscription.isWaiting,
+            );
+      console.log({suscriptionWaiting,lastSuscription})
+      //Typescript no me lo permitía y tuve que hacer esto
+      let cost 
+      let costWaiting:number = 0
+      if (suscriptionWaiting) {
+        cost = (suscriptionWaiting.cost as unknown) as string
+        costWaiting=parseInt(cost)
+      }
+      
+      let totalCost:number = (lastSuscription.cost*1) + (costWaiting*1)
+        // + costWaiting
+      console.log({totalCost})
 
       return {
         status: 0,
@@ -436,7 +457,8 @@ export class UserService {
           email: admin.email,
           type: admin.type.id,
           lastSuscription,
-          suscriptionWaiting,
+          suscriptionWaiting:suscriptionWaiting?suscriptionWaiting:null,
+          totalCost
         },
       };
     } catch (err) {

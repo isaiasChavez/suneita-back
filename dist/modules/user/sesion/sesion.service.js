@@ -427,7 +427,6 @@ let SesionService = class SesionService {
     }
     async requestPasswordReset(requestEmail) {
         try {
-            console.log({ requestEmail });
             let response = { status: 0 };
             const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestEmail);
             console.log({ isAdmin, isGuest, user });
@@ -498,8 +497,9 @@ let SesionService = class SesionService {
                     where: { email, isActive: true },
                 });
             }
-            console.log("============");
-            console.log({ user });
+            if (!user) {
+                return { isAdmin: null, isSuperAdmin: null, isGuest: null, user: null, admin: null, isGuestAdmin: null };
+            }
             const isSuperAdmin = user.type.id === this.typesNumbers.SUPERADMIN;
             const isAdmin = user.type.id === this.typesNumbers.ADMIN;
             const isGuest = user.type.id === this.typesNumbers.USER;
@@ -519,7 +519,7 @@ let SesionService = class SesionService {
             console.log('SesionService - getWhoIsRequesting: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'Error Changing Name  user',
+                error: 'Error finding  user',
             }, 500);
         }
     }
