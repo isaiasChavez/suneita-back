@@ -410,9 +410,10 @@ export class SesionService {
       console.log("passwordRecovery")
       let response = { status: 0,msg:'ok' };
       let jwtDecoded:{ tokenid:number}
+
       try {
         jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
-        
+      
       } catch (error) {
         console.log({error})
         return {status:5, msg:"Token invalid"}
