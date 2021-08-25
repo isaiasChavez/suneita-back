@@ -130,7 +130,7 @@ const newInvitationTemplate = (newInvitation) => {
                                 <p style="font-family:Helvetica; font-size:1rem; color:white; line-height: 1.4;"> To complete the process please provide us with the following information: </p>
                                 <p style=" font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
                                  style="color:white;"
-                                 href="https://ocupath.netlify.app/register/${newInvitation.token}"
+                                 href="https://ocupath.vercel.app/register/${newInvitation.token}"
                                  target="_blank">Register</a></p>
                             </td>
                         </tr>

@@ -166,10 +166,13 @@ let UserService = class UserService {
                             start: moment(registerToken.startedAt).calendar()
                         }),
                     });
+                    return {
+                        status: 0
+                    };
                 }
                 catch (error) {
                     return {
-                        status: 3, msg: 'there is not a email whith this address'
+                        status: 3, msg: 'There is not a email whith this address'
                     };
                 }
             }
@@ -182,7 +185,6 @@ let UserService = class UserService {
                     status = 8;
                 }
             }
-            return { status };
         }
         catch (err) {
             console.log('UserService - invite: ', err);

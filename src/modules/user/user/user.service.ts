@@ -125,7 +125,6 @@ export class UserService {
           where: { email: request.email,isDeleted: false },
         });
       }
-
       if (!userExistInDB && !adminExistInDB) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
         const invitation = await this.invitationRepository.findOne({
@@ -228,9 +227,13 @@ export class UserService {
               start: moment(registerToken.startedAt).calendar()
             }), // HTML body content
           });
+          return { 
+            status:0
+          }
+
         } catch (error) {
             return { 
-              status:3, msg: 'there is not a email whith this address'
+              status:3, msg: 'There is not a email whith this address'
             }
         }
 
@@ -245,7 +248,6 @@ export class UserService {
           status = 8;
         }
       }
-      return { status };
     } catch (err) {
       console.log('UserService - invite: ',err);
       throw new HttpException(

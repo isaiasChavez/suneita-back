@@ -362,7 +362,6 @@ let SesionService = class SesionService {
     }
     async passwordRecovery(requestDTO) {
         try {
-            console.log("passwordRecovery");
             let response = { status: 0, msg: 'ok' };
             let jwtDecoded;
             try {
@@ -398,7 +397,7 @@ let SesionService = class SesionService {
                     }
                     if (!userToUpdate) {
                         return {
-                            status: 5,
+                            status: 6,
                             msg: 'Ah ocurrido un  error',
                         };
                     }
@@ -410,6 +409,7 @@ let SesionService = class SesionService {
                         await this.adminRepository.save(userToUpdate);
                     }
                     await this.tokenRepository.remove(tokenExist);
+                    return { status: 0 };
                 }
                 else {
                     response = { status: 10, msg: 'token does not exist' };
@@ -429,7 +429,6 @@ let SesionService = class SesionService {
         try {
             let response = { status: 0 };
             const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestEmail);
-            console.log({ isAdmin, isGuest, user });
             if (user) {
                 let existToken;
                 existToken = await this.tokenRepository.findOne({
@@ -453,14 +452,21 @@ let SesionService = class SesionService {
                 const token = await jwt.sign({ tokenid: registerToken.id }, process.env.TOKEN_SECRET, {
                     expiresIn: 7200000,
                 });
-                const resoponseEmail = await this.mailerService.sendMail({
-                    to: user.email,
-                    from: 'noreply@ocupath.com',
-                    subject: 'Nueva solicitud de recuperación de contraseña',
-                    text: 'Has solicitado la recuperación de tu contraseña',
-                    html: templates_1.newResetPassTemplate(token),
-                });
-                console.log({ resoponseEmail });
+                try {
+                    const resoponseEmail = await this.mailerService.sendMail({
+                        to: user.email,
+                        from: 'noreply@ocupath.com',
+                        subject: 'Nueva solicitud de recuperación de contraseña',
+                        text: 'Has solicitado la recuperación de tu contraseña',
+                        html: templates_1.newResetPassTemplate(token),
+                    });
+                    console.log("New Request reset:", { resoponseEmail });
+                }
+                catch (error) {
+                    return {
+                        status: 2,
+                    };
+                }
                 return {
                     status: 0,
                 };

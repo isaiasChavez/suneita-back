@@ -407,7 +407,6 @@ export class SesionService {
   }
   async passwordRecovery(requestDTO: PasswordRecovery): Promise<any> {
     try {
-      console.log("passwordRecovery")
       let response = { status: 0,msg:'ok' };
       let jwtDecoded:{ tokenid:number}
 
@@ -422,6 +421,7 @@ export class SesionService {
       if (!jwtDecoded.tokenid) {
         response = { status: 10, msg:'token does not exist'};
       } else {
+
         const tokenExist = await this.tokenRepository.findOne(
           jwtDecoded.tokenid,
           {
@@ -453,7 +453,7 @@ export class SesionService {
           }
           if (!userToUpdate) {
             return {
-              status: 5,
+              status: 6,
               msg: 'Ah ocurrido un  error',
             };
           }
@@ -469,6 +469,10 @@ export class SesionService {
           }
           // Se elimina el token de la base de datos
           await this.tokenRepository.remove(tokenExist);
+
+          return { status: 0};
+
+
         } else {
           response = { status: 10, msg:'token does not exist'};
         }
@@ -494,9 +498,6 @@ export class SesionService {
       let response = { status: 0 };
       const {isAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestEmail)
 
-
-      
-      console.log({isAdmin,isGuest,user})
       if (user) {        
 
         //Verificar si ya existe un token antes que este
@@ -528,23 +529,20 @@ export class SesionService {
             expiresIn: 7200000,
           },
         );
-       const resoponseEmail=  await this.mailerService.sendMail({
-          to: user.email,
-          from: 'noreply@ocupath.com', // sender address
+        try {
+          const resoponseEmail=  await this.mailerService.sendMail({
+            to: user.email,
+            from: 'noreply@ocupath.com', // sender address
             subject: 'Nueva solicitud de recuperación de contraseña',
             text: 'Has solicitado la recuperación de tu contraseña', // plaintext body
             html: newResetPassTemplate(token), // HTML body content
-        });
-        console.log({resoponseEmail})
-        // Se envia correo
-        // await this.mailerService.sendMail({
-        //     to: requestEmail,
-        //     subject: "Recuperacion de contraseña.",
-        //     template: __dirname + '/recovery.hbs',
-        //     context: {
-        //         token,
-        //     },
-        // });
+          });
+          console.log("New Request reset:",{resoponseEmail})
+        } catch (error) {
+          return {
+            status: 2,
+          };  
+        }
         return {
           status: 0,
         };
