@@ -131,6 +131,7 @@ export class UserService {
         const invitation = await this.invitationRepository.findOne({
           where: { email: request.email },
         });
+        let registerToken:Invitation
         console.log({ invitation });
         if (!invitation) {
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
@@ -197,7 +198,7 @@ export class UserService {
 
           console.log({ newInvitation });
           // Se registra token
-          const registerToken = await this.invitationRepository.save(
+          registerToken = await this.invitationRepository.save(
             newInvitation,
           );
           invitationToSign = registerToken.id;
@@ -219,7 +220,13 @@ export class UserService {
             from: 'noreply@ocupath.com', // sender address
             subject: 'Has sido invitado a Ocupath.',
             text: 'Your new id', // plaintext body
-            html: newInvitationTemplate(jwtToken), // HTML body content
+            html: newInvitationTemplate({
+              token:jwtToken,
+              cost:registerToken.cost,
+              finish:moment(registerToken.finishedAt).calendar(),
+              invitations:registerToken.invitations,
+              start: moment(registerToken.startedAt).calendar()
+            }), // HTML body content
           });
         } catch (error) {
             return { 

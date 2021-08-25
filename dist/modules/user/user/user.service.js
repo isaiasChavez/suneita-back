@@ -25,6 +25,7 @@ const user_dto_1 = require("./user.dto");
 const mailer_1 = require("@nestjs-modules/mailer");
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
+const moment = require("moment");
 const types_1 = require("../../../types");
 const superadmin_entity_1 = require("./superadmin.entity");
 const admin_entity_1 = require("./admin.entity");
@@ -93,6 +94,7 @@ let UserService = class UserService {
                 const invitation = await this.invitationRepository.findOne({
                     where: { email: request.email },
                 });
+                let registerToken;
                 console.log({ invitation });
                 if (!invitation) {
                     let typeUserRequesting;
@@ -141,7 +143,7 @@ let UserService = class UserService {
                     }
                     const newInvitation = this.invitationRepository.create(Object.assign({}, invitationBase));
                     console.log({ newInvitation });
-                    const registerToken = await this.invitationRepository.save(newInvitation);
+                    registerToken = await this.invitationRepository.save(newInvitation);
                     invitationToSign = registerToken.id;
                 }
                 else {
@@ -156,7 +158,13 @@ let UserService = class UserService {
                         from: 'noreply@ocupath.com',
                         subject: 'Has sido invitado a Ocupath.',
                         text: 'Your new id',
-                        html: templates_1.newInvitationTemplate(jwtToken),
+                        html: templates_1.newInvitationTemplate({
+                            token: jwtToken,
+                            cost: registerToken.cost,
+                            finish: moment(registerToken.finishedAt).calendar(),
+                            invitations: registerToken.invitations,
+                            start: moment(registerToken.startedAt).calendar()
+                        }),
                     });
                 }
                 catch (error) {
