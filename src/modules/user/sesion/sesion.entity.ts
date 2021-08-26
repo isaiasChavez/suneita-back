@@ -18,10 +18,13 @@ export class Sesion {
 
   @Column({ nullable: false, default: false })
   isFromCMS: boolean;
+
   @ManyToOne((type) => Admin, (admin) => admin.sesion)
   admin: Admin;
+
   @ManyToOne((type) => SuperAdmin, (superadmin) => superadmin.sesion)
   superadmin: Admin;
+  
   @ManyToOne((type) => User, (user) => user.sesion)
   user: User;
 }

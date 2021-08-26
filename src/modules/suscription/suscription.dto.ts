@@ -72,7 +72,6 @@ export class AddNewSuscriptionSuscriptionDTO extends SimpleRequest {
     @IsNumber()
     @IsNotEmpty()
     typeToUpdate: number;
-
     @IsUUID()
   @IsNotEmpty()
   @IsOptional()

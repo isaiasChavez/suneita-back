@@ -185,6 +185,7 @@ let UserService = class UserService {
                     status = 8;
                 }
             }
+            return { status };
         }
         catch (err) {
             console.log('UserService - invite: ', err);
@@ -394,6 +395,13 @@ let UserService = class UserService {
             });
             const lastSuscription = user.suscriptions.find((suscription) => suscription.isActive);
             const suscriptionWaiting = user.suscriptions.find((suscription) => suscription.isWaiting);
+            let cost;
+            let costWaiting = 0;
+            if (suscriptionWaiting) {
+                cost = suscriptionWaiting.cost;
+                costWaiting = parseInt(cost);
+            }
+            let totalCost = (lastSuscription.cost * 1) + (costWaiting * 1);
             return {
                 status: 0,
                 user: {
@@ -406,6 +414,7 @@ let UserService = class UserService {
                     type: user.type.id,
                     lastSuscription,
                     suscriptionWaiting,
+                    totalCost
                 },
             };
         }
@@ -877,22 +886,6 @@ let UserService = class UserService {
                 if (!userToUpdate) {
                     return { status: 1, msg: 'user not found' };
                 }
-                lastSuscription = await this.suscriptionRepository.findOne({
-                    where: {
-                        admin: userToUpdate,
-                        user: null,
-                        isActive: true,
-                        isWaiting: false,
-                    },
-                });
-                hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-                    where: {
-                        admin: userToUpdate,
-                        user: null,
-                        isWaiting: true,
-                        isActive: false,
-                    },
-                });
             }
             if (userToUpdateIsGuest) {
                 userToUpdate = await this.userRepository.findOne({
@@ -906,21 +899,23 @@ let UserService = class UserService {
                 if (!userToUpdate) {
                     return { status: 1, msg: 'user not found' };
                 }
-                lastSuscription = await this.suscriptionRepository.findOne({
-                    where: {
-                        admin: null,
-                        user: userToUpdate,
-                        isActive: true,
-                    },
-                });
-                hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
-                    where: {
-                        admin: null,
-                        user: userToUpdate,
-                        isWaiting: true,
-                    },
-                });
             }
+            lastSuscription = await this.suscriptionRepository.findOne({
+                where: {
+                    admin: userToUpdateIsAdmin ? userToUpdate : null,
+                    user: userToUpdateIsGuest ? userToUpdate : null,
+                    isActive: true,
+                    isWaiting: false,
+                },
+            });
+            hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
+                where: {
+                    admin: userToUpdateIsAdmin ? userToUpdate : null,
+                    user: userToUpdateIsGuest ? userToUpdate : null,
+                    isWaiting: true,
+                    isActive: false,
+                },
+            });
             console.log({ userToUpdate, hasSuscriptionWaiting, lastSuscription });
             if (hasSuscriptionWaiting) {
                 return { status: 3, msg: 'There is already a subscription waiting' };
@@ -1319,9 +1314,6 @@ let UserService = class UserService {
             if (!admin) {
                 return { status: 2, msg: 'admin not found' };
             }
-            console.log('===========');
-            console.log(admin.users);
-            console.log('===========');
             await this.updateArrayUsers(admin.users, {
                 isActive: pauseAdminUserDTO.status,
                 isDeleted: false,
@@ -1341,24 +1333,26 @@ let UserService = class UserService {
     }
     async suspendUser(pauseUserDTO) {
         try {
-            const admin = await this.adminRepository.findOne({
-                where: {
-                    uuid: pauseUserDTO.adminUuid,
-                },
-            });
-            if (!admin) {
+            console.log({ pauseUserDTO });
+            const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(pauseUserDTO);
+            if (!user) {
                 return { status: 1, msg: 'admin not found' };
             }
-            const user = await this.userRepository.findOne({
+            const userToUpdate = await this.userRepository.findOne({
                 relations: ['admin'],
-                where: { uuid: pauseUserDTO.userUuidToChange, admin },
+                where: {
+                    uuid: pauseUserDTO.userUuidToChange,
+                    admin: isAdmin ? user : null,
+                    superadmin: isSuperAdmin ? user : null
+                },
             });
-            if (!user) {
+            console.log({ userToUpdate });
+            if (!userToUpdate) {
                 return { status: 2, msg: 'user not found' };
             }
-            user.isActive = pauseUserDTO.status;
-            await this.userRepository.save(user);
-            const userDTO = new user_dto_1.UserDTO(user);
+            userToUpdate.isActive = pauseUserDTO.status;
+            await this.userRepository.save(userToUpdate);
+            const userDTO = new user_dto_1.UserDTO(userToUpdate);
             return { status: 0, user: userDTO };
         }
         catch (err) {

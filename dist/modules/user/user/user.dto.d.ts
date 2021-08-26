@@ -201,17 +201,15 @@ export declare class GetAdminDetailDTO {
     adminUuidToGet: number;
     type: number;
 }
-export declare class DeleteUserDTO {
-    constructor({ adminUuid, superAdminUuid, type, userUuidToChange, status }: {
+export declare class DeleteUserDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status }: {
         adminUuid: any;
         superAdminUuid: any;
+        userUuid: any;
         type: any;
         userUuidToChange: any;
         status: any;
     });
-    superAdminUuid: number;
-    adminUuid: number;
     userUuidToChange: number;
     status: boolean;
-    type: number;
 }

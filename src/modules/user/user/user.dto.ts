@@ -469,22 +469,12 @@ export class GetAdminDetailDTO {
 }
 
 
-export class DeleteUserDTO {
-  constructor({ adminUuid,superAdminUuid,type, userUuidToChange,status }) {
+export class DeleteUserDTO extends SimpleRequest{
+  constructor({ adminUuid,superAdminUuid,userUuid,type, userUuidToChange,status }) {
+    super({adminUuid,superAdminUuid,type,userUuid})
     this.userUuidToChange = userUuidToChange;
-    this.adminUuid = adminUuid;
     this.status = status;
-    this.type=type
-    this.superAdminUuid=superAdminUuid
   }
-  @IsUUID()
-  @IsOptional()
-  @IsString()
-  superAdminUuid: number;
-  @IsUUID()
-  @IsOptional()
-  @IsString()
-  adminUuid: number;
   @IsUUID()
   @IsNotEmpty()
   @IsString()
@@ -492,7 +482,4 @@ export class DeleteUserDTO {
   @IsOptional()
   @IsBoolean()
   status: boolean;
-  @IsNumber()
-  @IsNotEmpty()
-  type: number;
 }

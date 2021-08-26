@@ -14,7 +14,6 @@ import { Invitation } from '../invitation/invitation.entity';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { Status } from '../status/status.entity';
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
