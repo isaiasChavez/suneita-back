@@ -20,13 +20,14 @@ import {
 } from 'class-validator';
 
 export class UserDTO {
-  constructor({ email,uuid, name,avatar,isActive,lastname }) {
+  constructor({ email,uuid, name,avatar,isActive,lastname,status}) {
     this.email = email;
     this.avatar = avatar;
     this.isActive = isActive;
     this.name = name
     this.uuid=uuid
     this.lastname = lastname
+    this.status = status.id
   }
   isActive:boolean
   lastname: string
@@ -34,6 +35,7 @@ export class UserDTO {
   name: string
   uuid: string
   email: string;
+  status:number
 }
 
 

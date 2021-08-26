@@ -12,13 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.FindUserChildrens = exports.InviteUserDTO = exports.SimpleRequest = exports.InviteAdminDTO = exports.UserDTO = void 0;
 const class_validator_1 = require("class-validator");
 class UserDTO {
-    constructor({ email, uuid, name, avatar, isActive, lastname }) {
+    constructor({ email, uuid, name, avatar, isActive, lastname, status }) {
         this.email = email;
         this.avatar = avatar;
         this.isActive = isActive;
         this.name = name;
         this.uuid = uuid;
         this.lastname = lastname;
+        this.status = status.id;
     }
 }
 exports.UserDTO = UserDTO;

@@ -1,11 +1,12 @@
 export declare class UserDTO {
-    constructor({ email, uuid, name, avatar, isActive, lastname }: {
+    constructor({ email, uuid, name, avatar, isActive, lastname, status }: {
         email: any;
         uuid: any;
         name: any;
         avatar: any;
         isActive: any;
         lastname: any;
+        status: any;
     });
     isActive: boolean;
     lastname: string;
@@ -13,6 +14,7 @@ export declare class UserDTO {
     name: string;
     uuid: string;
     email: string;
+    status: number;
 }
 export declare class InviteAdminDTO {
     constructor({ email, type }: {
