@@ -84,6 +84,7 @@ let AssetService = class AssetService {
     }
     async create(createAssetDTO) {
         try {
+            console.log({ createAssetDTO });
             const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(createAssetDTO);
             if (!user) {
                 return {
@@ -104,6 +105,7 @@ let AssetService = class AssetService {
                     user: null,
                     admin: user,
                     url: createAssetDTO.url,
+                    thumbnail: createAssetDTO.thumbnail,
                     typeAsset
                 });
             }
@@ -112,6 +114,7 @@ let AssetService = class AssetService {
                     user,
                     admin: null,
                     url: createAssetDTO.url,
+                    thumbnail: createAssetDTO.thumbnail,
                     typeAsset
                 });
             }

@@ -13,13 +13,14 @@ exports.DeleteAssetDto = exports.CreateAssetDTO = void 0;
 const class_validator_1 = require("class-validator");
 const user_dto_1 = require("../user/user/user.dto");
 class CreateAssetDTO extends user_dto_1.SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, url, typeAsset }) {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, url, typeAsset, thumbnail }) {
         super({ adminUuid,
             superAdminUuid,
             userUuid,
             type });
         this.url = url;
         this.typeAsset = typeAsset;
+        this.thumbnail = thumbnail;
     }
 }
 __decorate([
@@ -28,6 +29,12 @@ __decorate([
     class_validator_1.IsUrl(),
     __metadata("design:type", String)
 ], CreateAssetDTO.prototype, "url", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    class_validator_1.IsUrl(),
+    __metadata("design:type", String)
+], CreateAssetDTO.prototype, "thumbnail", void 0);
 __decorate([
     class_validator_1.IsNotEmpty(),
     class_validator_1.IsNumber(),

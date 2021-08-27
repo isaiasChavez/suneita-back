@@ -57,7 +57,7 @@ export class UserController {
             await validateOrReject(newsetSesionAppId);
             return await this.userService.setSesionOfApp(newsetSesionAppId);
         } catch (errors) {
-            console.log('Caught promise rejection (validation failed)  please check your inputs. Errors: ', errors);
+            console.log('Caught promiseee rejection (validation failed)  please check your inputs. Errors: ', errors);
             return {
                 errors
             }
