@@ -374,15 +374,14 @@ export class UpdateUserDTO extends SimpleRequest {
     type,
     name,
     avatar,
-    thumbnail
+    thumbnail,
+    roomImage
   }) {
-    super({adminUuid,
-      superAdminUuid,
-      userUuid,
-      type})
-    this.name=name
-    this.avatar=avatar
-    this.thumbnail=thumbnail
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.name = name;
+    this.avatar = avatar;
+    this.thumbnail = thumbnail;
+    this.roomImage = roomImage;
   }
   @IsOptional()  
   @IsString()
@@ -397,6 +396,11 @@ export class UpdateUserDTO extends SimpleRequest {
   @IsString()
   @MaxLength(150)
   thumbnail: string;
+  @IsOptional()  
+  @IsString()
+  roomImage: string;
+
+  
 }
 
 

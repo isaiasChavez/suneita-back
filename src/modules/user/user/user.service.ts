@@ -431,6 +431,7 @@ export class UserService {
           thumbnail: user.thumbnail,
           email: user.email,
           type: user.type.id,
+          roomImage: user.roomImage,
         },
       });
     } catch (err) {
@@ -769,6 +770,7 @@ export class UserService {
           lastname: user.lastname,
           email: user.email,
           type: user.type.id,
+          roomImage:user.roomImage
         },
         childrens,
       };
@@ -962,17 +964,6 @@ export class UserService {
       // const suscriptionsGuestExpiredIds = guestExpired.map(
       //   (suscription) => suscription.suscriptionId,
       // );
-
-
-
-
-
-
-
-
-
-
-
       return { status: 0 };
     } catch (err) {
       console.log('UserService - clearSuscriptionsExpired: ',err);
@@ -1409,6 +1400,10 @@ export class UserService {
         console.log('Ha actualizado el nombre');
         user.name = updateUserDTO.name;
       }
+      if (updateUserDTO.roomImage) {
+        console.log('Ha actualizado el nombre');
+        user.roomImage = updateUserDTO.roomImage;
+      }
       if (updateUserDTO.avatar) {
         console.log('Ha actualizado el avatar');
         user.avatar = updateUserDTO.avatar;
@@ -1431,6 +1426,7 @@ export class UserService {
           avatar: user.avatar,
           thumbnail: user.thumbnail,
           name: user.name,
+          roomImage:user.roomImage
         },
       };
     } catch (err) {
