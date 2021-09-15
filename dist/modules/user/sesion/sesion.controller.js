@@ -52,7 +52,7 @@ let SesionController = class SesionController {
     async validating(token) {
         if (token.length < 50) {
             return {
-                status: 5
+                status: 5,
             };
         }
         return await this.sesionService.validateIfExistToken(token);
@@ -71,8 +71,21 @@ let SesionController = class SesionController {
         }
     }
     async requestPasswordReset(email) {
-        console.log("requestPasswordReset");
+        console.log('requestPasswordReset');
         return await this.sesionService.requestPasswordReset(email);
+    }
+    async sendInformationForm(sendEmailInfo) {
+        const newsendEmailInfo = new sesion_dto_1.SendEmailInfo(sendEmailInfo);
+        try {
+            await class_validator_1.validateOrReject(newsendEmailInfo);
+            return await this.sesionService.sendInformationForm(newsendEmailInfo);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed). Errors: ', errors);
+            return {
+                errors,
+            };
+        }
     }
     async Logout(requestSesionLogOutDTO) {
         console.log({ requestSesionLogOutDTO });
@@ -90,7 +103,7 @@ let SesionController = class SesionController {
         catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {
-                errors
+                errors,
             };
         }
     }
@@ -103,7 +116,7 @@ let SesionController = class SesionController {
         catch (errors) {
             console.log('Caught promise rejection (validation failed). Errors: ', errors);
             return {
-                errors
+                errors,
             };
         }
     }
@@ -144,6 +157,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "requestPasswordReset", null);
 __decorate([
+    common_1.Post('info'),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [sesion_dto_1.SendEmailInfo]),
+    __metadata("design:returntype", Promise)
+], SesionController.prototype, "sendInformationForm", null);
+__decorate([
     common_1.Post('logout'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
@@ -158,14 +178,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "Decifring", null);
 __decorate([
-    common_1.Post("admin"),
+    common_1.Post('admin'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [sesion_dto_1.CreateAdminDTO]),
     __metadata("design:returntype", Promise)
 ], SesionController.prototype, "createAdmin", null);
 __decorate([
-    common_1.Post("user"),
+    common_1.Post('user'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [sesion_dto_1.CreateUserDTO]),

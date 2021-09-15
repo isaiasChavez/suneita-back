@@ -43,6 +43,9 @@ export declare class UserService {
     findUserDetail(requestDetailDTO: SimpleRequest, res: any): Promise<any>;
     getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any>;
     getUserDetail(getUserDetailDTO: GetUserDetailDTO): Promise<any>;
+    getStatusSuscription(suscription: Suscription): Promise<{
+        isExpired: boolean;
+    }>;
     findUserChildrens(findUserChildrensDTO: SimpleRequest): Promise<any>;
     clearSuscriptionsExpired(): Promise<any>;
     createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any>;

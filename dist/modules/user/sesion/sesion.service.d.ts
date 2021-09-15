@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { Sesion } from './sesion.entity';
-import { ReuestSesionDTO, ReuestSesionLogOutDTO, PasswordRecovery, CreateAdminDTO, CreateUserDTO } from './sesion.dto';
+import { ReuestSesionDTO, ReuestSesionLogOutDTO, PasswordRecovery, CreateAdminDTO, CreateUserDTO, SendEmailInfo } from './sesion.dto';
 import { Types, Roles, TypesNumbers } from '../../../types';
 import { Type } from '../type/type.entity';
 import { User } from '../user/user.entity';
@@ -41,6 +41,7 @@ export declare class SesionService {
     validateIfExistToken(token: string): Promise<any>;
     passwordRecovery(requestDTO: PasswordRecovery): Promise<any>;
     requestPasswordReset(requestEmail: string): Promise<any>;
+    sendInformationForm(sendEmailInfo: SendEmailInfo): Promise<any>;
     getWhoIsRequesting(email: string): Promise<{
         isAdmin: boolean;
         isSuperAdmin: boolean;

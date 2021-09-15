@@ -32,36 +32,36 @@ let AssetService = class AssetService {
             IMAGE: 1,
             IMAGE360: 2,
             VIDEO: 3,
-            VIDEO360: 4
+            VIDEO360: 4,
         };
     }
     async getAllAssetsByUser(getAssetDTO) {
         try {
-            const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(getAssetDTO);
+            const { isAdmin, isGuest, user, } = await this.userService.getWhoIsRequesting(getAssetDTO);
             if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el usuario"
+                    error: 'No existe el usuario',
                 };
             }
             let assets;
             if (isGuest) {
                 assets = await this.assetRepository.find({
-                    select: ["url", "thumbnail"],
-                    relations: ["typeAsset"],
+                    select: ['url', 'thumbnail', 'uuid'],
+                    relations: ['typeAsset'],
                     where: {
-                        user
-                    }
+                        user,
+                    },
                 });
             }
             if (isAdmin) {
                 assets = await this.assetRepository.find({
-                    select: ["url", "thumbnail"],
-                    relations: ["typeAsset"],
+                    select: ['url', 'thumbnail', 'uuid'],
+                    relations: ['typeAsset'],
                     where: {
                         admin: user,
-                        isDeleted: false
-                    }
+                        isDeleted: false,
+                    },
                 });
             }
             const images = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE);
@@ -71,31 +71,31 @@ let AssetService = class AssetService {
             console.log({ images, videos360, videos, images360 });
             return {
                 assets: { images, videos360, videos, images360 },
-                status: 0
+                status: 0,
             };
         }
         catch (err) {
-            console.log("AssetService - get: ", err);
+            console.log('AssetService - get: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: "Error getting assets",
+                error: 'Error getting assets',
             }, 500);
         }
     }
     async create(createAssetDTO) {
         try {
-            const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(createAssetDTO);
+            const { isAdmin, isGuest, user, } = await this.userService.getWhoIsRequesting(createAssetDTO);
             if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el usuario"
+                    error: 'No existe el usuario',
                 };
             }
             const typeAsset = await this.typeAssetRepository.findOne(createAssetDTO.typeAsset);
             if (!typeAsset) {
                 throw new common_1.HttpException({
                     status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                    error: "No permitido",
+                    error: 'No permitido',
                 }, 403);
             }
             let asset;
@@ -104,7 +104,7 @@ let AssetService = class AssetService {
                     user: null,
                     admin: user,
                     url: createAssetDTO.url,
-                    typeAsset
+                    typeAsset,
                 });
             }
             if (isGuest) {
@@ -112,7 +112,7 @@ let AssetService = class AssetService {
                     user,
                     admin: null,
                     url: createAssetDTO.url,
-                    typeAsset
+                    typeAsset,
                 });
             }
             await this.assetRepository.save(asset);
@@ -120,44 +120,44 @@ let AssetService = class AssetService {
                 asset: {
                     url: asset.url,
                     thumbnail: asset.thumbnail,
-                    typeAsset
+                    typeAsset,
                 },
-                status: 0
+                status: 0,
             };
         }
         catch (err) {
-            console.log("AssetService - create: ", err);
+            console.log('AssetService - create: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: "Error creating asset",
+                error: 'Error creating asset',
             }, 500);
         }
     }
     async delete(deleteAssetDto) {
         try {
-            const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(deleteAssetDto);
+            const { isAdmin, isGuest, user, } = await this.userService.getWhoIsRequesting(deleteAssetDto);
             if (!user) {
                 return {
                     status: 1,
-                    error: "No existe el usuario"
+                    error: 'No existe el usuario',
                 };
             }
             let asset;
             if (isAdmin) {
                 asset = await this.assetRepository.findOne({
-                    relations: ['admin'],
+                    relations: ['admin', 'typeAsset'],
                     where: {
                         uuid: deleteAssetDto.uuid,
-                        admin: user
+                        admin: user,
                     },
                 });
             }
             if (isGuest) {
                 asset = await this.assetRepository.findOne({
-                    relations: ['admin'],
+                    relations: ['admin', 'typeAsset'],
                     where: {
                         uuid: deleteAssetDto.uuid,
-                        user
+                        user,
                     },
                 });
             }
@@ -165,13 +165,16 @@ let AssetService = class AssetService {
                 return { status: 2, msg: 'asset not found' };
             }
             await this.assetRepository.remove(asset);
-            return;
+            return {
+                status: 0,
+                asset,
+            };
         }
         catch (err) {
-            console.log("AssetService - invite: ", err);
+            console.log('AssetService - invite: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: "Error deleting asset",
+                error: 'Error deleting asset',
             }, 500);
         }
     }

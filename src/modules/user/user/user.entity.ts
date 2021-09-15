@@ -40,7 +40,12 @@ export class User {
       'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
   })
   thumbnail: string;
-
+ @Column({
+    type: 'text',
+    default:
+      'https://ocupath.fra1.digitaloceanspaces.com/app/defaultapp.png',
+  })
+  roomImage: string;
   @Column({ length: 250 })
   email: string;
 

@@ -12,13 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.FindUserChildrens = exports.InviteUserDTO = exports.SimpleRequest = exports.InviteAdminDTO = exports.UserDTO = void 0;
 const class_validator_1 = require("class-validator");
 class UserDTO {
-    constructor({ email, uuid, name, avatar, isActive, lastname }) {
+    constructor({ email, uuid, name, avatar, isActive, lastname, status }) {
         this.email = email;
         this.avatar = avatar;
         this.isActive = isActive;
         this.name = name;
         this.uuid = uuid;
         this.lastname = lastname;
+        this.status = status.id;
     }
 }
 exports.UserDTO = UserDTO;
@@ -362,14 +363,12 @@ __decorate([
 ], UpdateGuestDTO.prototype, "userUuidToUpdate", void 0);
 exports.UpdateGuestDTO = UpdateGuestDTO;
 class UpdateUserDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type });
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail, roomImage }) {
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.name = name;
         this.avatar = avatar;
         this.thumbnail = thumbnail;
+        this.roomImage = roomImage;
     }
 }
 __decorate([
@@ -389,6 +388,11 @@ __decorate([
     class_validator_1.MaxLength(150),
     __metadata("design:type", String)
 ], UpdateUserDTO.prototype, "thumbnail", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], UpdateUserDTO.prototype, "roomImage", void 0);
 exports.UpdateUserDTO = UpdateUserDTO;
 class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }) {
@@ -479,27 +483,13 @@ __decorate([
     __metadata("design:type", Number)
 ], GetAdminDetailDTO.prototype, "type", void 0);
 exports.GetAdminDetailDTO = GetAdminDetailDTO;
-class DeleteUserDTO {
-    constructor({ adminUuid, superAdminUuid, type, userUuidToChange, status }) {
+class DeleteUserDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status }) {
+        super({ adminUuid, superAdminUuid, type, userUuid });
         this.userUuidToChange = userUuidToChange;
-        this.adminUuid = adminUuid;
         this.status = status;
-        this.type = type;
-        this.superAdminUuid = superAdminUuid;
     }
 }
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsOptional(),
-    class_validator_1.IsString(),
-    __metadata("design:type", Number)
-], DeleteUserDTO.prototype, "superAdminUuid", void 0);
-__decorate([
-    class_validator_1.IsUUID(),
-    class_validator_1.IsOptional(),
-    class_validator_1.IsString(),
-    __metadata("design:type", Number)
-], DeleteUserDTO.prototype, "adminUuid", void 0);
 __decorate([
     class_validator_1.IsUUID(),
     class_validator_1.IsNotEmpty(),
@@ -511,10 +501,5 @@ __decorate([
     class_validator_1.IsBoolean(),
     __metadata("design:type", Boolean)
 ], DeleteUserDTO.prototype, "status", void 0);
-__decorate([
-    class_validator_1.IsNumber(),
-    class_validator_1.IsNotEmpty(),
-    __metadata("design:type", Number)
-], DeleteUserDTO.prototype, "type", void 0);
 exports.DeleteUserDTO = DeleteUserDTO;
 //# sourceMappingURL=user.dto.js.map

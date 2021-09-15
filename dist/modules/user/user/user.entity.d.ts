@@ -13,6 +13,7 @@ export declare class User {
     lastname: string;
     avatar: string;
     thumbnail: string;
+    roomImage: string;
     email: string;
     password: string;
     type: Type;

@@ -20,13 +20,14 @@ import {
 } from 'class-validator';
 
 export class UserDTO {
-  constructor({ email,uuid, name,avatar,isActive,lastname }) {
+  constructor({ email,uuid, name,avatar,isActive,lastname,status}) {
     this.email = email;
     this.avatar = avatar;
     this.isActive = isActive;
     this.name = name
     this.uuid=uuid
     this.lastname = lastname
+    this.status = status.id
   }
   isActive:boolean
   lastname: string
@@ -34,6 +35,7 @@ export class UserDTO {
   name: string
   uuid: string
   email: string;
+  status:number
 }
 
 
@@ -372,15 +374,14 @@ export class UpdateUserDTO extends SimpleRequest {
     type,
     name,
     avatar,
-    thumbnail
+    thumbnail,
+    roomImage
   }) {
-    super({adminUuid,
-      superAdminUuid,
-      userUuid,
-      type})
-    this.name=name
-    this.avatar=avatar
-    this.thumbnail=thumbnail
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.name = name;
+    this.avatar = avatar;
+    this.thumbnail = thumbnail;
+    this.roomImage = roomImage;
   }
   @IsOptional()  
   @IsString()
@@ -395,6 +396,11 @@ export class UpdateUserDTO extends SimpleRequest {
   @IsString()
   @MaxLength(150)
   thumbnail: string;
+  @IsOptional()  
+  @IsString()
+  roomImage: string;
+
+  
 }
 
 
@@ -469,22 +475,12 @@ export class GetAdminDetailDTO {
 }
 
 
-export class DeleteUserDTO {
-  constructor({ adminUuid,superAdminUuid,type, userUuidToChange,status }) {
+export class DeleteUserDTO extends SimpleRequest{
+  constructor({ adminUuid,superAdminUuid,userUuid,type, userUuidToChange,status }) {
+    super({adminUuid,superAdminUuid,type,userUuid})
     this.userUuidToChange = userUuidToChange;
-    this.adminUuid = adminUuid;
     this.status = status;
-    this.type=type
-    this.superAdminUuid=superAdminUuid
   }
-  @IsUUID()
-  @IsOptional()
-  @IsString()
-  superAdminUuid: number;
-  @IsUUID()
-  @IsOptional()
-  @IsString()
-  adminUuid: number;
   @IsUUID()
   @IsNotEmpty()
   @IsString()
@@ -492,7 +488,4 @@ export class DeleteUserDTO {
   @IsOptional()
   @IsBoolean()
   status: boolean;
-  @IsNumber()
-  @IsNotEmpty()
-  type: number;
 }

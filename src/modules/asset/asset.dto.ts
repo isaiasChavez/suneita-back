@@ -33,7 +33,9 @@ export class DeleteAssetDto extends SimpleRequest {
     constructor({ adminUuid,
         superAdminUuid,
         userUuid,
-        type, uuid }) {
+        type,
+        uuid 
+    }) {
         super({adminUuid,
             superAdminUuid,
             userUuid,

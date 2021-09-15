@@ -54,6 +54,13 @@ __decorate([
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "email", void 0);
 __decorate([
+    typeorm_1.Column({
+        type: 'text',
+        default: 'https://ocupath.fra1.digitaloceanspaces.com/app/defaultapp.png',
+    }),
+    __metadata("design:type", String)
+], SuperAdmin.prototype, "roomImage", void 0);
+__decorate([
     typeorm_1.Column({ length: 100 }),
     __metadata("design:type", String)
 ], SuperAdmin.prototype, "password", void 0);

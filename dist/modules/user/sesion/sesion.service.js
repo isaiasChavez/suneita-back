@@ -429,7 +429,6 @@ let SesionService = class SesionService {
         try {
             let response = { status: 0 };
             const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestEmail);
-            console.log({ isAdmin, isGuest, user });
             if (user) {
                 let existToken;
                 existToken = await this.tokenRepository.findOne({
@@ -475,6 +474,29 @@ let SesionService = class SesionService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error requesting password reset',
+            }, 500);
+        }
+    }
+    async sendInformationForm(sendEmailInfo) {
+        try {
+            console.log({ sendEmailInfo });
+            const resoponseEmail = await this.mailerService.sendMail({
+                to: sendEmailInfo.email,
+                from: 'noreply@ocupath.com',
+                subject: 'Nueva solicitud de información',
+                text: 'Ha llegado una nueva solicitud de información',
+                html: templates_1.newInfoLanding(),
+            });
+            console.log({ resoponseEmail });
+            return {
+                status: 0,
+            };
+        }
+        catch (err) {
+            console.log('UserService - sendInformationForm: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error requesting send information',
             }, 500);
         }
     }

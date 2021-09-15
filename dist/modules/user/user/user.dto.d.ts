@@ -1,11 +1,12 @@
 export declare class UserDTO {
-    constructor({ email, uuid, name, avatar, isActive, lastname }: {
+    constructor({ email, uuid, name, avatar, isActive, lastname, status }: {
         email: any;
         uuid: any;
         name: any;
         avatar: any;
         isActive: any;
         lastname: any;
+        status: any;
     });
     isActive: boolean;
     lastname: string;
@@ -13,6 +14,7 @@ export declare class UserDTO {
     name: string;
     uuid: string;
     email: string;
+    status: number;
 }
 export declare class InviteAdminDTO {
     constructor({ email, type }: {
@@ -154,7 +156,7 @@ export declare class UpdateGuestDTO extends SimpleRequest {
     userUuidToUpdate: string;
 }
 export declare class UpdateUserDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail, roomImage }: {
         adminUuid: any;
         superAdminUuid: any;
         userUuid: any;
@@ -162,10 +164,12 @@ export declare class UpdateUserDTO extends SimpleRequest {
         name: any;
         avatar: any;
         thumbnail: any;
+        roomImage: any;
     });
     name: string;
     avatar: string;
     thumbnail: string;
+    roomImage: string;
 }
 export declare class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }: {
@@ -201,17 +205,15 @@ export declare class GetAdminDetailDTO {
     adminUuidToGet: number;
     type: number;
 }
-export declare class DeleteUserDTO {
-    constructor({ adminUuid, superAdminUuid, type, userUuidToChange, status }: {
+export declare class DeleteUserDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status }: {
         adminUuid: any;
         superAdminUuid: any;
+        userUuid: any;
         type: any;
         userUuidToChange: any;
         status: any;
     });
-    superAdminUuid: number;
-    adminUuid: number;
     userUuidToChange: number;
     status: boolean;
-    type: number;
 }
