@@ -27,6 +27,7 @@ import {
   ChangeName,
   UpdateGuestDTO,
   SetSesionAppId,
+  ResponseProfile
 } from './user.dto';
 import { Configuration } from '../../../config/config.keys';
 
@@ -108,6 +109,7 @@ export class UserService {
   typesNumbers: TypesNumbers;
   async invite(request: InviteUserDTO): Promise<any> {
     try {
+      
       let status = 0;
       let invitationToSign = '';
       let jwtToken = null;
@@ -131,23 +133,19 @@ export class UserService {
         });
         let registerToken:Invitation
         if (!invitation) {
-
-
-          
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
-          let typeUserRequesting: number;
-
-          const { isAdmin,isSuperAdmin,isGuest,user } =
+          const { isAdmin,isSuperAdmin,user } =
           await this.getWhoIsRequesting(request);
           if (!user) {
             return {
               status: 5,
             };
           }
-
-          if (moment(request.startedAt).isBefore(new Date())) {
+          let yesterday = moment(new Date()).add(-1, 'days');
+          console.log({yesterday})
+          if (moment(request.startedAt).isBefore(yesterday)) {
             return {
-              status: 5,
+              status: 6,
             };
           }
 
@@ -417,14 +415,25 @@ export class UserService {
     @Res() res,
   ): Promise<any> {
     try {
-      const { user } = await this.getWhoIsRequesting(requestDetailDTO);
+      const { user,isAdmin,isGuest ,isSuperAdmin} = await this.getWhoIsRequesting(requestDetailDTO);
       if (!user) {
         return res.status(404);
       }
-      return res.status(201).json({
-        status: 0,
-        profile: {
-          id: user.id,
+      let lastSuscription: Suscription
+      if (!isSuperAdmin) {
+        lastSuscription=
+         await this.suscriptionRepository.findOne({
+           select: [ 'invitations'],
+           where: {
+             admin:isAdmin?user:null,
+             user:isGuest?user:null,
+             isActive: true,
+           },
+         });
+        
+      }
+      const profile:ResponseProfile ={
+          id: parseInt(user.id),
           name: user.name,
           uuid: user.uuid,
           lastname: user.lastname,
@@ -432,7 +441,13 @@ export class UserService {
           email: user.email,
           type: user.type.id,
           roomImage: user.roomImage,
-        },
+          lastSuscription:{
+            invitations: !isSuperAdmin ? lastSuscription.invitations:0
+          }
+        }
+      return res.status(201).json({
+        status: 0,
+        profile
       });
     } catch (err) {
       console.log('UserService - findUserDetail: ',err);

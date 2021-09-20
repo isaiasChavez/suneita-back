@@ -36,6 +36,7 @@ export class AssetController {
     }
     @Put()
     async delete(@Body() deleteAssetDTO: DeleteAssetDto): Promise<any> {
+        console.log({deleteAssetDTO})
         let newdeleteAssetDTO = new DeleteAssetDto(deleteAssetDTO)
         try {
             await validateOrReject(newdeleteAssetDTO);

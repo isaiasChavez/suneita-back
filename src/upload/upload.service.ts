@@ -131,6 +131,28 @@ export class UploadService {
               );
           });
           break;
+          case '6':
+          this.uploadRoom(req, res,  (error)=> {
+            if (error) {
+              console.log(error);
+              return res
+                .status(404)
+                .json(`Failed to upload room file: ${error}`);
+            }
+            // console.log("ASSETS: ", req.files);
+            let urlToReturn = req.files[0].Location;
+            urlToReturn = urlToReturn.substring(
+              urlToReturn.indexOf('/rooms/'),
+              urlToReturn.lenght,
+            );
+            return res
+              .status(201)
+              .json(
+                'https://ocupath.fra1.digitaloceanspaces.com' +
+                  urlToReturn,
+              );
+          });
+          break;
         default:
           console.log('default');
           break;
@@ -234,4 +256,27 @@ export class UploadService {
       },
     }),
   }).array('upload', 1);
+
+  uploadRoom = multer({
+    storage: s3Storage({
+      s3: this.s3,
+      Bucket: this._configService.get(Configuration.BUCKET_NAME),
+      // contentType: multerS3.AUTO_CONTENT_TYPE,
+      ACL: 'public-read',
+      Key: function (request, file, cb) {
+        cb(
+          null,
+          `rooms/${Date.now().toString()}-${file.originalname.replace(
+            /\s+/g,
+            '',
+          )}`,
+        );
+      },
+      resize: {
+        width: 200,
+        height: 200,
+      },
+    }),
+  }).array('upload', 1);
+
 }

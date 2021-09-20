@@ -1,4 +1,4 @@
-import { Optional } from '@nestjs/common';
+import { Optional } from '@nestjs/common'
 
 import {
   IsBoolean,
@@ -17,76 +17,84 @@ import {
   maxLength,
   MaxLength,
   MinLength,
-} from 'class-validator';
+} from 'class-validator'
 
 export class UserDTO {
-  constructor({ email,uuid, name,avatar,isActive,lastname,status}) {
-    this.email = email;
-    this.avatar = avatar;
-    this.isActive = isActive;
+  constructor ({ email, uuid, name, avatar, isActive, lastname, status }) {
+    this.email = email
+    this.avatar = avatar
+    this.isActive = isActive
     this.name = name
-    this.uuid=uuid
+    this.uuid = uuid
     this.lastname = lastname
     this.status = status.id
   }
-  isActive:boolean
+  isActive: boolean
   lastname: string
   avatar: string
   name: string
   uuid: string
-  email: string;
-  status:number
+  email: string
+  status: number
 }
 
+export interface ResponseProfile {
+  id: number
+  name: string
+  uuid: string
+  lastname: string
+  thumbnail: string
+  email: string
+  type: number
+  roomImage: string
+  lastSuscription: {
+    invitations: number
+  }
+}
 
 export class InviteAdminDTO {
-  constructor({ email, type }) {
-    this.email = email;
-    this.type = type;
+  constructor ({ email, type }) {
+    this.email = email
+    this.type = type
   }
   @IsUUID()
   @IsNotEmpty()
-  superAdminUuid: number;
+  superAdminUuid: number
   @IsString()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email: string
   @IsNumber()
   @IsNotEmpty()
-  type: number;
+  type: number
 }
 export class SimpleRequest {
-  constructor({
-    adminUuid,
-    superAdminUuid,
-    userUuid,
-    type
-  }) {
-    this.adminUuid = adminUuid;
-    this.superAdminUuid = superAdminUuid;
-    this.userUuid = userUuid;
+  constructor ({ adminUuid, superAdminUuid, userUuid, type }) {
+    this.adminUuid = adminUuid
+    this.superAdminUuid = superAdminUuid
+    this.userUuid = userUuid
     this.type = type
   }
 
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
-  adminUuid: string;
+  adminUuid: string
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
-  userUuid: string;
+  userUuid: string
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
-  superAdminUuid: string;
+  superAdminUuid: string
   @IsNumber()
   @IsNotEmpty()
-  type: number;
+  type: number
 }
 
-export class InviteUserDTO extends SimpleRequest{
-  constructor({
+export class InviteUserDTO extends SimpleRequest {
+  constructor ({
     userUuid,
     adminUuid,
     superAdminUuid,
@@ -100,165 +108,138 @@ export class InviteUserDTO extends SimpleRequest{
     email,
     typeToInvite,
   }) {
-    super({adminUuid,
-      superAdminUuid,
-      userUuid,
-      type
-    })
-    this.company = company;
-    this.email = email;
-    this.name = name;
-    this.invitations = parseInt(invitations);
-    this.cost = parseFloat(cost);
-    this.startedAt = startedAt;
-    this.finishedAt = finishedAt;
-    this.typeToInvite = typeToInvite;
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.company = company
+    this.email = email
+    this.name = name
+    this.invitations = parseInt(invitations)
+    this.cost = parseFloat(cost)
+    this.startedAt = startedAt
+    this.finishedAt = finishedAt
+    this.typeToInvite = typeToInvite
   }
   @IsString()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email: string
 
   @IsOptional()
   @IsString()
   @MaxLength(250)
-  company: string;
+  company: string
   @MaxLength(250)
   @IsOptional()
   @IsString()
-  name: string;
+  name: string
   @IsOptional()
   @IsNumber()
-  invitations: number;
+  invitations: number
 
   @IsOptional()
   @IsNumber()
   @IsPositive()
-  cost: number;
+  cost: number
 
   @IsDateString()
   @IsString()
   @IsNotEmpty()
-  startedAt: string;
+  startedAt: string
 
   @IsString()
   @IsDateString()
   @IsNotEmpty()
-  finishedAt: string;
+  finishedAt: string
 
   @IsNumber()
   @IsNotEmpty()
-  typeToInvite: number;
+  typeToInvite: number
 }
 
 export class FindUserChildrens {
-  constructor({
-    adminUuid,
-    superAdminUuid,
-    type
-  }) {
-    this.adminUuid = adminUuid;
-    this.superAdminUuid = superAdminUuid;
+  constructor ({ adminUuid, superAdminUuid, type }) {
+    this.adminUuid = adminUuid
+    this.superAdminUuid = superAdminUuid
     this.type = type
   }
 
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
-  adminUuid: string;
+  adminUuid: string
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
-  superAdminUuid: string;
+  superAdminUuid: string
   @IsNumber()
   @IsNotEmpty()
-  type: number;
+  type: number
 }
 
-
-
-
 export class ChangeName extends SimpleRequest {
-  constructor({
-    adminUuid,
-    superAdminUuid,
-    userUuid,
-    type,
-    name
-  }) {
-    super({adminUuid,
-      superAdminUuid,
-      userUuid,
-      type})
-    this.name=name
+  constructor ({ adminUuid, superAdminUuid, userUuid, type, name }) {
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.name = name
   }
   @IsNotEmpty()
   @IsString()
-  name: string;
+  name: string
 }
 export class ConfirmUserPassword {
-  constructor({ email, password }) {
-    this.email = email;
-    this.password = password;
+  constructor ({ email, password }) {
+    this.email = email
+    this.password = password
   }
   @IsString()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email: string
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  password: string;
+  password: string
 }
 
 export class SetSesionAppId extends SimpleRequest {
-  constructor({ adminUuid,
-    superAdminUuid,
-    userUuid,
-    type ,playerId}) {
-      super({adminUuid,
-        superAdminUuid,
-        userUuid,
-        type})
-    this.playerId = playerId;
+  constructor ({ adminUuid, superAdminUuid, userUuid, type, playerId }) {
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.playerId = playerId
   }
   @IsString()
   @IsNotEmpty()
-  playerId: string;
+  playerId: string
 }
 
-
 export class CreateSuperAdminDTO {
-  constructor({ name, lastname, email, password, passwordmaster }) {
-    this.name = name;
-    this.lastname = lastname;
-    this.email = email;
-    this.passwordmaster = passwordmaster;
-    this.password = password;
+  constructor ({ name, lastname, email, password, passwordmaster }) {
+    this.name = name
+    this.lastname = lastname
+    this.email = email
+    this.passwordmaster = passwordmaster
+    this.password = password
   }
   @IsString()
   @IsNotEmpty()
   @MaxLength(12)
-  passwordmaster: string;
+  passwordmaster: string
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
-  name: string;
+  name: string
   @MaxLength(100)
   @IsString()
   @IsNotEmpty()
-  lastname: string;
+  lastname: string
   @IsNotEmpty()
   @IsEmail()
   @MaxLength(100)
-  email: string;
+  email: string
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  password: string;
+  password: string
 }
 export class UpdateUserAdminDTO extends SimpleRequest {
-  constructor({
+  constructor ({
     adminUuid,
     superAdminUuid,
     userUuid,
@@ -269,56 +250,53 @@ export class UpdateUserAdminDTO extends SimpleRequest {
     finishedAt,
     cost,
     business,
-    adminUuidToUpdate
+    adminUuidToUpdate,
   }) {
-    super({ adminUuid,
-      superAdminUuid,
-      userUuid,
-      type})
-    this.name= name?name:null;
-    this.lastname= lastname?lastname:null;
-    this.startedAt = startedAt ?startedAt:null;
-    this.finishedAt = finishedAt?finishedAt:null;
-    this.cost = cost?cost:null;
-    this.business = business?business:null;
-    this.adminUuidToUpdate=adminUuidToUpdate
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.name = name ? name : null
+    this.lastname = lastname ? lastname : null
+    this.startedAt = startedAt ? startedAt : null
+    this.finishedAt = finishedAt ? finishedAt : null
+    this.cost = cost ? cost : null
+    this.business = business ? business : null
+    this.adminUuidToUpdate = adminUuidToUpdate
   }
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  name: string | null;
+  name: string | null
 
   @IsOptional()
   @MaxLength(100)
   @IsString()
-  lastname: string | null;
+  lastname: string | null
 
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  business: string | null;
+  business: string | null
 
   @IsOptional()
   @IsDateString()
   @IsString()
-  startedAt: string | null;
+  startedAt: string | null
 
   @IsOptional()
   @IsString()
   @IsDateString()
-  finishedAt: string | null;
+  finishedAt: string | null
 
   @IsOptional()
   @IsNumber()
-  cost: number;
+  cost: number
 
   @IsUUID()
   @IsNotEmpty()
   @IsOptional()
-  adminUuidToUpdate: string;
+  adminUuidToUpdate: string
 }
 export class UpdateGuestDTO extends SimpleRequest {
-  constructor({
+  constructor ({
     adminUuid,
     superAdminUuid,
     userUuid,
@@ -328,46 +306,41 @@ export class UpdateGuestDTO extends SimpleRequest {
     startedAt,
     finishedAt,
     cost,
-    userUuidToUpdate
+    userUuidToUpdate,
   }) {
-    super({adminUuid,
-      superAdminUuid,
-      userUuid,
-      type})
-    this.name=name
-    this.lastname=lastname
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.name = name
+    this.lastname = lastname
     this.startedAt = startedAt
     this.finishedAt = finishedAt
-    this.cost = parseFloat(cost);
-    this.userUuidToUpdate=userUuidToUpdate
+    this.cost = parseFloat(cost)
+    this.userUuidToUpdate = userUuidToUpdate
   }
-  @IsOptional()  
+  @IsOptional()
   @IsString()
-  name: string;
+  name: string
   @MaxLength(100)
   @IsString()
   @IsNotEmpty()
-  lastname: string;
+  lastname: string
   @IsOptional()
   @IsDateString()
   @IsString()
-  startedAt: string | null;
+  startedAt: string | null
   @IsString()
   @IsDateString()
   @IsNotEmpty()
-  finishedAt: string;
+  finishedAt: string
   @IsOptional()
   @IsNumber()
   @IsPositive()
-  cost: number;
+  cost: number
   @IsUUID()
   @IsNotEmpty()
-  userUuidToUpdate: string;
-  
- 
+  userUuidToUpdate: string
 }
 export class UpdateUserDTO extends SimpleRequest {
-  constructor({
+  constructor ({
     adminUuid,
     superAdminUuid,
     userUuid,
@@ -375,117 +348,118 @@ export class UpdateUserDTO extends SimpleRequest {
     name,
     avatar,
     thumbnail,
-    roomImage
+    roomImage,
   }) {
     super({ adminUuid, superAdminUuid, userUuid, type })
-    this.name = name;
-    this.avatar = avatar;
-    this.thumbnail = thumbnail;
-    this.roomImage = roomImage;
+    this.name = name
+    this.avatar = avatar
+    this.thumbnail = thumbnail
+    this.roomImage = roomImage
   }
-  @IsOptional()  
+  @IsOptional()
   @IsString()
-  name: string;
-  
-  @IsOptional()  
-  @IsString()
-  @MaxLength(150)
-  avatar: string;
-  
-  @IsOptional()  
-  @IsString()
-  @MaxLength(150)
-  thumbnail: string;
-  @IsOptional()  
-  @IsString()
-  roomImage: string;
+  name: string
 
-  
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  avatar: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  thumbnail: string
+  @IsOptional()
+  @IsString()
+  roomImage: string
 }
 
-
-
-
 export class DeleteAdminUserDTO {
-  constructor({ superAdminUuid, adminUuidToStop, status }) {
-    this.superAdminUuid = superAdminUuid;
-    this.adminUuidToStop = adminUuidToStop;
-    this.status = status;
+  constructor ({ superAdminUuid, adminUuidToStop, status }) {
+    this.superAdminUuid = superAdminUuid
+    this.adminUuidToStop = adminUuidToStop
+    this.status = status
   }
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  superAdminUuid: number;
-  
+  superAdminUuid: number
+
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  adminUuidToStop: number;
+  adminUuidToStop: number
 
   @IsOptional()
   @IsBoolean()
-  status: boolean;
+  status: boolean
 }
 export class GetUserDetailDTO {
-  constructor({ adminUuid,superAdminUuid,type, userUuidToGet}) {
-    this.adminUuid = adminUuid;
-    this.userUuidToGet = userUuidToGet;
-    this.type=type
-    this.superAdminUuid=superAdminUuid
+  constructor ({ adminUuid, superAdminUuid, type, userUuidToGet }) {
+    this.adminUuid = adminUuid
+    this.userUuidToGet = userUuidToGet
+    this.type = type
+    this.superAdminUuid = superAdminUuid
   }
   @IsUUID()
   @IsOptional()
   @IsString()
-  superAdminUuid: number;
+  superAdminUuid: number
   @IsUUID()
   @IsOptional()
   @IsString()
-  adminUuid: number;
+  adminUuid: number
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  userUuidToGet: number;
+  userUuidToGet: number
   @IsNumber()
   @IsNotEmpty()
-  type: number;
+  type: number
 }
 
 export class GetAdminDetailDTO {
-  constructor({ adminUuid,superAdminUuid,type, adminUuidToGet}) {
-    this.superAdminUuid=superAdminUuid
-    this.adminUuid = adminUuid;
-    this.adminUuidToGet = adminUuidToGet;
-    this.type=type
+  constructor ({ adminUuid, superAdminUuid, type, adminUuidToGet }) {
+    this.superAdminUuid = superAdminUuid
+    this.adminUuid = adminUuid
+    this.adminUuidToGet = adminUuidToGet
+    this.type = type
   }
   @IsUUID()
   @IsOptional()
   @IsString()
-  superAdminUuid: number;
+  superAdminUuid: number
   @IsUUID()
   @IsOptional()
   @IsString()
-  adminUuid: number;
+  adminUuid: number
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  adminUuidToGet: number;
+  adminUuidToGet: number
   @IsNumber()
   @IsNotEmpty()
-  type: number;
+  type: number
 }
 
-
-export class DeleteUserDTO extends SimpleRequest{
-  constructor({ adminUuid,superAdminUuid,userUuid,type, userUuidToChange,status }) {
-    super({adminUuid,superAdminUuid,type,userUuid})
-    this.userUuidToChange = userUuidToChange;
-    this.status = status;
+export class DeleteUserDTO extends SimpleRequest {
+  constructor ({
+    adminUuid,
+    superAdminUuid,
+    userUuid,
+    type,
+    userUuidToChange,
+    status,
+  }) {
+    super({ adminUuid, superAdminUuid, type, userUuid })
+    this.userUuidToChange = userUuidToChange
+    this.status = status
   }
   @IsUUID()
   @IsNotEmpty()
   @IsString()
-  userUuidToChange: number;
+  userUuidToChange: number
   @IsOptional()
   @IsBoolean()
-  status: boolean;
+  status: boolean
 }
