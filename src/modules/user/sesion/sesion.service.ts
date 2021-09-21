@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable,HttpException,HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sesion } from './sesion.entity';
@@ -13,7 +13,7 @@ import {
   SendEmailInfo,
 } from './sesion.dto';
 import * as bcrypt from 'bcrypt';
-import { ADMIN, Types, Roles, USER_NORMAL, TypesNumbers } from '../../../types';
+import { ADMIN,Types,Roles,USER_NORMAL,TypesNumbers } from '../../../types';
 import { Type } from '../type/type.entity';
 import { User } from '../user/user.entity';
 import { Admin } from '../user/admin.entity';
@@ -26,7 +26,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SimpleRequest } from '../user/user.dto';
 import { UserService } from '../user/user.service';
-import { newInfoLanding, newResetPassTemplate } from 'src/templates/templates';
+import { newInfoLanding,newResetPassTemplate } from 'src/templates/templates';
 import { Status } from '../status/status.entity';
 const jwt = require('jsonwebtoken');
 @Injectable()
@@ -76,35 +76,36 @@ export class SesionService {
   async RequesLogin(requestDTO: ReuestSesionDTO): Promise<any> {
     try {
       let response = null;
-      const {isAdmin,isSuperAdmin,isGuest,user,isGuestAdmin,admin} =  await this.getWhoIsRequesting(requestDTO.email)
-      console.log({isGuestAdmin,admin})
+      const { isAdmin,isSuperAdmin,isGuest,isGuestAdmin,user,admin } = await this.getWhoIsRequesting(requestDTO.email)
+
       if (!user) {
         return {
           status: 1,
           msg: `email does't exist`,
         };
       }
-      const match = await bcrypt.compare(requestDTO.password, user.password);
+
+      const match = await bcrypt.compare(requestDTO.password,user.password);
       if (match) {
-        
-      if (isGuestAdmin) {
-        const statusSuscription = await this.checkExpiredSuscriptions(admin,true,false)
-        if (statusSuscription.hasSuscriptionActiveExpired) {
-          return { 
-            status:3, 
-            msg:"Suscription has expired"
+        const isUserFromSuperAdmin = isAdmin || isGuest
+        if (isGuestAdmin) {
+          const statusSuscription = await this.checkExpiredSuscriptions(admin,true,false)
+          if (statusSuscription.hasSuscriptionActiveExpired) {
+            return {
+              status: 3,
+              msg: "Suscription has expired"
+            }
           }
         }
-      }  
-      else if (isAdmin||isGuest) {
+        else if (isUserFromSuperAdmin) {
           const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
-        if (statusSuscription.hasSuscriptionActiveExpired) {
-          return { 
-            status:3, 
-            msg:"Suscription has expired"
+          if (statusSuscription.hasSuscriptionActiveExpired) {
+            return {
+              status: 3,
+              msg: "Suscription has expired"
+            }
           }
         }
-      }
 
 
         let sesionExist: Sesion;
@@ -132,19 +133,19 @@ export class SesionService {
         if (isAdmin) {
           sesion = this.sesionRepository.create({
             admin: user,
-            isFromCMS:true
+            isFromCMS: true
           });
         }
         if (isSuperAdmin) {
           sesion = this.sesionRepository.create({
             superadmin: user,
-            isFromCMS:true
+            isFromCMS: true
           });
         }
         if (isGuest) {
           sesion = this.sesionRepository.create({
             user,
-            isFromCMS:true
+            isFromCMS: true
           });
         }
 
@@ -156,7 +157,7 @@ export class SesionService {
           },
         };
 
-        const token = await this.jwtService.sign(payload, process.env.SECRETA, {
+        const token = await this.jwtService.sign(payload,process.env.SECRETA,{
           expiresIn: 36000000,
         });
 
@@ -174,11 +175,11 @@ export class SesionService {
         };
         return response;
       } else {
-        response = { status: 2, msg: "pass doesn't match" };
+        response = { status: 2,msg: "pass doesn't match" };
       }
       return response;
     } catch (err) {
-      console.log('SesionService - RequesLogin: ', err);
+      console.log('SesionService - RequesLogin: ',err);
 
       throw new HttpException(
         {
@@ -191,7 +192,7 @@ export class SesionService {
   }
   async RequesLoginFromApp(requestDTO: ReuestSesionDTO): Promise<any> {
     try {
-      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestDTO.email)
+      const { isAdmin,isSuperAdmin,isGuest,user } = await this.getWhoIsRequesting(requestDTO.email)
       if (!user) {
         return {
           status: 1,
@@ -201,16 +202,16 @@ export class SesionService {
 
 
 
-      const match = await bcrypt.compare(requestDTO.password, user.password);
+      const match = await bcrypt.compare(requestDTO.password,user.password);
       let response
       if (match) {
-        
-        if (isAdmin||isGuest) {
+
+        if (isAdmin || isGuest) {
           const statusSuscription = await this.checkExpiredSuscriptions(user,isAdmin,isGuest)
           if (statusSuscription.hasSuscriptionActiveExpired) {
-            return { 
-              status:3, 
-              msg:"Suscription has expired"
+            return {
+              status: 3,
+              msg: "Suscription has expired"
             }
           }
         }
@@ -240,19 +241,19 @@ export class SesionService {
         if (isAdmin) {
           sesion = this.sesionRepository.create({
             admin: user,
-            isFromCMS:false
+            isFromCMS: false
           });
         }
         if (isSuperAdmin) {
           sesion = this.sesionRepository.create({
             superadmin: user,
-            isFromCMS:false
+            isFromCMS: false
           });
         }
         if (isGuest) {
           sesion = this.sesionRepository.create({
             user,
-            isFromCMS:false
+            isFromCMS: false
           });
         }
         await this.sesionRepository.save(sesion);
@@ -262,9 +263,9 @@ export class SesionService {
             type: user.type.id,
           },
         };
-        const token = await this.jwtService.sign(payload, process.env.SECRETA, {
+        const token = await this.jwtService.sign(payload,process.env.SECRETA,{
           expiresIn: 36000000000,
-        });    
+        });
         response = {
           profile: {
             token,
@@ -278,13 +279,13 @@ export class SesionService {
           status: 0,
         };
         return response;
-    }
-       else {
-        response = { status: 2, msg: "pass doesn't match" };
+      }
+      else {
+        response = { status: 2,msg: "pass doesn't match" };
       }
       return response;
     } catch (err) {
-      console.log('SesionService - RequesLogin: ', err);
+      console.log('SesionService - RequesLogin: ',err);
 
       throw new HttpException(
         {
@@ -302,38 +303,38 @@ export class SesionService {
     reuestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
     try {
-      console.log({reuestSesionLogOutDTO})
-      const {isFromCMS} = reuestSesionLogOutDTO
-      const {isAdmin,isSuperAdmin,isGuest,user} =  await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO)
+      console.log({ reuestSesionLogOutDTO })
+      const { isFromCMS } = reuestSesionLogOutDTO
+      const { isAdmin,isSuperAdmin,isGuest,user } = await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO)
       let response = null;
-      let actualSesion:Sesion
+      let actualSesion: Sesion
       if (!user) {
-          return { status:1, msg: 'user not found'}
+        return { status: 1,msg: 'user not found' }
       }
       if (isSuperAdmin) {
         actualSesion = await this.sesionRepository.findOne({
-          where: {superadmin: user,isFromCMS},
+          where: { superadmin: user,isFromCMS },
         });
       }
       if (isAdmin) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { admin: user,isFromCMS},
+          where: { admin: user,isFromCMS },
         });
       }
       if (isGuest) {
         actualSesion = await this.sesionRepository.findOne({
-          where: {  user,isFromCMS },
+          where: { user,isFromCMS },
         });
       }
       if (!actualSesion) {
-        return { status:2, msg: 'sesion not found'}
+        return { status: 2,msg: 'sesion not found' }
       }
       await this.sesionRepository.remove(actualSesion);
       response = { status: 0 };
 
       return response;
     } catch (err) {
-      console.log('SesionService - RequesLogout: ', err);
+      console.log('SesionService - RequesLogout: ',err);
 
       throw new HttpException(
         {
@@ -346,13 +347,13 @@ export class SesionService {
   }
   async decifreToken(token: string): Promise<any> {
     try {
-      console.log({token})
+      console.log({ token })
       const dataInvitation: Invitation =
         await this.invitationRepository.findOne({
-          where: { id:token },
+          where: { id: token },
           relations: ['type'],
         });
-      console.log({dataInvitation})
+      console.log({ dataInvitation })
       if (!dataInvitation) {
         return { status: 1 };
       }
@@ -366,7 +367,7 @@ export class SesionService {
         status: 0,
       };
     } catch (err) {
-      console.log('SesionService - Decifre: ', err);
+      console.log('SesionService - Decifre: ',err);
 
       throw new HttpException(
         {
@@ -380,22 +381,22 @@ export class SesionService {
   async validateIfExistToken(token: string): Promise<any> {
     try {
       console.log("validateIfExistToken")
-      let jwtDecoded:{ tokenid:number}
+      let jwtDecoded: { tokenid: number }
       try {
-        jwtDecoded = jwt.verify(token, process.env.TOKEN_SECRET);
+        jwtDecoded = jwt.verify(token,process.env.TOKEN_SECRET);
         const tokenExist = await this.tokenRepository.findOne(
           jwtDecoded.tokenid,
         );
         if (tokenExist) {
-          return {status:0, msg:"Token valid"}
+          return { status: 0,msg: "Token valid" }
         }
-        return {status:3, msg:"Token does not exist"}
+        return { status: 3,msg: "Token does not exist" }
       } catch (error) {
-        return {status:1, msg:"Token invalid"}
+        return { status: 1,msg: "Token invalid" }
       }
 
     } catch (err) {
-      console.log('SesionService - validateIfExistToken: ', err);
+      console.log('SesionService - validateIfExistToken: ',err);
 
       throw new HttpException(
         {
@@ -408,29 +409,29 @@ export class SesionService {
   }
   async passwordRecovery(requestDTO: PasswordRecovery): Promise<any> {
     try {
-      let response = { status: 0,msg:'ok' };
-      let jwtDecoded:{ tokenid:number}
+      let response = { status: 0,msg: 'ok' };
+      let jwtDecoded: { tokenid: number }
 
       try {
-        jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
-      
+        jwtDecoded = jwt.verify(requestDTO.token,process.env.TOKEN_SECRET);
+
       } catch (error) {
-        console.log({error})
-        return {status:5, msg:"Token invalid"}
+        console.log({ error })
+        return { status: 5,msg: "Token invalid" }
       }
 
       if (!jwtDecoded.tokenid) {
-        response = { status: 10, msg:'token does not exist'};
+        response = { status: 10,msg: 'token does not exist' };
       } else {
 
         const tokenExist = await this.tokenRepository.findOne(
           jwtDecoded.tokenid,
           {
-            relations: ['type', 'user', 'admin'],
+            relations: ['type','user','admin'],
           },
         );
         if (tokenExist) {
-          const passwordHashed = await bcrypt.hash(requestDTO.password, 12);
+          const passwordHashed = await bcrypt.hash(requestDTO.password,12);
           let userToUpdate: Admin | User = null;
           if (tokenExist.user) {
             userToUpdate = await this.userRepository.findOne(
@@ -471,17 +472,17 @@ export class SesionService {
           // Se elimina el token de la base de datos
           await this.tokenRepository.remove(tokenExist);
 
-          return { status: 0};
+          return { status: 0 };
 
 
         } else {
-          response = { status: 10, msg:'token does not exist'};
+          response = { status: 10,msg: 'token does not exist' };
         }
       }
 
       return response;
     } catch (err) {
-      console.log('UserService - passwordRecovery: ', err);
+      console.log('UserService - passwordRecovery: ',err);
 
       throw new HttpException(
         {
@@ -495,20 +496,20 @@ export class SesionService {
 
   async requestPasswordReset(requestEmail: string): Promise<any> {
     try {
-    
+
       let response = { status: 0 };
-      const {isAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestEmail)
-      if (user) {        
+      const { isAdmin,isGuest,user } = await this.getWhoIsRequesting(requestEmail)
+      if (user) {
 
         //Verificar si ya existe un token antes que este
-        let existToken:Token
-          existToken = await this.tokenRepository.findOne({
-            relations: ['admin', 'user'],
-            where: {
-              user: isGuest?user:null,
-              admin:isAdmin? user:null
-            },
-          });
+        let existToken: Token
+        existToken = await this.tokenRepository.findOne({
+          relations: ['admin','user'],
+          where: {
+            user: isGuest ? user : null,
+            admin: isAdmin ? user : null
+          },
+        });
         if (existToken) {
           await this.tokenRepository.remove(existToken);
         }
@@ -529,20 +530,20 @@ export class SesionService {
             expiresIn: 7200000,
           },
         );
-        console.log({token})
+        console.log({ token })
         try {
-          const resoponseEmail=  await this.mailerService.sendMail({
+          const resoponseEmail = await this.mailerService.sendMail({
             to: user.email,
             from: 'noreply@multivrsity.com', // sender address
             subject: 'New password recovery request',
             text: 'You have requested the recovery of your password', // plaintext body
             html: newResetPassTemplate(token), // HTML body content
           });
-          console.log("New Request reset:",{resoponseEmail})
+          console.log("New Request reset:",{ resoponseEmail })
         } catch (error) {
           return {
             status: 2,
-          };  
+          };
         }
         return {
           status: 0,
@@ -552,7 +553,7 @@ export class SesionService {
       }
       return response;
     } catch (err) {
-      console.log('UserService - requestPasswordReset: ', err);
+      console.log('UserService - requestPasswordReset: ',err);
 
       throw new HttpException(
         {
@@ -566,25 +567,25 @@ export class SesionService {
   async sendInformationForm(sendEmailInfo: SendEmailInfo): Promise<any> {
     try {
       console.log("sendInformationForm")
-    
-      console.log({sendEmailInfo})        
-       const resoponseEmail=  await this.mailerService.sendMail({
-          to: 'isaiaschavez.co@gmail.com',
-          from: 'noreply@multivrsity.com', // sender address
-            subject: 'New information request',
-            text: 'A new request for information has arrived', // plaintext body
-            html: newInfoLanding(
-                sendEmailInfo 
-            ), // HTML body content
-        });
-        console.log({resoponseEmail})
-        
-        return {
-          status: 0,
-        };
-      
+
+      console.log({ sendEmailInfo })
+      const resoponseEmail = await this.mailerService.sendMail({
+        to: 'isaiaschavez.co@gmail.com',
+        from: 'noreply@multivrsity.com', // sender address
+        subject: 'New information request',
+        text: 'A new request for information has arrived', // plaintext body
+        html: newInfoLanding(
+          sendEmailInfo
+        ), // HTML body content
+      });
+      console.log({ resoponseEmail })
+
+      return {
+        status: 0,
+      };
+
     } catch (err) {
-      console.log('UserService - sendInformationForm: ', err);
+      console.log('UserService - sendInformationForm: ',err);
 
       throw new HttpException(
         {
@@ -597,48 +598,48 @@ export class SesionService {
   }
 
 
-  async getWhoIsRequesting(email:string): Promise<{isAdmin:boolean,isSuperAdmin:boolean,isGuest:boolean,isGuestAdmin:boolean,user:SuperAdmin|Admin|User,admin:Admin}> {
+  async getWhoIsRequesting(email: string): Promise<{ isAdmin: boolean,isSuperAdmin: boolean,isGuest: boolean,isGuestAdmin: boolean,user: SuperAdmin | Admin | User,admin: Admin }> {
     try {
-      let user: User| Admin | SuperAdmin ;
+      let user: User | Admin | SuperAdmin;
       user = await this.superAdminRepository.findOne({
         relations: ['type'],
-        where: { email, isActive: true },
+        where: { email,isActive: true },
       });
 
       if (!user) {
         user = await this.adminRepository.findOne({
           relations: ['type'],
-          where: { email, isActive: true },
+          where: { email,isActive: true },
         });
       }
       if (!user) {
         user = await this.userRepository.findOne({
           relations: ['type','admin'],
-          where: { email, isActive: true },
+          where: { email,isActive: true },
         });
       }
       if (!user) {
-        return {isAdmin:null,isSuperAdmin:null,isGuest:null,user:null,admin:null,isGuestAdmin:null}
+        return { isAdmin: null,isSuperAdmin: null,isGuest: null,user: null,admin: null,isGuestAdmin: null }
       }
-     
+
 
       const isSuperAdmin = user.type.id === this.typesNumbers.SUPERADMIN;
       const isAdmin = user.type.id === this.typesNumbers.ADMIN;
       const isGuest = user.type.id === this.typesNumbers.USER;
       let isGuestAdmin = false
-      let admin:Admin 
+      let admin: Admin
       if (isGuest) {
         user = user as User
         isGuestAdmin = user.admin !== null;
         if (isGuestAdmin) {
-          admin= user.admin
+          admin = user.admin
         }
       }
-      console.log({isGuestAdmin,user})
+      console.log({ isGuestAdmin,user })
 
-      return {isAdmin,isSuperAdmin,isGuest,user,admin,isGuestAdmin}
+      return { isAdmin,isSuperAdmin,isGuest,user,admin,isGuestAdmin }
     } catch (err) {
-      console.log('SesionService - getWhoIsRequesting: ', err);
+      console.log('SesionService - getWhoIsRequesting: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -650,51 +651,54 @@ export class SesionService {
   }
 
 
-    async checkExpiredSuscriptions(user:Admin|User|SuperAdmin,isAdmin:boolean,isGuest:boolean): Promise<{hasSuscriptionActiveExpired:boolean,currentSuscriptionActive:Suscription,
-      currentSuscriptionWaiting:Suscription|null}> {
+  async checkExpiredSuscriptions(user: Admin | User | SuperAdmin,isAdmin: boolean,isGuest: boolean): Promise<{
+    hasSuscriptionActiveExpired: boolean,currentSuscriptionActive: Suscription,
+    currentSuscriptionWaiting: Suscription | null
+  }> {
     try {
 
-      let currentSuscriptionActive:Suscription = null
-      let currentSuscriptionWaiting:Suscription = null
+      let currentSuscriptionActive: Suscription = null
+      let currentSuscriptionWaiting: Suscription = null
 
-      const suscriptionActive:Suscription = await  this.suscriptionRepository.findOne({
+      const suscriptionActive: Suscription = await this.suscriptionRepository.findOne({
         where: {
-          isActive:true,
-        admin: isAdmin ?user:null,
-        user:isGuest ?user:null
+          isActive: true,
+          admin: isAdmin ? user : null,
+          user: isGuest ? user : null
         }
       })
 
-      const suscriptionWaiting:Suscription = await this.suscriptionRepository.findOne({
+      const suscriptionWaiting: Suscription = await this.suscriptionRepository.findOne({
         where: {
-          isActive:false,
-          isWaiting:true,
-        admin: isAdmin ?user:null,
-        user:isGuest ?user:null
+          isActive: false,
+          isWaiting: true,
+          admin: isAdmin ? user : null,
+          user: isGuest ? user : null
         }
       })
 
-      let hasSuscriptionActiveExpired = suscriptionActive.finishedAt < new Date()  
+      let hasSuscriptionActiveExpired = suscriptionActive.finishedAt < new Date()
 
-      if (hasSuscriptionActiveExpired&&suscriptionWaiting) {
+      if (hasSuscriptionActiveExpired && suscriptionWaiting) {
         suscriptionActive.isActive = false
         suscriptionWaiting.isActive = true
         suscriptionWaiting.isWaiting = false
         await this.suscriptionRepository.save([suscriptionActive,suscriptionWaiting])
         currentSuscriptionActive = suscriptionWaiting
         hasSuscriptionActiveExpired = false
-      }else{
+      } else {
         currentSuscriptionActive = suscriptionActive
         currentSuscriptionWaiting = suscriptionWaiting
       }
-      console.log({currentSuscriptionActive,currentSuscriptionWaiting,hasSuscriptionActiveExpired})
+      console.log({ currentSuscriptionActive,currentSuscriptionWaiting,hasSuscriptionActiveExpired })
 
       return {
         currentSuscriptionActive,
         currentSuscriptionWaiting,
-        hasSuscriptionActiveExpired}
+        hasSuscriptionActiveExpired
+      }
     } catch (err) {
-      console.log('SesionService - checkExpiredSuscriptions: ', err);
+      console.log('SesionService - checkExpiredSuscriptions: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -710,7 +714,7 @@ export class SesionService {
       //Verificar que exista un token con el email asociado
 
       const invitation: Invitation = await this.invitationRepository.findOne({
-        relations: ['superAdmin', 'admin'],
+        relations: ['superAdmin','admin'],
         where: {
           email: createAdminDTO.email,
         },
@@ -747,7 +751,7 @@ export class SesionService {
           name: this.types.ADMIN,
         },
       });
-      const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
+      const userPassword = await bcrypt.hash(createAdminDTO.password,12);
       const userStatus = await this.statusRepository.findOne(1)
 
       const admin = this.adminRepository.create({
@@ -759,7 +763,7 @@ export class SesionService {
         email: createAdminDTO.email,
         password: userPassword,
         business: invitation.company,
-        status:userStatus
+        status: userStatus
       });
 
       await this.adminRepository.save(admin);
@@ -771,9 +775,9 @@ export class SesionService {
 
       const userSuscription = this.suscriptionRepository.create({
         admin: newAdmin,
-        user:null,
+        user: null,
         cost: invitation.cost,
-        invitations:invitation.invitations,
+        invitations: invitation.invitations,
         startedAt: new Date(invitation.startedAt),
         finishedAt: new Date(invitation.finishedAt),
       });
@@ -782,7 +786,7 @@ export class SesionService {
 
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - create: ', err);
+      console.log('UserService - create: ',err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -796,7 +800,7 @@ export class SesionService {
   async createGuest(createUserDTO: CreateUserDTO): Promise<any> {
     try {
       const invitation: Invitation = await this.invitationRepository.findOne({
-        relations: ['admin', 'superAdmin'],
+        relations: ['admin','superAdmin'],
         where: {
 
           email: createUserDTO.email,
@@ -830,7 +834,7 @@ export class SesionService {
           name: this.types.USER
         },
       });
-      const userPassword = await bcrypt.hash(createUserDTO.password, 12);
+      const userPassword = await bcrypt.hash(createUserDTO.password,12);
       const userStatus = await this.statusRepository.findOne(1)
 
       const user = this.userRepository.create({
@@ -842,12 +846,12 @@ export class SesionService {
         lastname: createUserDTO.lastname,
         email: createUserDTO.email,
         password: userPassword,
-        status:userStatus
+        status: userStatus
       });
-      
+
       await this.userRepository.save(user);
 
-        const newUser:User = await this.userRepository.findOne({
+      const newUser: User = await this.userRepository.findOne({
         where: {
           email: user.email,
         },
@@ -855,16 +859,16 @@ export class SesionService {
       const userSuscription = this.suscriptionRepository.create({
         user: newUser,
         cost: invitation.cost,
-        invitations:0,
+        invitations: 0,
         startedAt: new Date(invitation.startedAt),
         finishedAt: new Date(invitation.finishedAt),
       });
       await this.suscriptionRepository.save(userSuscription);
-      
+
       await this.invitationRepository.remove(invitation)
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - create: ', err);
+      console.log('UserService - create: ',err);
 
       throw new HttpException(
         {

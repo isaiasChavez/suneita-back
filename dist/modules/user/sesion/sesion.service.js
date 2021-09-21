@@ -69,8 +69,7 @@ let SesionService = class SesionService {
     async RequesLogin(requestDTO) {
         try {
             let response = null;
-            const { isAdmin, isSuperAdmin, isGuest, user, isGuestAdmin, admin } = await this.getWhoIsRequesting(requestDTO.email);
-            console.log({ isGuestAdmin, admin });
+            const { isAdmin, isSuperAdmin, isGuest, isGuestAdmin, user, admin } = await this.getWhoIsRequesting(requestDTO.email);
             if (!user) {
                 return {
                     status: 1,
@@ -79,6 +78,7 @@ let SesionService = class SesionService {
             }
             const match = await bcrypt.compare(requestDTO.password, user.password);
             if (match) {
+                const isUserFromSuperAdmin = isAdmin || isGuest;
                 if (isGuestAdmin) {
                     const statusSuscription = await this.checkExpiredSuscriptions(admin, true, false);
                     if (statusSuscription.hasSuscriptionActiveExpired) {
@@ -88,7 +88,7 @@ let SesionService = class SesionService {
                         };
                     }
                 }
-                else if (isAdmin || isGuest) {
+                else if (isUserFromSuperAdmin) {
                     const statusSuscription = await this.checkExpiredSuscriptions(user, isAdmin, isGuest);
                     if (statusSuscription.hasSuscriptionActiveExpired) {
                         return {

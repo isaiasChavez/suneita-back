@@ -55,7 +55,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { error } from 'console';
-import { newIdSession,newInvitationTemplate } from 'src/templates/templates';
+import { newIdSession,newInvitationGuestTemplate,newInvitationTemplate } from 'src/templates/templates';
 import { ReuestSesionLogOutDTO } from '../sesion/sesion.dto';
 import { Status } from '../status/status.entity';
 
@@ -109,40 +109,42 @@ export class UserService {
   typesNumbers: TypesNumbers;
   async invite(request: InviteUserDTO): Promise<any> {
     try {
-      
+
       let status = 0;
       let invitationToSign = '';
       let jwtToken = null;
       // Se verifica si el usuario ya cuenta con una invitacion enviada
-      const userExistInDB: User = await this.userRepository.findOne({
+      const hasGuestWithThisEmail: User = await this.userRepository.findOne({
         where: {
           email: request.email,
           isDeleted: false,
         },
-      });      
-      let adminExistInDB: Admin;
-      if (!userExistInDB) {
-        adminExistInDB = await this.adminRepository.findOne({
+      });
+      let hasAdminWithThisEmail: Admin;
+      if (!hasGuestWithThisEmail) {
+        hasAdminWithThisEmail = await this.adminRepository.findOne({
           where: { email: request.email,isDeleted: false },
         });
       }
-      if (!userExistInDB && !adminExistInDB) {
+      if (!hasGuestWithThisEmail && !hasAdminWithThisEmail) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
-        const invitation = await this.invitationRepository.findOne({
+        const hasAnInvitation = await this.invitationRepository.findOne({
           where: { email: request.email },
         });
-        let registerToken:Invitation
-        if (!invitation) {
+        let registerToken: Invitation
+        let isAdminInvitingGuest: boolean
+        if (!hasAnInvitation) {
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
           const { isAdmin,isSuperAdmin,user } =
-          await this.getWhoIsRequesting(request);
+            await this.getWhoIsRequesting(request);
           if (!user) {
             return {
               status: 5,
             };
           }
-          let yesterday = moment(new Date()).add(-1, 'days');
-          console.log({yesterday})
+
+          let yesterday = moment(new Date()).add(-1,'days');
+
           if (moment(request.startedAt).isBefore(yesterday)) {
             return {
               status: 6,
@@ -154,9 +156,12 @@ export class UserService {
           if (request.typeToInvite === this.typesNumbers.ADMIN) {
             typeToInvite = await this.typeRepository.findOne(ADMIN);
           }
+
           if (request.typeToInvite === this.typesNumbers.USER) {
             typeToInvite = await this.typeRepository.findOne(USER_NORMAL);
           }
+
+
 
           // Se crea nuevo token asociado al email del nuevo usuario
           const invitationBase = {
@@ -164,8 +169,8 @@ export class UserService {
             cost: 0,
             finishedAt: new Date(request.finishedAt),
             startedAt: new Date(request.startedAt),
-            admin:isAdmin?user:null,
-            superAdmin:isSuperAdmin?user:null,
+            admin: isAdmin ? user : null,
+            superAdmin: isSuperAdmin ? user : null,
             type: typeToInvite,
             company: null,
             invitations: null,
@@ -180,13 +185,13 @@ export class UserService {
             invitationBase.invitations = request.invitations;
             invitationBase.cost = request.cost;
           }
-
+          isAdminInvitingGuest = isAdmin && typeToInvite.id === this.typesNumbers.USER
           if (typeToInvite.id === this.typesNumbers.USER) {
             if (isAdmin) {
-              const dateFinishAdmin:Suscription =await this.suscripctionRepository.findOne({ 
-                where:{
-                  admin:user,
-                  isActive:true,
+              const dateFinishAdmin: Suscription = await this.suscripctionRepository.findOne({
+                where: {
+                  admin: user,
+                  isActive: true,
                 }
               })
               invitationBase.finishedAt = dateFinishAdmin.finishedAt
@@ -194,6 +199,7 @@ export class UserService {
             invitationBase.name = request.name;
             invitationBase.cost = request.cost;
           }
+
 
           const newInvitation: Invitation = this.invitationRepository.create({
             ...invitationBase,
@@ -206,7 +212,7 @@ export class UserService {
           );
           invitationToSign = registerToken.id;
         } else {
-          invitationToSign = invitation.id;
+          invitationToSign = hasAnInvitation.id;
         }
 
         // Se genera jwt para enviar por correo
@@ -215,68 +221,76 @@ export class UserService {
           process.env.TOKEN_SECRET,
         );
         // Se envia correo
-        console.log({ jwtToken });
-          console.log("Enviando ...")
         try {
-          if (!invitation) {
-            const responseEmail = await this.mailerService.sendMail({
-             to: request.email,
-             from: 'noreply@multivrsity.com', // sender address
-             subject: 'Multivrsity has sent you an invitation.',
-             text: 'Multivrsity has sent you an invitation', // plaintext body
-             html: newInvitationTemplate({
-               token:jwtToken,
-               cost:registerToken.cost,
-               finish:moment(registerToken.finishedAt).calendar(),
-               invitations:registerToken.invitations,
-               start: moment(registerToken.startedAt).calendar()
-             }), // HTML body content
-           });
-           console.log({responseEmail})
-           return { 
-            status:0
-          }
-          }
-          else{
+          console.log({ isAdminInvitingGuest })
+          if (!hasAnInvitation) {
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
               from: 'noreply@multivrsity.com', // sender address
               subject: 'Multivrsity has sent you an invitation.',
               text: 'Multivrsity has sent you an invitation', // plaintext body
-              html: newInvitationTemplate({
-                token:jwtToken,
-                cost:invitation.cost,
-                finish:moment(invitation.finishedAt).calendar(),
-                invitations:invitation.invitations,
-                start: moment(invitation.startedAt).calendar()
-              }), // HTML body content
+              html: isAdminInvitingGuest ? newInvitationGuestTemplate({
+                token: jwtToken,
+              }) : newInvitationTemplate({
+                token: jwtToken,
+                cost: registerToken.cost,
+                finish: moment(registerToken.finishedAt).calendar(),
+                invitations: registerToken.invitations,
+                start: moment(registerToken.startedAt).calendar()
+              }),
             });
-            console.log({responseEmail})
-            return { 
-              status:8
+            console.log({ responseEmail })
+            return {
+              status: 0
             }
           }
-          
+          else {
+
+            const responseEmail = await this.mailerService.sendMail({
+              to: request.email,
+              from: 'noreply@multivrsity.com', // sender address
+              subject: 'Multivrsity has sent you an invitation.',
+              text: 'Multivrsity has sent you an invitation', // plaintext body
+              html: isAdminInvitingGuest ?
+                newInvitationGuestTemplate({
+                  token: jwtToken,
+                })
+                : newInvitationTemplate({
+                  token: jwtToken,
+                  cost: hasAnInvitation.cost,
+                  finish: moment(hasAnInvitation.finishedAt).calendar(),
+                  invitations: hasAnInvitation.invitations,
+                  start: moment(hasAnInvitation.startedAt).calendar()
+                }), // HTML body content
+            });
+
+
+            console.log({ responseEmail })
+            return {
+              status: 8
+            }
+          }
+
 
         } catch (error) {
-          console.log({error})
-            return { 
-              status:3, msg: 'There is not a email whith this address'
-            }
+          console.log({ error })
+          return {
+            status: 3,msg: 'There is not a email whith this address'
+          }
         }
 
-        
+
       } else {
         if (
-          (userExistInDB && userExistInDB.isActive) ||
-          (adminExistInDB && adminExistInDB.isActive)
+          (hasGuestWithThisEmail && hasGuestWithThisEmail.isActive) ||
+          (hasAdminWithThisEmail && hasAdminWithThisEmail.isActive)
         ) {
           status = 9;
         } else {
           status = 8;
         }
       }
-      return { status}
+      return { status }
     } catch (err) {
       console.log('UserService - invite: ',err);
       throw new HttpException(
@@ -415,36 +429,36 @@ export class UserService {
     @Res() res,
   ): Promise<any> {
     try {
-      const { user,isAdmin,isGuest ,isSuperAdmin} = await this.getWhoIsRequesting(requestDetailDTO);
+      const { user,isAdmin,isGuest,isSuperAdmin } = await this.getWhoIsRequesting(requestDetailDTO);
       if (!user) {
         return res.status(404);
       }
       let lastSuscription: Suscription
       if (!isSuperAdmin) {
-        lastSuscription=
-         await this.suscriptionRepository.findOne({
-           select: [ 'invitations'],
-           where: {
-             admin:isAdmin?user:null,
-             user:isGuest?user:null,
-             isActive: true,
-           },
-         });
-        
+        lastSuscription =
+          await this.suscriptionRepository.findOne({
+            select: ['invitations'],
+            where: {
+              admin: isAdmin ? user : null,
+              user: isGuest ? user : null,
+              isActive: true,
+            },
+          });
+
       }
-      const profile:ResponseProfile ={
-          id: parseInt(user.id),
-          name: user.name,
-          uuid: user.uuid,
-          lastname: user.lastname,
-          thumbnail: user.thumbnail,
-          email: user.email,
-          type: user.type.id,
-          roomImage: user.roomImage,
-          lastSuscription:{
-            invitations: !isSuperAdmin ? lastSuscription.invitations:0
-          }
+      const profile: ResponseProfile = {
+        id: parseInt(user.id),
+        name: user.name,
+        uuid: user.uuid,
+        lastname: user.lastname,
+        thumbnail: user.thumbnail,
+        email: user.email,
+        type: user.type.id,
+        roomImage: user.roomImage,
+        lastSuscription: {
+          invitations: !isSuperAdmin ? lastSuscription.invitations : 0
         }
+      }
       return res.status(201).json({
         status: 0,
         profile
@@ -481,31 +495,31 @@ export class UserService {
             isWaiting: suscription.isWaiting,
           };
         },
-        );
-        const lastSuscription = admin.suscriptions.find(
-          (suscription: Suscription) => suscription.isActive,
-          );
-        const statusSuscription =await this.getStatusSuscription(lastSuscription)
-        if (!statusSuscription.isExpired && admin.isActive) {
-          const statusExpired:Status =await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
-          admin.status = statusExpired
-          await this.adminRepository.save(admin)
-        }
+      );
+      const lastSuscription = admin.suscriptions.find(
+        (suscription: Suscription) => suscription.isActive,
+      );
+      const statusSuscription = await this.getStatusSuscription(lastSuscription)
+      if (!statusSuscription.isExpired && admin.isActive) {
+        const statusExpired: Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
+        admin.status = statusExpired
+        await this.adminRepository.save(admin)
+      }
 
-          const suscriptionWaiting = admin.suscriptions.find(
-            (suscription: Suscription) => suscription.isWaiting,
-            );
+      const suscriptionWaiting = admin.suscriptions.find(
+        (suscription: Suscription) => suscription.isWaiting,
+      );
 
-      let cost 
-      let costWaiting:number = 0
+      let cost
+      let costWaiting: number = 0
       if (suscriptionWaiting) {
         cost = (suscriptionWaiting.cost as unknown) as string
-        costWaiting=parseInt(cost)
+        costWaiting = parseInt(cost)
       }
-      
-      let totalCost:number = (lastSuscription.cost*1) + (costWaiting*1)
-        // + costWaiting
-      console.log({totalCost})
+
+      let totalCost: number = (lastSuscription.cost * 1) + (costWaiting * 1)
+      // + costWaiting
+      console.log({ totalCost })
 
       return {
         status: 0,
@@ -518,7 +532,7 @@ export class UserService {
           email: admin.email,
           type: admin.type.id,
           lastSuscription,
-          suscriptionWaiting:suscriptionWaiting?suscriptionWaiting:null,
+          suscriptionWaiting: suscriptionWaiting ? suscriptionWaiting : null,
           totalCost
         },
       };
@@ -559,19 +573,19 @@ export class UserService {
         (suscription: Suscription) => suscription.isActive,
       );
       const status = this.getStatusSuscription(lastSuscription)
-      console.log({status})
+      console.log({ status })
 
       const suscriptionWaiting = user.suscriptions.find(
         (suscription: Suscription) => suscription.isWaiting,
       );
-      let cost 
-      let costWaiting:number = 0
+      let cost
+      let costWaiting: number = 0
       if (suscriptionWaiting) {
         cost = (suscriptionWaiting.cost as unknown) as string
-        costWaiting=parseInt(cost)
+        costWaiting = parseInt(cost)
       }
-      
-      let totalCost:number = (lastSuscription.cost*1) + (costWaiting*1)
+
+      let totalCost: number = (lastSuscription.cost * 1) + (costWaiting * 1)
 
       return {
         status: 0,
@@ -600,17 +614,17 @@ export class UserService {
     }
   }
 
-  async getStatusSuscription(suscription: Suscription): Promise<{isExpired:boolean}> {
+  async getStatusSuscription(suscription: Suscription): Promise<{ isExpired: boolean }> {
     try {
       let isExpired = false
 
       if (moment(suscription.finishedAt).isAfter(new Date())) {
         isExpired = true
       }
-      return{
-        isExpired:false
+      return {
+        isExpired: false
       }
-      
+
     } catch (err) {
       console.log('UserService - getStatusSuscription: ',err);
       throw new HttpException(
@@ -732,7 +746,7 @@ export class UserService {
       };
       if (isSuperAdmin) {
 
-        if (dataChildrens.admins.length>0) {
+        if (dataChildrens.admins.length > 0) {
           console.log("1")
 
           childrens.admins = dataChildrens.admins.map((child: Admin,i) => {
@@ -747,36 +761,36 @@ export class UserService {
               suscriptionWaiting: null,
               status: child.status.id,
             };
-  
+
             const lastSuscription: Suscription = child.suscriptions.find(
               (suscription: Suscription) => suscription.isActive,
             );
             const suscriptionWaiting: Suscription = child.suscriptions.find(
               (suscription: Suscription) => suscription.isWaiting,
             );
-  
+
             dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
             if (suscriptionWaiting) {
               dataToSend.suscriptionWaiting =
                 filterDataSuscription(suscriptionWaiting);
             }
-  
+
             return dataToSend;
           });
-          console.log({childrens})
+          console.log({ childrens })
         }
-        if (dataChildrens.users.length>0) {
+        if (dataChildrens.users.length > 0) {
           childrens.users = dataChildrens.users.map(filterUsers)
         }
       } else {
-        if (dataChildrens.users.length>0) {
+        if (dataChildrens.users.length > 0) {
           childrens.users = dataChildrens.users.map(filterUsers)
         }
       }
 
-      
+
       return {
-        status:0,
+        status: 0,
         profile: {
           id: user.id,
           name: user.name,
@@ -785,7 +799,7 @@ export class UserService {
           lastname: user.lastname,
           email: user.email,
           type: user.type.id,
-          roomImage:user.roomImage
+          roomImage: user.roomImage
         },
         childrens,
       };
@@ -848,7 +862,7 @@ export class UserService {
         const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map(
           (suscription) => suscription.adminId,
         );
-        
+
         const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter(
           (adminId) => {
             if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
@@ -868,10 +882,10 @@ export class UserService {
               adminsWithNotSuscWaitingButExpiredIds,
             })
             .execute();
-          
+
         }
 
-        console.log({adminsWithSuscriptionsWaitingIds,adminsWithNotSuscWaitingButExpiredIds})
+        console.log({ adminsWithSuscriptionsWaitingIds,adminsWithNotSuscWaitingButExpiredIds })
 
         if (adminsWithSuscriptionsWaitingIds.length > 0) {
           const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
@@ -1223,20 +1237,20 @@ export class UserService {
         return { status: 1,msg: 'user not found' };
       }
       if (!userToUpdate.isActive) {
-        return { status: 500 ,msg: 'You cannot edit an inactive user' };
+        return { status: 500,msg: 'You cannot edit an inactive user' };
       }
       lastSuscription = await this.suscriptionRepository.findOne({
         where: {
-          admin: userToUpdateIsAdmin? userToUpdate:null,
-          user: userToUpdateIsGuest? userToUpdate:null,
+          admin: userToUpdateIsAdmin ? userToUpdate : null,
+          user: userToUpdateIsGuest ? userToUpdate : null,
           isActive: true,
           isWaiting: false,
         },
       });
       hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
         where: {
-          admin: userToUpdateIsAdmin? userToUpdate:null,
-          user: userToUpdateIsGuest? userToUpdate:null,
+          admin: userToUpdateIsAdmin ? userToUpdate : null,
+          user: userToUpdateIsGuest ? userToUpdate : null,
           isWaiting: true,
           isActive: false,
         },
@@ -1252,7 +1266,7 @@ export class UserService {
         startedAt: new Date(addNewSuscription.startedAt),
         finishedAt: new Date(addNewSuscription.finishedAt),
         invitations: addNewSuscription.invitations,
-      }); 
+      });
 
       //inactivo
       //Expirado
@@ -1261,9 +1275,9 @@ export class UserService {
       //pausado
 
       const statusLastSuscription = await this.getStatusSuscription(lastSuscription)
-      const statusActive:Status =await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
+      const statusActive: Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
 
-      if ( statusLastSuscription.isExpired) {
+      if (statusLastSuscription.isExpired) {
 
         lastSuscription.isActive = false;
         lastSuscription.isWaiting = false;
@@ -1278,9 +1292,9 @@ export class UserService {
             .createQueryBuilder()
             .update()
             .set({
-              status:statusActive
+              status: statusActive
             })
-            .where("id = :id", { id: user.id })            
+            .where("id = :id",{ id: user.id })
             .execute();
         }
         if (userToUpdateIsAdmin) {
@@ -1288,12 +1302,12 @@ export class UserService {
             .createQueryBuilder()
             .update()
             .set({
-              status:statusActive
+              status: statusActive
             })
-            .where("id = :id", { id: user.id })            
+            .where("id = :id",{ id: user.id })
             .execute();
         }
-          
+
       }
       if (!statusLastSuscription.isExpired) {
         lastSuscription.isActive = true;
@@ -1441,7 +1455,7 @@ export class UserService {
           avatar: user.avatar,
           thumbnail: user.thumbnail,
           name: user.name,
-          roomImage:user.roomImage
+          roomImage: user.roomImage
         },
       };
     } catch (err) {
@@ -1708,45 +1722,45 @@ export class UserService {
   async suspendUserAdmin(pauseAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
     try {
 
-      console.log({pauseAdminUserDTO})
+      console.log({ pauseAdminUserDTO })
       const superAdmin = await this.superAdminRepository.findOne({
         where: {
           uuid: pauseAdminUserDTO.superAdminUuid,
         },
       });
-      console.log({superAdmin})
+      console.log({ superAdmin })
       if (!superAdmin) {
         return { status: 1,msg: 'super not found' };
       }
       const admin: Admin = await this.adminRepository.findOne({
         relations: ['users'],
         where: {
-           uuid: pauseAdminUserDTO.adminUuidToStop,
-           superadmin:superAdmin
-           },
+          uuid: pauseAdminUserDTO.adminUuidToStop,
+          superadmin: superAdmin
+        },
       });
       if (!admin) {
         return { status: 2,msg: 'admin not found' };
       }
 
       if (pauseAdminUserDTO.status) {
-        const activeSuscription:Suscription =await  this.suscripctionRepository.findOne({
+        const activeSuscription: Suscription = await this.suscripctionRepository.findOne({
           where: {
-            isActive:true,
+            isActive: true,
             admin
           }
         })
         const statusSuscription = await this.getStatusSuscription(activeSuscription)
         if (statusSuscription.isExpired) {
-          const statusExpired:Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
-          admin.status=statusExpired
-        }else{
-          const statusActive:Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
-          admin.status=statusActive
+          const statusExpired: Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
+          admin.status = statusExpired
+        } else {
+          const statusActive: Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
+          admin.status = statusActive
         }
-      }else{
-        const statusInactive:Status = await this.statusRepository.findOne(this.statusNumbers.INACTIVE)
-        admin.status=statusInactive
+      } else {
+        const statusInactive: Status = await this.statusRepository.findOne(this.statusNumbers.INACTIVE)
+        admin.status = statusInactive
       }
 
       await this.updateArrayUsers(
@@ -1778,42 +1792,42 @@ export class UserService {
   }
   async suspendUser(pauseUserDTO: DeleteUserDTO): Promise<any> {
     try {
-      console.log({pauseUserDTO})
+      console.log({ pauseUserDTO })
       const { isAdmin,isSuperAdmin,user } = await this.getWhoIsRequesting(pauseUserDTO)
-     
+
       if (!user) {
         return { status: 1,msg: 'admin not found' };
       }
       const userToUpdate = await this.userRepository.findOne({
         relations: ['admin'],
-        where: { 
+        where: {
           uuid: pauseUserDTO.userUuidToChange,
-          admin:isAdmin?user:null,
-          superadmin:isSuperAdmin?user:null
-         },
+          admin: isAdmin ? user : null,
+          superadmin: isSuperAdmin ? user : null
+        },
       });
-      console.log({userToUpdate})
+      console.log({ userToUpdate })
       if (!userToUpdate) {
         return { status: 2,msg: 'user not found' };
       }
       if (pauseUserDTO.status) {
-        const activeSuscription:Suscription =await  this.suscripctionRepository.findOne({
+        const activeSuscription: Suscription = await this.suscripctionRepository.findOne({
           where: {
-            isActive:true,
-            user:userToUpdate
+            isActive: true,
+            user: userToUpdate
           }
         })
         const statusSuscription = await this.getStatusSuscription(activeSuscription)
         if (statusSuscription.isExpired) {
-          const statusExpired:Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
-          userToUpdate.status=statusExpired
-        }else{
-          const statusActive:Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
-          userToUpdate.status=statusActive
+          const statusExpired: Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
+          userToUpdate.status = statusExpired
+        } else {
+          const statusActive: Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
+          userToUpdate.status = statusActive
         }
-      }else{
-        const statusInactive:Status = await this.statusRepository.findOne(this.statusNumbers.INACTIVE)
-        userToUpdate.status=statusInactive
+      } else {
+        const statusInactive: Status = await this.statusRepository.findOne(this.statusNumbers.INACTIVE)
+        userToUpdate.status = statusInactive
       }
 
       userToUpdate.isActive = pauseUserDTO.status;

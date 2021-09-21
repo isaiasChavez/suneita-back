@@ -182,6 +182,109 @@ export const newInvitationTemplate = (newInvitation: NewInvitation) => {
  `
 }
 
+
+type NewInvitationGuest = {
+    token: string
+}
+
+export const newInvitationGuestTemplate = (newInvitation: NewInvitationGuest) => {
+
+    return `
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="es">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#FAFAFA;">
+    <center>
+        <table width="720" cellpadding="0" cellspacing="0" border="0" style="border-radius: 8px;" class="wrapper" bgcolor="#000d34">
+            <tr>
+                <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
+            </tr>
+            <tr>
+                <td align="center" valign="top">
+                    <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                        <tr>
+                            <td align="center" valign="top">
+                                <h3 style="font-family:Helvetica; font-size:1.5rem;color:white;">Welcome to</h3>
+                            </td>
+                        </tr>
+                        <tr>
+                         <td align="center" valign="top">
+                             <img style="height:3.4rem" src="https://ocupath.fra1.digitaloceanspaces.com/app/Logo15x.svg" alt="">
+                         </td>
+                     </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
+            </tr>
+            <tr>
+                <td align="center" valign="top">
+                    <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                        <tr>
+                            <td align="left" valign="top">
+                               
+                                <p style="margin-bottom:1.5rem; font-family:Helvetica; font-size:1rem;font-weight:bold; color:white; line-height: 1.4;">Hello! It's a pleasure to greet you, </p>
+
+                                <p style=" margin-bottom:1.5rem;font-family:Helvetica; font-size:1rem; color:white; line-height: 1.4;"> 
+                                    We hereby invite you to become part of our team.
+                                 </p>
+                                <p style=" margin-bottom:2rem;font-family:Helvetica; font-size:1rem; color:white; line-height: 1.4;"> 
+                                    <span style="margin-right:0.2rem">Please enter this link to complete your registration:</span>
+                                    <a
+                                    style="color:white;"
+                                    href="https://ocupath-nine.vercel.app/register/${newInvitation.token}"
+                                    target="_blank">Register</a>
+                                 </p>
+                            </td>
+                        </tr>
+                        
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td height="30"
+                    style="font-size:10px; line-height:10px; border-bottom: 2px solid #EAEAEA; padding-bottom: 9px;">
+                    &nbsp;</td>
+            </tr>
+            <tr bgcolor="#000d34">
+                <td align="center" valign="top">
+                    <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                        <tr>
+
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr bgcolor="#FAFAFA">
+                <td align="center" valign="top">
+                    <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
+                        <tr>
+                            <td align="left" valign="top" style="padding-top: 15px; text-align: center;">
+                                <em
+                                    style="font-style: italic; font-family: Helvetica; font-size: 12px; color: #656565;">Copyright
+                                    © 2021 Ocupath, All rights reserved.</em></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+
+</html>
+ `
+}
+
+
+
 export const newResetPassTemplate = (token: string) => {
 
     return `

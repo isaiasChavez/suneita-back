@@ -78,24 +78,25 @@ let UserService = class UserService {
             let status = 0;
             let invitationToSign = '';
             let jwtToken = null;
-            const userExistInDB = await this.userRepository.findOne({
+            const hasGuestWithThisEmail = await this.userRepository.findOne({
                 where: {
                     email: request.email,
                     isDeleted: false,
                 },
             });
-            let adminExistInDB;
-            if (!userExistInDB) {
-                adminExistInDB = await this.adminRepository.findOne({
+            let hasAdminWithThisEmail;
+            if (!hasGuestWithThisEmail) {
+                hasAdminWithThisEmail = await this.adminRepository.findOne({
                     where: { email: request.email, isDeleted: false },
                 });
             }
-            if (!userExistInDB && !adminExistInDB) {
-                const invitation = await this.invitationRepository.findOne({
+            if (!hasGuestWithThisEmail && !hasAdminWithThisEmail) {
+                const hasAnInvitation = await this.invitationRepository.findOne({
                     where: { email: request.email },
                 });
                 let registerToken;
-                if (!invitation) {
+                let isAdminInvitingGuest;
+                if (!hasAnInvitation) {
                     const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(request);
                     if (!user) {
                         return {
@@ -103,7 +104,6 @@ let UserService = class UserService {
                         };
                     }
                     let yesterday = moment(new Date()).add(-1, 'days');
-                    console.log({ yesterday });
                     if (moment(request.startedAt).isBefore(yesterday)) {
                         return {
                             status: 6,
@@ -133,6 +133,7 @@ let UserService = class UserService {
                         invitationBase.invitations = request.invitations;
                         invitationBase.cost = request.cost;
                     }
+                    isAdminInvitingGuest = isAdmin && typeToInvite.id === this.typesNumbers.USER;
                     if (typeToInvite.id === this.typesNumbers.USER) {
                         if (isAdmin) {
                             const dateFinishAdmin = await this.suscripctionRepository.findOne({
@@ -152,19 +153,20 @@ let UserService = class UserService {
                     invitationToSign = registerToken.id;
                 }
                 else {
-                    invitationToSign = invitation.id;
+                    invitationToSign = hasAnInvitation.id;
                 }
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
-                console.log({ jwtToken });
-                console.log("Enviando ...");
                 try {
-                    if (!invitation) {
+                    console.log({ isAdminInvitingGuest });
+                    if (!hasAnInvitation) {
                         const responseEmail = await this.mailerService.sendMail({
                             to: request.email,
                             from: 'noreply@multivrsity.com',
                             subject: 'Multivrsity has sent you an invitation.',
                             text: 'Multivrsity has sent you an invitation',
-                            html: templates_1.newInvitationTemplate({
+                            html: isAdminInvitingGuest ? templates_1.newInvitationGuestTemplate({
+                                token: jwtToken,
+                            }) : templates_1.newInvitationTemplate({
                                 token: jwtToken,
                                 cost: registerToken.cost,
                                 finish: moment(registerToken.finishedAt).calendar(),
@@ -183,13 +185,17 @@ let UserService = class UserService {
                             from: 'noreply@multivrsity.com',
                             subject: 'Multivrsity has sent you an invitation.',
                             text: 'Multivrsity has sent you an invitation',
-                            html: templates_1.newInvitationTemplate({
-                                token: jwtToken,
-                                cost: invitation.cost,
-                                finish: moment(invitation.finishedAt).calendar(),
-                                invitations: invitation.invitations,
-                                start: moment(invitation.startedAt).calendar()
-                            }),
+                            html: isAdminInvitingGuest ?
+                                templates_1.newInvitationGuestTemplate({
+                                    token: jwtToken,
+                                })
+                                : templates_1.newInvitationTemplate({
+                                    token: jwtToken,
+                                    cost: hasAnInvitation.cost,
+                                    finish: moment(hasAnInvitation.finishedAt).calendar(),
+                                    invitations: hasAnInvitation.invitations,
+                                    start: moment(hasAnInvitation.startedAt).calendar()
+                                }),
                         });
                         console.log({ responseEmail });
                         return {
@@ -205,8 +211,8 @@ let UserService = class UserService {
                 }
             }
             else {
-                if ((userExistInDB && userExistInDB.isActive) ||
-                    (adminExistInDB && adminExistInDB.isActive)) {
+                if ((hasGuestWithThisEmail && hasGuestWithThisEmail.isActive) ||
+                    (hasAdminWithThisEmail && hasAdminWithThisEmail.isActive)) {
                     status = 9;
                 }
                 else {
