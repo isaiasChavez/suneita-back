@@ -44,6 +44,12 @@ export class SuperAdmin {
   @Column({ length: 250 })
   email: string;
 
+   @Column({
+    type: 'text',
+    default:
+      'https://ocupath.fra1.digitaloceanspaces.com/app/defaultapp.png',
+  })
+  roomImage: string;
   @Column({ length: 100 })
   password: string;
 

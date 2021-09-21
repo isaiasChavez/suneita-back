@@ -8,4 +8,10 @@ declare type NewInvitation = {
 };
 export declare const newInvitationTemplate: (newInvitation: NewInvitation) => string;
 export declare const newResetPassTemplate: (token: string) => string;
+export declare const newInfoLanding: ({ name, company, email, phone }: {
+    name: string;
+    company: string;
+    email: string;
+    phone: string;
+}) => string;
 export {};

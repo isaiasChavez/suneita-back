@@ -28,6 +28,7 @@ let UserController = class UserController {
         try {
             console.log("inviteUser:", { inviteUserDTO });
             await class_validator_1.validateOrReject(newinviteUserDTO);
+            console.log({ newinviteUserDTO });
             return await this.userService.invite(newinviteUserDTO);
         }
         catch (errors) {

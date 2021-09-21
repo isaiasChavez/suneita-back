@@ -44,6 +44,7 @@ let AssetController = class AssetController {
         }
     }
     async delete(deleteAssetDTO) {
+        console.log({ deleteAssetDTO });
         let newdeleteAssetDTO = new asset_dto_1.DeleteAssetDto(deleteAssetDTO);
         try {
             await class_validator_1.validateOrReject(newdeleteAssetDTO);

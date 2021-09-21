@@ -47,7 +47,7 @@ let AssetService = class AssetService {
             let assets;
             if (isGuest) {
                 assets = await this.assetRepository.find({
-                    select: ["url", "thumbnail"],
+                    select: ["url", "thumbnail", "uuid"],
                     relations: ["typeAsset"],
                     where: {
                         user
@@ -56,7 +56,7 @@ let AssetService = class AssetService {
             }
             if (isAdmin) {
                 assets = await this.assetRepository.find({
-                    select: ["url", "thumbnail"],
+                    select: ["url", "thumbnail", "uuid"],
                     relations: ["typeAsset"],
                     where: {
                         admin: user,
@@ -148,7 +148,7 @@ let AssetService = class AssetService {
             let asset;
             if (isAdmin) {
                 asset = await this.assetRepository.findOne({
-                    relations: ['admin'],
+                    relations: ['admin', "typeAsset"],
                     where: {
                         uuid: deleteAssetDto.uuid,
                         admin: user
@@ -157,7 +157,7 @@ let AssetService = class AssetService {
             }
             if (isGuest) {
                 asset = await this.assetRepository.findOne({
-                    relations: ['admin'],
+                    relations: ['admin', "typeAsset"],
                     where: {
                         uuid: deleteAssetDto.uuid,
                         user
@@ -168,10 +168,13 @@ let AssetService = class AssetService {
                 return { status: 2, msg: 'asset not found' };
             }
             await this.assetRepository.remove(asset);
-            return;
+            return {
+                status: 0,
+                asset
+            };
         }
         catch (err) {
-            console.log("AssetService - invite: ", err);
+            console.log("AssetService - delete: ", err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: "Error deleting asset",

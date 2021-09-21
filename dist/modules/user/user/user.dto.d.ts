@@ -16,6 +16,19 @@ export declare class UserDTO {
     email: string;
     status: number;
 }
+export interface ResponseProfile {
+    id: number;
+    name: string;
+    uuid: string;
+    lastname: string;
+    thumbnail: string;
+    email: string;
+    type: number;
+    roomImage: string;
+    lastSuscription: {
+        invitations: number;
+    };
+}
 export declare class InviteAdminDTO {
     constructor({ email, type }: {
         email: any;
@@ -114,7 +127,7 @@ export declare class CreateSuperAdminDTO {
     password: string;
 }
 export declare class UpdateUserAdminDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, business, adminUuidToUpdate }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, business, adminUuidToUpdate, }: {
         adminUuid: any;
         superAdminUuid: any;
         userUuid: any;
@@ -136,7 +149,7 @@ export declare class UpdateUserAdminDTO extends SimpleRequest {
     adminUuidToUpdate: string;
 }
 export declare class UpdateGuestDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, userUuidToUpdate }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, userUuidToUpdate, }: {
         adminUuid: any;
         superAdminUuid: any;
         userUuid: any;
@@ -156,7 +169,7 @@ export declare class UpdateGuestDTO extends SimpleRequest {
     userUuidToUpdate: string;
 }
 export declare class UpdateUserDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail, roomImage, }: {
         adminUuid: any;
         superAdminUuid: any;
         userUuid: any;
@@ -164,10 +177,12 @@ export declare class UpdateUserDTO extends SimpleRequest {
         name: any;
         avatar: any;
         thumbnail: any;
+        roomImage: any;
     });
     name: string;
     avatar: string;
     thumbnail: string;
+    roomImage: string;
 }
 export declare class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }: {
@@ -204,7 +219,7 @@ export declare class GetAdminDetailDTO {
     type: number;
 }
 export declare class DeleteUserDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status }: {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status, }: {
         adminUuid: any;
         superAdminUuid: any;
         userUuid: any;

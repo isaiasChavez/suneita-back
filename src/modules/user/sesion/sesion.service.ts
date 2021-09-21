@@ -10,6 +10,7 @@ import {
   PasswordRecovery,
   CreateAdminDTO,
   CreateUserDTO,
+  SendEmailInfo,
 } from './sesion.dto';
 import * as bcrypt from 'bcrypt';
 import { ADMIN, Types, Roles, USER_NORMAL, TypesNumbers } from '../../../types';
@@ -25,7 +26,7 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SimpleRequest } from '../user/user.dto';
 import { UserService } from '../user/user.service';
-import { newResetPassTemplate } from 'src/templates/templates';
+import { newInfoLanding, newResetPassTemplate } from 'src/templates/templates';
 import { Status } from '../status/status.entity';
 const jwt = require('jsonwebtoken');
 @Injectable()
@@ -497,7 +498,6 @@ export class SesionService {
     
       let response = { status: 0 };
       const {isAdmin,isGuest,user} =  await this.getWhoIsRequesting(requestEmail)
-
       if (user) {        
 
         //Verificar si ya existe un token antes que este
@@ -529,12 +529,13 @@ export class SesionService {
             expiresIn: 7200000,
           },
         );
+        console.log({token})
         try {
           const resoponseEmail=  await this.mailerService.sendMail({
             to: user.email,
-            from: 'noreply@ocupath.com', // sender address
-            subject: 'Nueva solicitud de recuperación de contraseña',
-            text: 'Has solicitado la recuperación de tu contraseña', // plaintext body
+            from: 'noreply@multivrsity.com', // sender address
+            subject: 'New password recovery request',
+            text: 'You have requested the recovery of your password', // plaintext body
             html: newResetPassTemplate(token), // HTML body content
           });
           console.log("New Request reset:",{resoponseEmail})
@@ -557,6 +558,38 @@ export class SesionService {
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           error: 'Error requesting password reset',
+        },
+        500,
+      );
+    }
+  }
+  async sendInformationForm(sendEmailInfo: SendEmailInfo): Promise<any> {
+    try {
+      console.log("sendInformationForm")
+    
+      console.log({sendEmailInfo})        
+       const resoponseEmail=  await this.mailerService.sendMail({
+          to: 'isaiaschavez.co@gmail.com',
+          from: 'noreply@multivrsity.com', // sender address
+            subject: 'New information request',
+            text: 'A new request for information has arrived', // plaintext body
+            html: newInfoLanding(
+                sendEmailInfo 
+            ), // HTML body content
+        });
+        console.log({resoponseEmail})
+        
+        return {
+          status: 0,
+        };
+      
+    } catch (err) {
+      console.log('UserService - sendInformationForm: ', err);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error requesting send information',
         },
         500,
       );

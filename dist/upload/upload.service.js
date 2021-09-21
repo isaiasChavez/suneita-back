@@ -86,6 +86,20 @@ let UploadService = class UploadService {
                 },
             }),
         }).array('upload', 1);
+        this.uploadRoom = multer({
+            storage: s3Storage({
+                s3: this.s3,
+                Bucket: this._configService.get(config_keys_1.Configuration.BUCKET_NAME),
+                ACL: 'public-read',
+                Key: function (request, file, cb) {
+                    cb(null, `rooms/${Date.now().toString()}-${file.originalname.replace(/\s+/g, '')}`);
+                },
+                resize: {
+                    width: 200,
+                    height: 200,
+                },
+            }),
+        }).array('upload', 1);
         this._configService.get = this._configService.get.bind(this);
     }
     async fileupload(req, res, folder) {
@@ -166,6 +180,22 @@ let UploadService = class UploadService {
                         }
                         let urlToReturn = req.files[0].Location;
                         urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/users/'), urlToReturn.lenght);
+                        return res
+                            .status(201)
+                            .json('https://ocupath.fra1.digitaloceanspaces.com' +
+                            urlToReturn);
+                    });
+                    break;
+                case '6':
+                    this.uploadRoom(req, res, (error) => {
+                        if (error) {
+                            console.log(error);
+                            return res
+                                .status(404)
+                                .json(`Failed to upload room file: ${error}`);
+                        }
+                        let urlToReturn = req.files[0].Location;
+                        urlToReturn = urlToReturn.substring(urlToReturn.indexOf('/rooms/'), urlToReturn.lenght);
                         return res
                             .status(201)
                             .json('https://ocupath.fra1.digitaloceanspaces.com' +

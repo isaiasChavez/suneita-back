@@ -452,12 +452,13 @@ let SesionService = class SesionService {
                 const token = await jwt.sign({ tokenid: registerToken.id }, process.env.TOKEN_SECRET, {
                     expiresIn: 7200000,
                 });
+                console.log({ token });
                 try {
                     const resoponseEmail = await this.mailerService.sendMail({
                         to: user.email,
-                        from: 'noreply@ocupath.com',
-                        subject: 'Nueva solicitud de recuperación de contraseña',
-                        text: 'Has solicitado la recuperación de tu contraseña',
+                        from: 'noreply@multivrsity.com',
+                        subject: 'New password recovery request',
+                        text: 'You have requested the recovery of your password',
                         html: templates_1.newResetPassTemplate(token),
                     });
                     console.log("New Request reset:", { resoponseEmail });
@@ -481,6 +482,30 @@ let SesionService = class SesionService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error requesting password reset',
+            }, 500);
+        }
+    }
+    async sendInformationForm(sendEmailInfo) {
+        try {
+            console.log("sendInformationForm");
+            console.log({ sendEmailInfo });
+            const resoponseEmail = await this.mailerService.sendMail({
+                to: 'isaiaschavez.co@gmail.com',
+                from: 'noreply@multivrsity.com',
+                subject: 'New information request',
+                text: 'A new request for information has arrived',
+                html: templates_1.newInfoLanding(sendEmailInfo),
+            });
+            console.log({ resoponseEmail });
+            return {
+                status: 0,
+            };
+        }
+        catch (err) {
+            console.log('UserService - sendInformationForm: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error requesting send information',
             }, 500);
         }
     }

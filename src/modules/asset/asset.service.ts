@@ -40,7 +40,7 @@ export class AssetService {
             let assets: Asset[]
             if (isGuest) {
                 assets = await this.assetRepository.find({
-                    select: ["url","thumbnail"],
+                    select: ["url","thumbnail","uuid"],
                     relations: ["typeAsset"],
                     where: {
                         user
@@ -49,7 +49,7 @@ export class AssetService {
             }
             if (isAdmin) {
                 assets = await this.assetRepository.find({
-                    select: ["url","thumbnail"],
+                    select: ["url","thumbnail","uuid"],
                     relations: ["typeAsset"],
                     where: {
                         admin: user,
@@ -152,7 +152,7 @@ export class AssetService {
             let asset:Asset
             if (isAdmin) {
                 asset = await this.assetRepository.findOne({
-                    relations: ['admin'],
+                    relations: ['admin',"typeAsset"],
                     where: {
                         uuid: deleteAssetDto.uuid,
                         admin:user
@@ -161,7 +161,7 @@ export class AssetService {
             }
             if (isGuest) {
                 asset = await this.assetRepository.findOne({
-                    relations: ['admin'],
+                    relations: ['admin',"typeAsset"],
                     where: {
                         uuid: deleteAssetDto.uuid,
                         user
@@ -172,9 +172,12 @@ export class AssetService {
                 return { status: 2, msg: 'asset not found' };
             }
             await this.assetRepository.remove(asset)
-            return
+            return{
+              status:0, 
+              asset
+            }
         } catch (err) {
-            console.log("AssetService - invite: ", err);
+            console.log("AssetService - delete: ", err);
 
             throw new HttpException(
                 {

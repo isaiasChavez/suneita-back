@@ -63,7 +63,7 @@ AppModule = AppModule_1 = __decorate([
                         },
                     },
                     defaults: {
-                        from: '"Ocupath" <noreplay@ocupath.mx>',
+                        from: '"Multivrsity" <noreply@multivrsity.com>',
                     },
                     template: {
                         dir: __dirname + "/templates",

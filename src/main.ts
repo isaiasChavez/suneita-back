@@ -23,9 +23,8 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(helmet());
   app.enableCors();
-
   app.setGlobalPrefix('api')
-
   await app.listen(AppModule.port);
+  console.log(`Ocupath api running on port ${AppModule.port} `)
 }
 bootstrap();

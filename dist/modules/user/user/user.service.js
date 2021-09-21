@@ -96,16 +96,17 @@ let UserService = class UserService {
                 });
                 let registerToken;
                 if (!invitation) {
-                    let typeUserRequesting;
-                    const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(request);
+                    const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(request);
                     if (!user) {
                         return {
                             status: 5,
                         };
                     }
-                    if (moment(request.startedAt).isBefore(new Date())) {
+                    let yesterday = moment(new Date()).add(-1, 'days');
+                    console.log({ yesterday });
+                    if (moment(request.startedAt).isBefore(yesterday)) {
                         return {
-                            status: 5,
+                            status: 6,
                         };
                     }
                     let typeToInvite;
@@ -160,9 +161,9 @@ let UserService = class UserService {
                     if (!invitation) {
                         const responseEmail = await this.mailerService.sendMail({
                             to: request.email,
-                            from: 'noreply@ocupath.com',
-                            subject: 'Has sido invitado a Ocupath.',
-                            text: 'Your new id',
+                            from: 'noreply@multivrsity.com',
+                            subject: 'Multivrsity has sent you an invitation.',
+                            text: 'Multivrsity has sent you an invitation',
                             html: templates_1.newInvitationTemplate({
                                 token: jwtToken,
                                 cost: registerToken.cost,
@@ -179,9 +180,9 @@ let UserService = class UserService {
                     else {
                         const responseEmail = await this.mailerService.sendMail({
                             to: request.email,
-                            from: 'noreply@ocupath.com',
-                            subject: 'Has sido invitado a Ocupath.',
-                            text: 'Your new id',
+                            from: 'noreply@multivrsity.com',
+                            subject: 'Multivrsity has sent you an invitation.',
+                            text: 'Multivrsity has sent you an invitation',
                             html: templates_1.newInvitationTemplate({
                                 token: jwtToken,
                                 cost: invitation.cost,
@@ -269,9 +270,9 @@ let UserService = class UserService {
             try {
                 const response = await this.mailerService.sendMail({
                     to: user.email,
-                    from: 'noreply@ocupath.com',
-                    subject: 'Tu nuevo ID Ocupath.',
-                    text: 'Your new id',
+                    from: 'noreply@multivrsity.com',
+                    subject: 'Your new room id.',
+                    text: 'Your new room id Multivrsity.',
                     html: templates_1.newIdSession(requestDTO.playerId),
                 });
                 console.log({ response });
@@ -320,21 +321,38 @@ let UserService = class UserService {
     }
     async findUserDetail(requestDetailDTO, res) {
         try {
-            const { user } = await this.getWhoIsRequesting(requestDetailDTO);
+            const { user, isAdmin, isGuest, isSuperAdmin } = await this.getWhoIsRequesting(requestDetailDTO);
             if (!user) {
                 return res.status(404);
             }
+            let lastSuscription;
+            if (!isSuperAdmin) {
+                lastSuscription =
+                    await this.suscriptionRepository.findOne({
+                        select: ['invitations'],
+                        where: {
+                            admin: isAdmin ? user : null,
+                            user: isGuest ? user : null,
+                            isActive: true,
+                        },
+                    });
+            }
+            const profile = {
+                id: parseInt(user.id),
+                name: user.name,
+                uuid: user.uuid,
+                lastname: user.lastname,
+                thumbnail: user.thumbnail,
+                email: user.email,
+                type: user.type.id,
+                roomImage: user.roomImage,
+                lastSuscription: {
+                    invitations: !isSuperAdmin ? lastSuscription.invitations : 0
+                }
+            };
             return res.status(201).json({
                 status: 0,
-                profile: {
-                    id: user.id,
-                    name: user.name,
-                    uuid: user.uuid,
-                    lastname: user.lastname,
-                    thumbnail: user.thumbnail,
-                    email: user.email,
-                    type: user.type.id,
-                },
+                profile
             });
         }
         catch (err) {
@@ -616,6 +634,7 @@ let UserService = class UserService {
                     lastname: user.lastname,
                     email: user.email,
                     type: user.type.id,
+                    roomImage: user.roomImage
                 },
                 childrens,
             };
@@ -1104,6 +1123,10 @@ let UserService = class UserService {
                 console.log('Ha actualizado el nombre');
                 user.name = updateUserDTO.name;
             }
+            if (updateUserDTO.roomImage) {
+                console.log('Ha actualizado el nombre');
+                user.roomImage = updateUserDTO.roomImage;
+            }
             if (updateUserDTO.avatar) {
                 console.log('Ha actualizado el avatar');
                 user.avatar = updateUserDTO.avatar;
@@ -1124,6 +1147,7 @@ let UserService = class UserService {
                     avatar: user.avatar,
                     thumbnail: user.thumbnail,
                     name: user.name,
+                    roomImage: user.roomImage
                 },
             };
         }

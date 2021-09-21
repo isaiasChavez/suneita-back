@@ -10,6 +10,7 @@ export declare class SuperAdmin {
     avatar: string;
     thumbnail: string;
     email: string;
+    roomImage: string;
     password: string;
     type: Type;
     token: Token[];

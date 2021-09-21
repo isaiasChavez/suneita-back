@@ -80,11 +80,7 @@ __decorate([
 exports.SimpleRequest = SimpleRequest;
 class InviteUserDTO extends SimpleRequest {
     constructor({ userUuid, adminUuid, superAdminUuid, type, company, name, invitations, cost, startedAt, finishedAt, email, typeToInvite, }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type
-        });
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.company = company;
         this.email = email;
         this.name = name;
@@ -169,10 +165,7 @@ __decorate([
 exports.FindUserChildrens = FindUserChildrens;
 class ChangeName extends SimpleRequest {
     constructor({ adminUuid, superAdminUuid, userUuid, type, name }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type });
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.name = name;
     }
 }
@@ -203,10 +196,7 @@ __decorate([
 exports.ConfirmUserPassword = ConfirmUserPassword;
 class SetSesionAppId extends SimpleRequest {
     constructor({ adminUuid, superAdminUuid, userUuid, type, playerId }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type });
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.playerId = playerId;
     }
 }
@@ -257,11 +247,8 @@ __decorate([
 ], CreateSuperAdminDTO.prototype, "password", void 0);
 exports.CreateSuperAdminDTO = CreateSuperAdminDTO;
 class UpdateUserAdminDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, business, adminUuidToUpdate }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type });
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, business, adminUuidToUpdate, }) {
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.name = name ? name : null;
         this.lastname = lastname ? lastname : null;
         this.startedAt = startedAt ? startedAt : null;
@@ -314,11 +301,8 @@ __decorate([
 ], UpdateUserAdminDTO.prototype, "adminUuidToUpdate", void 0);
 exports.UpdateUserAdminDTO = UpdateUserAdminDTO;
 class UpdateGuestDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, userUuidToUpdate }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type });
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, lastname, startedAt, finishedAt, cost, userUuidToUpdate, }) {
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.name = name;
         this.lastname = lastname;
         this.startedAt = startedAt;
@@ -363,14 +347,12 @@ __decorate([
 ], UpdateGuestDTO.prototype, "userUuidToUpdate", void 0);
 exports.UpdateGuestDTO = UpdateGuestDTO;
 class UpdateUserDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail }) {
-        super({ adminUuid,
-            superAdminUuid,
-            userUuid,
-            type });
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail, roomImage, }) {
+        super({ adminUuid, superAdminUuid, userUuid, type });
         this.name = name;
         this.avatar = avatar;
         this.thumbnail = thumbnail;
+        this.roomImage = roomImage;
     }
 }
 __decorate([
@@ -390,6 +372,11 @@ __decorate([
     class_validator_1.MaxLength(150),
     __metadata("design:type", String)
 ], UpdateUserDTO.prototype, "thumbnail", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], UpdateUserDTO.prototype, "roomImage", void 0);
 exports.UpdateUserDTO = UpdateUserDTO;
 class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }) {
@@ -481,7 +468,7 @@ __decorate([
 ], GetAdminDetailDTO.prototype, "type", void 0);
 exports.GetAdminDetailDTO = GetAdminDetailDTO;
 class DeleteUserDTO extends SimpleRequest {
-    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status }) {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, userUuidToChange, status, }) {
         super({ adminUuid, superAdminUuid, type, userUuid });
         this.userUuidToChange = userUuidToChange;
         this.status = status;

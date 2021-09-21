@@ -22,6 +22,7 @@ async function bootstrap() {
     app.enableCors();
     app.setGlobalPrefix('api');
     await app.listen(app_module_1.AppModule.port);
+    console.log(`Ocupath api running on port ${app_module_1.AppModule.port} `);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

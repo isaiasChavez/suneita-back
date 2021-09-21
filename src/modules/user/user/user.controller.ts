@@ -40,6 +40,7 @@ export class UserController {
         try {
             console.log("inviteUser:", { inviteUserDTO })
             await validateOrReject(newinviteUserDTO);
+            console.log({newinviteUserDTO})
             return await this.userService.invite(newinviteUserDTO);
         } catch (errors) {
             console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);

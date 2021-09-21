@@ -13,6 +13,21 @@ export declare class ResetPassword {
     });
     email: string;
 }
+export interface SendEmailInfoProps {
+    surname: string;
+    name: string;
+    email: string;
+    company: string;
+    phone: string;
+}
+export declare class SendEmailInfo implements SendEmailInfoProps {
+    constructor({ name, surname, company, email, phone }: SendEmailInfoProps);
+    readonly email: string;
+    readonly name: string;
+    readonly surname: string;
+    readonly company: string;
+    readonly phone: string;
+}
 export declare class PasswordRecovery {
     constructor({ password, token }: {
         password: any;

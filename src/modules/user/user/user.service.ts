@@ -27,6 +27,7 @@ import {
   ChangeName,
   UpdateGuestDTO,
   SetSesionAppId,
+  ResponseProfile
 } from './user.dto';
 import { Configuration } from '../../../config/config.keys';
 
@@ -108,6 +109,7 @@ export class UserService {
   typesNumbers: TypesNumbers;
   async invite(request: InviteUserDTO): Promise<any> {
     try {
+      
       let status = 0;
       let invitationToSign = '';
       let jwtToken = null;
@@ -131,23 +133,19 @@ export class UserService {
         });
         let registerToken:Invitation
         if (!invitation) {
-
-
-          
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
-          let typeUserRequesting: number;
-
-          const { isAdmin,isSuperAdmin,isGuest,user } =
+          const { isAdmin,isSuperAdmin,user } =
           await this.getWhoIsRequesting(request);
           if (!user) {
             return {
               status: 5,
             };
           }
-
-          if (moment(request.startedAt).isBefore(new Date())) {
+          let yesterday = moment(new Date()).add(-1, 'days');
+          console.log({yesterday})
+          if (moment(request.startedAt).isBefore(yesterday)) {
             return {
-              status: 5,
+              status: 6,
             };
           }
 
@@ -223,9 +221,9 @@ export class UserService {
           if (!invitation) {
             const responseEmail = await this.mailerService.sendMail({
              to: request.email,
-             from: 'noreply@ocupath.com', // sender address
-             subject: 'Has sido invitado a Ocupath.',
-             text: 'Your new id', // plaintext body
+             from: 'noreply@multivrsity.com', // sender address
+             subject: 'Multivrsity has sent you an invitation.',
+             text: 'Multivrsity has sent you an invitation', // plaintext body
              html: newInvitationTemplate({
                token:jwtToken,
                cost:registerToken.cost,
@@ -242,9 +240,9 @@ export class UserService {
           else{
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
-              from: 'noreply@ocupath.com', // sender address
-              subject: 'Has sido invitado a Ocupath.',
-              text: 'Your new id', // plaintext body
+              from: 'noreply@multivrsity.com', // sender address
+              subject: 'Multivrsity has sent you an invitation.',
+              text: 'Multivrsity has sent you an invitation', // plaintext body
               html: newInvitationTemplate({
                 token:jwtToken,
                 cost:invitation.cost,
@@ -348,9 +346,9 @@ export class UserService {
       try {
         const response = await this.mailerService.sendMail({
           to: user.email,
-          from: 'noreply@ocupath.com', // sender address
-          subject: 'Tu nuevo ID Ocupath.',
-          text: 'Your new id', // plaintext body
+          from: 'noreply@multivrsity.com', // sender address
+          subject: 'Your new room id.',
+          text: 'Your new room id Multivrsity.', // plaintext body
           html: newIdSession(requestDTO.playerId), // HTML body content
         });
         console.log({ response });
@@ -417,21 +415,39 @@ export class UserService {
     @Res() res,
   ): Promise<any> {
     try {
-      const { user } = await this.getWhoIsRequesting(requestDetailDTO);
+      const { user,isAdmin,isGuest ,isSuperAdmin} = await this.getWhoIsRequesting(requestDetailDTO);
       if (!user) {
         return res.status(404);
       }
-      return res.status(201).json({
-        status: 0,
-        profile: {
-          id: user.id,
+      let lastSuscription: Suscription
+      if (!isSuperAdmin) {
+        lastSuscription=
+         await this.suscriptionRepository.findOne({
+           select: [ 'invitations'],
+           where: {
+             admin:isAdmin?user:null,
+             user:isGuest?user:null,
+             isActive: true,
+           },
+         });
+        
+      }
+      const profile:ResponseProfile ={
+          id: parseInt(user.id),
           name: user.name,
           uuid: user.uuid,
           lastname: user.lastname,
           thumbnail: user.thumbnail,
           email: user.email,
           type: user.type.id,
-        },
+          roomImage: user.roomImage,
+          lastSuscription:{
+            invitations: !isSuperAdmin ? lastSuscription.invitations:0
+          }
+        }
+      return res.status(201).json({
+        status: 0,
+        profile
       });
     } catch (err) {
       console.log('UserService - findUserDetail: ',err);
@@ -769,6 +785,7 @@ export class UserService {
           lastname: user.lastname,
           email: user.email,
           type: user.type.id,
+          roomImage:user.roomImage
         },
         childrens,
       };
@@ -962,17 +979,6 @@ export class UserService {
       // const suscriptionsGuestExpiredIds = guestExpired.map(
       //   (suscription) => suscription.suscriptionId,
       // );
-
-
-
-
-
-
-
-
-
-
-
       return { status: 0 };
     } catch (err) {
       console.log('UserService - clearSuscriptionsExpired: ',err);
@@ -1409,6 +1415,10 @@ export class UserService {
         console.log('Ha actualizado el nombre');
         user.name = updateUserDTO.name;
       }
+      if (updateUserDTO.roomImage) {
+        console.log('Ha actualizado el nombre');
+        user.roomImage = updateUserDTO.roomImage;
+      }
       if (updateUserDTO.avatar) {
         console.log('Ha actualizado el avatar');
         user.avatar = updateUserDTO.avatar;
@@ -1431,6 +1441,7 @@ export class UserService {
           avatar: user.avatar,
           thumbnail: user.thumbnail,
           name: user.name,
+          roomImage:user.roomImage
         },
       };
     } catch (err) {
