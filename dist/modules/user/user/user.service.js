@@ -78,6 +78,29 @@ let UserService = class UserService {
             let status = 0;
             let invitationToSign = '';
             let jwtToken = null;
+            const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(request);
+            if (isAdmin) {
+                console.log("ES ADMIN");
+                const activeSuscription = await this.suscripctionRepository.findOne({
+                    where: {
+                        isActive: true,
+                        admin: user,
+                    }
+                });
+                const statusActiveSuscription = await this.suscriptionService.getStatusSuscription({ suscription: activeSuscription });
+                console.log({ statusActiveSuscription });
+                if (statusActiveSuscription.isExpired) {
+                    return {
+                        status: 405,
+                    };
+                }
+                const canAddMore = await this.suscriptionService.canAddMoreSuscriptions({ admin: user, suscription: activeSuscription });
+                if (!canAddMore.canAdd) {
+                    return {
+                        status: 405,
+                    };
+                }
+            }
             const hasGuestWithThisEmail = await this.userRepository.findOne({
                 where: {
                     email: request.email,
@@ -93,11 +116,11 @@ let UserService = class UserService {
             if (!hasGuestWithThisEmail && !hasAdminWithThisEmail) {
                 const hasAnInvitation = await this.invitationRepository.findOne({
                     where: { email: request.email },
+                    relations: ['type']
                 });
                 let registerToken;
                 let isAdminInvitingGuest;
                 if (!hasAnInvitation) {
-                    const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(request);
                     if (!user) {
                         return {
                             status: 5,
@@ -133,7 +156,9 @@ let UserService = class UserService {
                         invitationBase.invitations = request.invitations;
                         invitationBase.cost = request.cost;
                     }
-                    isAdminInvitingGuest = isAdmin && typeToInvite.id === this.typesNumbers.USER;
+                    const typeToInviteIsGuest = typeToInvite.id === this.typesNumbers.USER;
+                    isAdminInvitingGuest = isAdmin && typeToInviteIsGuest;
+                    console.log({ isAdmin, typeToInviteIsGuest, isAdminInvitingGuest });
                     if (typeToInvite.id === this.typesNumbers.USER) {
                         if (isAdmin) {
                             const dateFinishAdmin = await this.suscripctionRepository.findOne({
@@ -156,6 +181,7 @@ let UserService = class UserService {
                     invitationToSign = hasAnInvitation.id;
                 }
                 jwtToken = await jwt.sign({ token: invitationToSign }, process.env.TOKEN_SECRET);
+                console.log({ jwtToken });
                 try {
                     console.log({ isAdminInvitingGuest });
                     if (!hasAnInvitation) {
@@ -180,6 +206,8 @@ let UserService = class UserService {
                         };
                     }
                     else {
+                        isAdminInvitingGuest = isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER;
+                        console.log({ isAdminInvitingGuest });
                         const responseEmail = await this.mailerService.sendMail({
                             to: request.email,
                             from: 'noreply@multivrsity.com',
@@ -256,7 +284,7 @@ let UserService = class UserService {
     }
     async setSesionOfApp(requestDTO) {
         try {
-            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO);
+            const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO);
             if (!user) {
                 return { status: 1, msg: 'User does not exist' };
             }
@@ -272,14 +300,14 @@ let UserService = class UserService {
             }
             sesionExist.playerId = requestDTO.playerId;
             await this.sesionRepository.save(sesionExist);
-            console.log(templates_1.newIdSession(requestDTO.playerId));
+            console.log(templates_1.newIdSession({ id: requestDTO.playerId, name: user.name }));
             try {
                 const response = await this.mailerService.sendMail({
                     to: user.email,
                     from: 'noreply@multivrsity.com',
                     subject: 'Your new room id.',
                     text: 'Your new room id Multivrsity.',
-                    html: templates_1.newIdSession(requestDTO.playerId),
+                    html: templates_1.newIdSession({ id: requestDTO.playerId, name: user.name }),
                 });
                 console.log({ response });
             }
@@ -389,8 +417,8 @@ let UserService = class UserService {
                 };
             });
             const lastSuscription = admin.suscriptions.find((suscription) => suscription.isActive);
-            const statusSuscription = await this.getStatusSuscription(lastSuscription);
-            if (!statusSuscription.isExpired && admin.isActive) {
+            const { isExpired } = await this.suscriptionService.getStatusSuscription({ suscription: lastSuscription });
+            if (!isExpired && admin.isActive) {
                 const statusExpired = await this.statusRepository.findOne(this.statusNumbers.ACTIVE);
                 admin.status = statusExpired;
                 await this.adminRepository.save(admin);
@@ -437,19 +465,7 @@ let UserService = class UserService {
                     uuid: getUserDetailDTO.userUuidToGet,
                 },
             });
-            const suscriptions = user.suscriptions.map((suscription) => {
-                return {
-                    cost: suscription.cost,
-                    createdAt: suscription.createdAt,
-                    finishedAt: suscription.finishedAt,
-                    isActive: suscription.isActive,
-                    isDeleted: suscription.isDeleted,
-                    startedAt: suscription.startedAt,
-                };
-            });
             const lastSuscription = user.suscriptions.find((suscription) => suscription.isActive);
-            const status = this.getStatusSuscription(lastSuscription);
-            console.log({ status });
             const suscriptionWaiting = user.suscriptions.find((suscription) => suscription.isWaiting);
             let cost;
             let costWaiting = 0;
@@ -479,24 +495,6 @@ let UserService = class UserService {
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error getting user',
-            }, 500);
-        }
-    }
-    async getStatusSuscription(suscription) {
-        try {
-            let isExpired = false;
-            if (moment(suscription.finishedAt).isAfter(new Date())) {
-                isExpired = true;
-            }
-            return {
-                isExpired: false
-            };
-        }
-        catch (err) {
-            console.log('UserService - getStatusSuscription: ', err);
-            throw new common_1.HttpException({
-                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'Error getting Status Suscription ',
             }, 500);
         }
     }
@@ -1000,7 +998,7 @@ let UserService = class UserService {
                 finishedAt: new Date(addNewSuscription.finishedAt),
                 invitations: addNewSuscription.invitations,
             });
-            const statusLastSuscription = await this.getStatusSuscription(lastSuscription);
+            const statusLastSuscription = await this.suscriptionService.getStatusSuscription({ suscription: lastSuscription });
             const statusActive = await this.statusRepository.findOne(this.statusNumbers.ACTIVE);
             if (statusLastSuscription.isExpired) {
                 lastSuscription.isActive = false;
@@ -1090,47 +1088,16 @@ let UserService = class UserService {
             }, 500);
         }
     }
-    async updateName(changeNameDto) {
-        try {
-            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(changeNameDto);
-            if (!user) {
-                return { status: 1 };
-            }
-            user.name = changeNameDto.name;
-            if (isAdmin) {
-                await this.adminRepository.save(user);
-            }
-            if (isSuperAdmin) {
-                await this.superAdminRepository.save(user);
-            }
-            if (isGuest) {
-                await this.userRepository.save(user);
-            }
-            return {
-                status: 0,
-            };
-        }
-        catch (err) {
-            console.log('UserService - ChangeName: ', err);
-            throw new common_1.HttpException({
-                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'Error Changing Name  user',
-            }, 500);
-        }
-    }
     async updateUser(updateUserDTO) {
         try {
-            console.log({ updateUserDTO });
             const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(updateUserDTO);
             if (!user) {
                 return { status: 1 };
             }
             if (updateUserDTO.name) {
-                console.log('Ha actualizado el nombre');
                 user.name = updateUserDTO.name;
             }
             if (updateUserDTO.roomImage) {
-                console.log('Ha actualizado el nombre');
                 user.roomImage = updateUserDTO.roomImage;
             }
             if (updateUserDTO.avatar) {
@@ -1400,7 +1367,7 @@ let UserService = class UserService {
                         admin
                     }
                 });
-                const statusSuscription = await this.getStatusSuscription(activeSuscription);
+                const statusSuscription = await this.suscriptionService.getStatusSuscription({ suscription: activeSuscription });
                 if (statusSuscription.isExpired) {
                     const statusExpired = await this.statusRepository.findOne(this.statusNumbers.EXPIRED);
                     admin.status = statusExpired;
@@ -1457,7 +1424,7 @@ let UserService = class UserService {
                         user: userToUpdate
                     }
                 });
-                const statusSuscription = await this.getStatusSuscription(activeSuscription);
+                const statusSuscription = await this.suscriptionService.getStatusSuscription({ suscription: activeSuscription });
                 if (statusSuscription.isExpired) {
                     const statusExpired = await this.statusRepository.findOne(this.statusNumbers.EXPIRED);
                     userToUpdate.status = statusExpired;

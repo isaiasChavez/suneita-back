@@ -4,7 +4,7 @@ import { Token } from '../token/token.entity';
 import { Type } from '../type/type.entity';
 import { Role } from '../role/role.entity';
 import { Sesion } from '../sesion/sesion.entity';
-import { InviteUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, ChangeName, UpdateGuestDTO, SetSesionAppId } from './user.dto';
+import { InviteUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, UpdateGuestDTO, SetSesionAppId } from './user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Roles, Types, TypesNumbers, Statuses } from 'src/types';
 import { SuperAdmin } from './superadmin.entity';
@@ -43,9 +43,6 @@ export declare class UserService {
     findUserDetail(requestDetailDTO: SimpleRequest, res: any): Promise<any>;
     getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any>;
     getUserDetail(getUserDetailDTO: GetUserDetailDTO): Promise<any>;
-    getStatusSuscription(suscription: Suscription): Promise<{
-        isExpired: boolean;
-    }>;
     findUserChildrens(findUserChildrensDTO: SimpleRequest): Promise<any>;
     clearSuscriptionsExpired(): Promise<any>;
     createSuperAdmin(createSuperAdminDTO: CreateSuperAdminDTO): Promise<any>;
@@ -58,7 +55,6 @@ export declare class UserService {
         isGuest: boolean;
         user: SuperAdmin | Admin | User;
     }>;
-    updateName(changeNameDto: ChangeName): Promise<any>;
     updateUser(updateUserDTO: UpdateUserDTO): Promise<any>;
     getTypeAndUser(type: number, adminUuid: string, superAdminUuid: string): Promise<any>;
     deleteUserAdmin(deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any>;

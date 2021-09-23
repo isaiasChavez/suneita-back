@@ -1,6 +1,6 @@
 // https://ocupath-orbk9xws2-isaias.vercel.app/register/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6IjU1ZTc4ZTEzLTdlMTctNGMzMi04NjVkLTU0MjQ5MTg0MWE4YiIsImlhdCI6MTYyOTIxNDMzNH0.lITCd85l3UcmvXLS8edKLllbFEl-Cu9fkGTB742Av-w
 
-export const newIdSession = (id: string) => {
+export const newIdSession = ({id,name}:{id: string,name:string}) => {
 
     return `
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">

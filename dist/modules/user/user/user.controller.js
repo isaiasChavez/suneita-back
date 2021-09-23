@@ -160,19 +160,6 @@ let UserController = class UserController {
             };
         }
     }
-    async updateName(changeName) {
-        let newchangeName = new user_dto_1.ChangeName(changeName);
-        try {
-            await class_validator_1.validateOrReject(newchangeName);
-            return await this.userService.updateName(newchangeName);
-        }
-        catch (errors) {
-            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
-            return {
-                errors
-            };
-        }
-    }
     async updateUser(updateUserDTO) {
         let newupdateUserDTO = new user_dto_1.UpdateUserDTO(updateUserDTO);
         try {
@@ -320,13 +307,6 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.UpdateGuestDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "updateGuest", null);
-__decorate([
-    common_1.Post("name"),
-    __param(0, common_1.Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.ChangeName]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "updateName", null);
 __decorate([
     common_1.Put(),
     __param(0, common_1.Body()),

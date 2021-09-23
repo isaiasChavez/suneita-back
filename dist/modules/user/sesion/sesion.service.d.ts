@@ -14,9 +14,11 @@ import { Asset } from 'src/modules/asset/asset.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { UserService } from '../user/user.service';
 import { Status } from '../status/status.entity';
+import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 export declare class SesionService {
     private readonly mailerService;
     private readonly userService;
+    private readonly suscriptionService;
     private sesionRepository;
     private typeRepository;
     private userRepository;
@@ -28,7 +30,7 @@ export declare class SesionService {
     private superAdminRepository;
     private tokenRepository;
     private invitationRepository;
-    constructor(mailerService: MailerService, userService: UserService, sesionRepository: Repository<Sesion>, typeRepository: Repository<Type>, userRepository: Repository<User>, suscriptionRepository: Repository<Suscription>, adminRepository: Repository<Admin>, roleRepository: Repository<Role>, statusRepository: Repository<Status>, assetRepository: Repository<Asset>, superAdminRepository: Repository<SuperAdmin>, tokenRepository: Repository<Token>, invitationRepository: Repository<Invitation>);
+    constructor(mailerService: MailerService, userService: UserService, suscriptionService: SuscriptionService, sesionRepository: Repository<Sesion>, typeRepository: Repository<Type>, userRepository: Repository<User>, suscriptionRepository: Repository<Suscription>, adminRepository: Repository<Admin>, roleRepository: Repository<Role>, statusRepository: Repository<Status>, assetRepository: Repository<Asset>, superAdminRepository: Repository<SuperAdmin>, tokenRepository: Repository<Token>, invitationRepository: Repository<Invitation>);
     types: Types;
     typesNumbers: TypesNumbers;
     roles: Roles;

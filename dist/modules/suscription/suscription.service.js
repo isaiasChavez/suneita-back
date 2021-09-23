@@ -17,10 +17,13 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const admin_entity_1 = require("../user/user/admin.entity");
+const user_entity_1 = require("../user/user/user.entity");
 const suscription_entity_1 = require("./suscription.entity");
+const moment = require("moment");
 let SuscriptionService = class SuscriptionService {
-    constructor(adminRepository, suscriptionRepository) {
+    constructor(adminRepository, userRepository, suscriptionRepository) {
         this.adminRepository = adminRepository;
+        this.userRepository = userRepository;
         this.suscriptionRepository = suscriptionRepository;
     }
     async update(suscription, updateSuscriptionDTO, user, isAdmin, isGuest) {
@@ -84,6 +87,55 @@ let SuscriptionService = class SuscriptionService {
             }, 500);
         }
     }
+    async getStatusSuscription({ suscription }) {
+        try {
+            let isExpired = false;
+            const today = new Date();
+            if (moment(today).isAfter(suscription.finishedAt)) {
+                isExpired = true;
+            }
+            return {
+                isExpired
+            };
+        }
+        catch (err) {
+            console.log('SuscriptionService - getStatusSuscription: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error getting Status Suscription ',
+            }, 500);
+        }
+    }
+    async canAddMoreSuscriptions({ suscription, admin }) {
+        try {
+            let canAdd = true;
+            const maxAvailableInvitations = suscription.invitations;
+            const { usersActives } = await this.userRepository
+                .createQueryBuilder("user")
+                .select("COUNT(user)", "usersActives")
+                .innerJoinAndSelect('user.admin', 'admin')
+                .where(" user.isDeleted = false and admin.id = :id", { id: admin.id })
+                .groupBy("admin.id")
+                .getRawOne();
+            console.log({ usersActives });
+            console.log(usersActives);
+            const numberActives = parseInt(usersActives);
+            if (numberActives >= maxAvailableInvitations) {
+                canAdd = false;
+            }
+            console.log({ canAdd, usersActives, numberActives, admin });
+            return {
+                canAdd
+            };
+        }
+        catch (err) {
+            console.log('SuscriptionService - canAddMoreSuscriptions: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error getting Status Suscription ',
+            }, 500);
+        }
+    }
     async add(newSuscription) {
         try {
         }
@@ -99,8 +151,10 @@ let SuscriptionService = class SuscriptionService {
 SuscriptionService = __decorate([
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(1, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(1, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(2, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], SuscriptionService);
 exports.SuscriptionService = SuscriptionService;

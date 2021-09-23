@@ -10,6 +10,7 @@ exports.SuscriptionModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const admin_entity_1 = require("../user/user/admin.entity");
+const user_entity_1 = require("../user/user/user.entity");
 const suscription_controller_1 = require("./suscription.controller");
 const suscription_entity_1 = require("./suscription.entity");
 const suscription_service_1 = require("./suscription.service");
@@ -19,6 +20,7 @@ SuscriptionModule = __decorate([
     common_1.Module({
         imports: [
             typeorm_1.TypeOrmModule.forFeature([admin_entity_1.Admin]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User]),
             typeorm_1.TypeOrmModule.forFeature([suscription_entity_1.Suscription]),
         ],
         controllers: [suscription_controller_1.SuscriptionController],

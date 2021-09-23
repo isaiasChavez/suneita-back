@@ -113,6 +113,39 @@ export class UserService {
       let status = 0;
       let invitationToSign = '';
       let jwtToken = null;
+      
+
+      const { isAdmin,isSuperAdmin,user } =
+            await this.getWhoIsRequesting(request);
+      
+      if (isAdmin) {
+        console.log("ES ADMIN")
+        const activeSuscription:Suscription = await this.suscripctionRepository.findOne({ 
+          where:{
+            isActive:true,
+            admin:user,
+          }
+        })
+
+        const statusActiveSuscription = await this.suscriptionService.getStatusSuscription({suscription:activeSuscription})
+        console.log({statusActiveSuscription})
+        if (statusActiveSuscription.isExpired) {
+          return {
+            status: 405,
+          };
+        }
+
+        const canAddMore = await this.suscriptionService.canAddMoreSuscriptions({admin:user as Admin,suscription:activeSuscription})
+
+        if (!canAddMore.canAdd) {
+          return {
+            status: 405,
+          };
+        }
+
+        
+      }
+
       // Se verifica si el usuario ya cuenta con una invitacion enviada
       const hasGuestWithThisEmail: User = await this.userRepository.findOne({
         where: {
@@ -120,23 +153,26 @@ export class UserService {
           isDeleted: false,
         },
       });
+
       let hasAdminWithThisEmail: Admin;
       if (!hasGuestWithThisEmail) {
         hasAdminWithThisEmail = await this.adminRepository.findOne({
           where: { email: request.email,isDeleted: false },
         });
       }
+
       if (!hasGuestWithThisEmail && !hasAdminWithThisEmail) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
         const hasAnInvitation = await this.invitationRepository.findOne({
           where: { email: request.email },
+          relations:['type']
         });
         let registerToken: Invitation
         let isAdminInvitingGuest: boolean
+
         if (!hasAnInvitation) {
           // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
-          const { isAdmin,isSuperAdmin,user } =
-            await this.getWhoIsRequesting(request);
+          
           if (!user) {
             return {
               status: 5,
@@ -185,7 +221,9 @@ export class UserService {
             invitationBase.invitations = request.invitations;
             invitationBase.cost = request.cost;
           }
-          isAdminInvitingGuest = isAdmin && typeToInvite.id === this.typesNumbers.USER
+          const typeToInviteIsGuest =typeToInvite.id === this.typesNumbers.USER
+          isAdminInvitingGuest = isAdmin && typeToInviteIsGuest 
+          console.log({isAdmin,typeToInviteIsGuest,isAdminInvitingGuest})
           if (typeToInvite.id === this.typesNumbers.USER) {
             if (isAdmin) {
               const dateFinishAdmin: Suscription = await this.suscripctionRepository.findOne({
@@ -221,6 +259,7 @@ export class UserService {
           process.env.TOKEN_SECRET,
         );
         // Se envia correo
+        console.log({jwtToken})
         try {
           console.log({ isAdminInvitingGuest })
           if (!hasAnInvitation) {
@@ -245,6 +284,8 @@ export class UserService {
             }
           }
           else {
+            isAdminInvitingGuest = isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER 
+            console.log({isAdminInvitingGuest})
 
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
@@ -335,12 +376,13 @@ export class UserService {
 
   async setSesionOfApp(requestDTO: SetSesionAppId): Promise<any> {
     try {
-      const { isAdmin,isSuperAdmin,isGuest,user } =
+      const { isAdmin,isGuest,user } =
         await this.getWhoIsRequesting(requestDTO);
 
       if (!user) {
         return { status: 1,msg: 'User does not exist' };
       }
+
       const sesionExist: Sesion = await this.sesionRepository.findOne({
         where: {
           admin: isAdmin ? user : null,
@@ -355,7 +397,7 @@ export class UserService {
       sesionExist.playerId = requestDTO.playerId;
       await this.sesionRepository.save(sesionExist);
 
-      console.log(newIdSession(requestDTO.playerId));
+      console.log(newIdSession({id:requestDTO.playerId,name:user.name}));
 
       try {
         const response = await this.mailerService.sendMail({
@@ -363,7 +405,7 @@ export class UserService {
           from: 'noreply@multivrsity.com', // sender address
           subject: 'Your new room id.',
           text: 'Your new room id Multivrsity.', // plaintext body
-          html: newIdSession(requestDTO.playerId), // HTML body content
+          html: newIdSession({id:requestDTO.playerId,name:user.name}), // HTML body content
         });
         console.log({ response });
       } catch (error) {
@@ -446,6 +488,8 @@ export class UserService {
           });
 
       }
+
+
       const profile: ResponseProfile = {
         id: parseInt(user.id),
         name: user.name,
@@ -499,8 +543,8 @@ export class UserService {
       const lastSuscription = admin.suscriptions.find(
         (suscription: Suscription) => suscription.isActive,
       );
-      const statusSuscription = await this.getStatusSuscription(lastSuscription)
-      if (!statusSuscription.isExpired && admin.isActive) {
+      const {isExpired} = await this.suscriptionService.getStatusSuscription({suscription:lastSuscription})
+      if (!isExpired && admin.isActive) {
         const statusExpired: Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
         admin.status = statusExpired
         await this.adminRepository.save(admin)
@@ -559,21 +603,10 @@ export class UserService {
           uuid: getUserDetailDTO.userUuidToGet,
         },
       });
-      const suscriptions = user.suscriptions.map((suscription: Suscription) => {
-        return {
-          cost: suscription.cost,
-          createdAt: suscription.createdAt,
-          finishedAt: suscription.finishedAt,
-          isActive: suscription.isActive,
-          isDeleted: suscription.isDeleted,
-          startedAt: suscription.startedAt,
-        };
-      });
+     
       const lastSuscription = user.suscriptions.find(
         (suscription: Suscription) => suscription.isActive,
       );
-      const status = this.getStatusSuscription(lastSuscription)
-      console.log({ status })
 
       const suscriptionWaiting = user.suscriptions.find(
         (suscription: Suscription) => suscription.isWaiting,
@@ -614,28 +647,7 @@ export class UserService {
     }
   }
 
-  async getStatusSuscription(suscription: Suscription): Promise<{ isExpired: boolean }> {
-    try {
-      let isExpired = false
-
-      if (moment(suscription.finishedAt).isAfter(new Date())) {
-        isExpired = true
-      }
-      return {
-        isExpired: false
-      }
-
-    } catch (err) {
-      console.log('UserService - getStatusSuscription: ',err);
-      throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error getting Status Suscription ',
-        },
-        500,
-      );
-    }
-  }
+  
   async findUserChildrens(findUserChildrensDTO: SimpleRequest): Promise<any> {
     try {
       const dataChildrens: { admins: Admin[]; users: User[] } = {
@@ -1274,7 +1286,7 @@ export class UserService {
       //Activo
       //pausado
 
-      const statusLastSuscription = await this.getStatusSuscription(lastSuscription)
+      const statusLastSuscription = await this.suscriptionService.getStatusSuscription({suscription:lastSuscription})
       const statusActive: Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
 
       if (statusLastSuscription.isExpired) {
@@ -1383,54 +1395,18 @@ export class UserService {
     }
   }
 
-  async updateName(changeNameDto: ChangeName): Promise<any> {
-    try {
-      const { isAdmin,isSuperAdmin,isGuest,user } =
-        await this.getWhoIsRequesting(changeNameDto);
-
-      if (!user) {
-        return { status: 1 };
-      }
-
-      user.name = changeNameDto.name;
-      if (isAdmin) {
-        await this.adminRepository.save(user);
-      }
-      if (isSuperAdmin) {
-        await this.superAdminRepository.save(user);
-      }
-      if (isGuest) {
-        await this.userRepository.save(user);
-      }
-      return {
-        status: 0,
-      };
-    } catch (err) {
-      console.log('UserService - ChangeName: ',err);
-      throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error Changing Name  user',
-        },
-        500,
-      );
-    }
-  }
   //Actualiza el usuario loggeado
   async updateUser(updateUserDTO: UpdateUserDTO): Promise<any> {
     try {
-      console.log({ updateUserDTO });
       const { isAdmin,isSuperAdmin,isGuest,user } =
         await this.getWhoIsRequesting(updateUserDTO);
       if (!user) {
         return { status: 1 };
       }
       if (updateUserDTO.name) {
-        console.log('Ha actualizado el nombre');
         user.name = updateUserDTO.name;
       }
       if (updateUserDTO.roomImage) {
-        console.log('Ha actualizado el nombre');
         user.roomImage = updateUserDTO.roomImage;
       }
       if (updateUserDTO.avatar) {
@@ -1750,7 +1726,7 @@ export class UserService {
             admin
           }
         })
-        const statusSuscription = await this.getStatusSuscription(activeSuscription)
+        const statusSuscription = await this.suscriptionService.getStatusSuscription({suscription:activeSuscription})
         if (statusSuscription.isExpired) {
           const statusExpired: Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
           admin.status = statusExpired
@@ -1817,7 +1793,7 @@ export class UserService {
             user: userToUpdate
           }
         })
-        const statusSuscription = await this.getStatusSuscription(activeSuscription)
+        const statusSuscription = await this.suscriptionService.getStatusSuscription({suscription:activeSuscription})
         if (statusSuscription.isExpired) {
           const statusExpired: Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
           userToUpdate.status = statusExpired

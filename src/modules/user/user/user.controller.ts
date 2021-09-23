@@ -196,22 +196,6 @@ export class UserController {
         }
     }
 
-
-    
-    @Post("name")
-    async updateName(@Body() changeName: ChangeName): Promise<any> {
-        let newchangeName = new ChangeName(changeName)
-        try {
-            await validateOrReject(newchangeName);
-            return await this.userService.updateName(newchangeName);
-        } catch (errors) {
-            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
-            return {
-                errors
-            }
-        }
-    }
-
     @Put()
     async updateUser(@Body() updateUserDTO: UpdateUserDTO): Promise<any> {
         let newupdateUserDTO = new UpdateUserDTO(updateUserDTO)

@@ -28,12 +28,14 @@ import { SimpleRequest } from '../user/user.dto';
 import { UserService } from '../user/user.service';
 import { newInfoLanding,newResetPassTemplate } from 'src/templates/templates';
 import { Status } from '../status/status.entity';
+import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 const jwt = require('jsonwebtoken');
 @Injectable()
 export class SesionService {
   constructor (
     private readonly mailerService: MailerService,
     private readonly userService: UserService,
+    private readonly suscriptionService: SuscriptionService,
     @InjectRepository(Sesion) private sesionRepository: Repository<Sesion>,
     @InjectRepository(Type) private typeRepository: Repository<Type>,
     @InjectRepository(User) private userRepository: Repository<User>,
@@ -711,6 +713,7 @@ export class SesionService {
 
   async createAdmin(createAdminDTO: CreateAdminDTO): Promise<any> {
     try {
+
       //Verificar que exista un token con el email asociado
 
       const invitation: Invitation = await this.invitationRepository.findOne({
@@ -799,6 +802,7 @@ export class SesionService {
 
   async createGuest(createUserDTO: CreateUserDTO): Promise<any> {
     try {
+      
       const invitation: Invitation = await this.invitationRepository.findOne({
         relations: ['admin','superAdmin'],
         where: {
@@ -806,12 +810,33 @@ export class SesionService {
           email: createUserDTO.email,
         },
       });
+
+
       if (!invitation) {
         return {
           status: 1,
           error: 'No existe una invitación',
         };
       }
+
+      if (invitation.admin) {
+        const lastSuscriptionInviter:Suscription = await this.suscriptionRepository.findOne({
+          where:{
+            admin:invitation.admin,
+            isActive:true
+          }
+        })
+        const canAddMore =await this.suscriptionService.canAddMoreSuscriptions({admin:invitation.admin,suscription:lastSuscriptionInviter})
+        if (!canAddMore.canAdd) {
+          return {
+            status: 3,
+            error: 'You can join to this team',
+          };
+        }
+        
+      }
+
+
       const existUser = await this.userRepository.findOne({
         where: {
           email: createUserDTO.email,
@@ -836,6 +861,8 @@ export class SesionService {
       });
       const userPassword = await bcrypt.hash(createUserDTO.password,12);
       const userStatus = await this.statusRepository.findOne(1)
+
+      
 
       const user = this.userRepository.create({
         admin: invitation.admin,

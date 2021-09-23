@@ -32,11 +32,13 @@ const mailer_1 = require("@nestjs-modules/mailer");
 const user_service_1 = require("../user/user.service");
 const templates_1 = require("../../../templates/templates");
 const status_entity_1 = require("../status/status.entity");
+const suscription_service_1 = require("../../suscription/suscription.service");
 const jwt = require('jsonwebtoken');
 let SesionService = class SesionService {
-    constructor(mailerService, userService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, statusRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+    constructor(mailerService, userService, suscriptionService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, statusRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
         this.mailerService = mailerService;
         this.userService = userService;
+        this.suscriptionService = suscriptionService;
         this.sesionRepository = sesionRepository;
         this.typeRepository = typeRepository;
         this.userRepository = userRepository;
@@ -692,6 +694,21 @@ let SesionService = class SesionService {
                     error: 'No existe una invitación',
                 };
             }
+            if (invitation.admin) {
+                const lastSuscriptionInviter = await this.suscriptionRepository.findOne({
+                    where: {
+                        admin: invitation.admin,
+                        isActive: true
+                    }
+                });
+                const canAddMore = await this.suscriptionService.canAddMoreSuscriptions({ admin: invitation.admin, suscription: lastSuscriptionInviter });
+                if (!canAddMore.canAdd) {
+                    return {
+                        status: 3,
+                        error: 'You can join to this team',
+                    };
+                }
+            }
             const existUser = await this.userRepository.findOne({
                 where: {
                     email: createUserDTO.email,
@@ -755,19 +772,20 @@ let SesionService = class SesionService {
 };
 SesionService = __decorate([
     common_1.Injectable(),
-    __param(2, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
-    __param(3, typeorm_1.InjectRepository(type_entity_1.Type)),
-    __param(4, typeorm_1.InjectRepository(user_entity_1.User)),
-    __param(5, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
-    __param(6, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(7, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(8, typeorm_1.InjectRepository(status_entity_1.Status)),
-    __param(9, typeorm_1.InjectRepository(asset_entity_1.Asset)),
-    __param(10, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
-    __param(11, typeorm_1.InjectRepository(token_entity_1.Token)),
-    __param(12, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __param(3, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
+    __param(4, typeorm_1.InjectRepository(type_entity_1.Type)),
+    __param(5, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(6, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(7, typeorm_1.InjectRepository(admin_entity_1.Admin)),
+    __param(8, typeorm_1.InjectRepository(role_entity_1.Role)),
+    __param(9, typeorm_1.InjectRepository(status_entity_1.Status)),
+    __param(10, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(11, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
+    __param(12, typeorm_1.InjectRepository(token_entity_1.Token)),
+    __param(13, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
     __metadata("design:paramtypes", [mailer_1.MailerService,
         user_service_1.UserService,
+        suscription_service_1.SuscriptionService,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
