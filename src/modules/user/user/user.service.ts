@@ -376,9 +376,10 @@ export class UserService {
 
   async setSesionOfApp(requestDTO: SetSesionAppId): Promise<any> {
     try {
+
       const { isAdmin,isGuest,user } =
         await this.getWhoIsRequesting(requestDTO);
-
+console.log({requestDTO,isAdmin,isGuest,user})
       if (!user) {
         return { status: 1,msg: 'User does not exist' };
       }
@@ -400,6 +401,7 @@ export class UserService {
       console.log(newIdSession({id:requestDTO.playerId,name:user.name}));
 
       try {
+        
         const response = await this.mailerService.sendMail({
           to: user.email,
           from: 'noreply@multivrsity.com', // sender address
@@ -417,12 +419,12 @@ export class UserService {
 
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - confirmPassword: ',err);
+      console.log('UserService - sesion id: ',err);
 
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error confirming user password',
+          error: 'Error setting id',
         },
         500,
       );

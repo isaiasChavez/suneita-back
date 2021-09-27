@@ -543,6 +543,7 @@ export class SesionService {
           });
           console.log("New Request reset:",{ resoponseEmail })
         } catch (error) {
+          console.log({error})
           return {
             status: 2,
           };

@@ -285,6 +285,7 @@ let UserService = class UserService {
     async setSesionOfApp(requestDTO) {
         try {
             const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO);
+            console.log({ requestDTO, isAdmin, isGuest, user });
             if (!user) {
                 return { status: 1, msg: 'User does not exist' };
             }
@@ -320,10 +321,10 @@ let UserService = class UserService {
             return { status: 0 };
         }
         catch (err) {
-            console.log('UserService - confirmPassword: ', err);
+            console.log('UserService - sesion id: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'Error confirming user password',
+                error: 'Error setting id',
             }, 500);
         }
     }
