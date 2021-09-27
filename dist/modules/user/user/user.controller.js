@@ -134,6 +134,19 @@ let UserController = class UserController {
             };
         }
     }
+    async deleteperiod(simpleRequest) {
+        let newsimpleRequest = new user_dto_1.SimpleRequest(simpleRequest);
+        try {
+            await class_validator_1.validateOrReject(newsimpleRequest);
+            return await this.userService.deleteperiod(newsimpleRequest);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
     async updateAdmin(updateUserAdminDTO) {
         let newupdateUserDTO = new user_dto_1.UpdateUserAdminDTO(updateUserAdminDTO);
         try {
@@ -293,6 +306,13 @@ __decorate([
     __metadata("design:paramtypes", [suscription_dto_1.AddNewSuscriptionSuscriptionDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "addNewPeriod", null);
+__decorate([
+    common_1.Put('deleteperiod'),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.SimpleRequest]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "deleteperiod", null);
 __decorate([
     common_1.Put('admin'),
     __param(0, common_1.Body()),

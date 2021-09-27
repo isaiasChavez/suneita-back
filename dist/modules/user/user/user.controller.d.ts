@@ -14,6 +14,7 @@ export declare class UserController {
     getAdminDetail(dto: GetAdminDetailDTO): Promise<any>;
     confirmUserPassword(confirmUserPassword: ConfirmUserPassword): Promise<any>;
     addNewPeriod(addNewSuscription: AddNewSuscriptionSuscriptionDTO): Promise<any>;
+    deleteperiod(simpleRequest: SimpleRequest): Promise<any>;
     updateAdmin(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any>;
     updateGuest(updateGuestDTO: UpdateGuestDTO): Promise<any>;
     updateUser(updateUserDTO: UpdateUserDTO): Promise<any>;

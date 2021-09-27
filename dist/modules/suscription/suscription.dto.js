@@ -48,11 +48,8 @@ __decorate([
 ], UpdateSuscriptionDTO.prototype, "business", void 0);
 exports.UpdateSuscriptionDTO = UpdateSuscriptionDTO;
 class AddNewSuscriptionSuscriptionDTO extends user_dto_1.SimpleRequest {
-    constructor({ userUuid, adminUuid, superAdminUuid, type, invitations, cost, startedAt, finishedAt, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate }) {
-        super({ adminUuid,
-            userUuid,
-            superAdminUuid,
-            type });
+    constructor({ userUuid, adminUuid, superAdminUuid, type, invitations, cost, startedAt, finishedAt, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate, }) {
+        super({ adminUuid, userUuid, superAdminUuid, type });
         this.invitations = parseInt(invitations);
         this.cost = parseFloat(cost);
         this.startedAt = startedAt;

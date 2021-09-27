@@ -1048,6 +1048,21 @@ let UserService = class UserService {
             }, 500);
         }
     }
+    async deleteperiod(request) {
+        try {
+            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(request);
+            console.log("Deleting period: ");
+            console.log({ request });
+            return { status: 0 };
+        }
+        catch (err) {
+            console.log('UserService - deleteperiod: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error deleting period  user',
+            }, 500);
+        }
+    }
     async getWhoIsRequesting(request) {
         try {
             let user;
@@ -1400,7 +1415,6 @@ let UserService = class UserService {
     }
     async suspendUser(pauseUserDTO) {
         try {
-            console.log({ pauseUserDTO });
             const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(pauseUserDTO);
             if (!user) {
                 return { status: 1, msg: 'admin not found' };
@@ -1413,7 +1427,6 @@ let UserService = class UserService {
                     superadmin: isSuperAdmin ? user : null
                 },
             });
-            console.log({ userToUpdate });
             if (!userToUpdate) {
                 return { status: 2, msg: 'user not found' };
             }

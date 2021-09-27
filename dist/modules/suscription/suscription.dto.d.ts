@@ -1,4 +1,4 @@
-import { SimpleRequest } from "../user/user/user.dto";
+import { SimpleRequest } from '../user/user/user.dto';
 export declare class UpdateSuscriptionDTO {
     constructor({ adminUuid, startedAt, finishedAt, cost, business }: {
         adminUuid: any;
@@ -14,7 +14,7 @@ export declare class UpdateSuscriptionDTO {
     business: string;
 }
 export declare class AddNewSuscriptionSuscriptionDTO extends SimpleRequest {
-    constructor({ userUuid, adminUuid, superAdminUuid, type, invitations, cost, startedAt, finishedAt, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate }: {
+    constructor({ userUuid, adminUuid, superAdminUuid, type, invitations, cost, startedAt, finishedAt, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate, }: {
         userUuid: any;
         adminUuid: any;
         superAdminUuid: any;

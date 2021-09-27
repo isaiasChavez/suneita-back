@@ -1,12 +1,12 @@
-import { Type } from "../type/type.entity";
-import { Role } from "../role/role.entity";
-import { Sesion } from "../sesion/sesion.entity";
-import { SuperAdmin } from "./superadmin.entity";
-import { User } from "./user.entity";
-import { Suscription } from "src/modules/suscription/suscription.entity";
-import { Asset } from "src/modules/asset/asset.entity";
-import { Token } from "../token/token.entity";
-import { Status } from "../status/status.entity";
+import { Type } from '../type/type.entity';
+import { Role } from '../role/role.entity';
+import { Sesion } from '../sesion/sesion.entity';
+import { SuperAdmin } from './superadmin.entity';
+import { User } from './user.entity';
+import { Suscription } from 'src/modules/suscription/suscription.entity';
+import { Asset } from 'src/modules/asset/asset.entity';
+import { Token } from '../token/token.entity';
+import { Status } from '../status/status.entity';
 export declare class Admin {
     id: string;
     name: string;

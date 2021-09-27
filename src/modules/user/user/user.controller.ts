@@ -167,7 +167,23 @@ export class UserController {
             }
         }
     }
+    @Put('deleteperiod')
+    async deleteperiod(@Body() simpleRequest: SimpleRequest): Promise<any> {
+        let newsimpleRequest = new SimpleRequest(simpleRequest)
+        try {
+            
+            await validateOrReject(newsimpleRequest);
+            return await this.userService.deleteperiod(newsimpleRequest);
 
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
+    
+    
 
     @Put('admin')
     async updateAdmin(@Body() updateUserAdminDTO: UpdateUserAdminDTO): Promise<any> {

@@ -40,7 +40,10 @@ __decorate([
     __metadata("design:type", String)
 ], Admin.prototype, "lastname", void 0);
 __decorate([
-    typeorm_1.Column({ type: "text", default: "https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb" }),
+    typeorm_1.Column({
+        type: 'text',
+        default: 'https://d1a370nemizbjq.cloudfront.net/569e30b7-51ee-461a-861a-8a43a72473c1.glb',
+    }),
     __metadata("design:type", String)
 ], Admin.prototype, "avatar", void 0);
 __decorate([
@@ -82,11 +85,11 @@ __decorate([
     __metadata("design:type", status_entity_1.Status)
 ], Admin.prototype, "status", void 0);
 __decorate([
-    typeorm_1.ManyToOne((type) => superadmin_entity_1.SuperAdmin, superadmin => superadmin.admins),
+    typeorm_1.ManyToOne((type) => superadmin_entity_1.SuperAdmin, (superadmin) => superadmin.admins),
     __metadata("design:type", superadmin_entity_1.SuperAdmin)
 ], Admin.prototype, "superadmin", void 0);
 __decorate([
-    typeorm_1.OneToMany(() => user_entity_1.User, user => user.admin),
+    typeorm_1.OneToMany(() => user_entity_1.User, (user) => user.admin),
     __metadata("design:type", Array)
 ], Admin.prototype, "users", void 0);
 __decorate([
@@ -98,15 +101,15 @@ __decorate([
     __metadata("design:type", Array)
 ], Admin.prototype, "sesion", void 0);
 __decorate([
-    typeorm_1.OneToMany(() => suscription_entity_1.Suscription, suscription => suscription.admin),
+    typeorm_1.OneToMany(() => suscription_entity_1.Suscription, (suscription) => suscription.admin),
     __metadata("design:type", Array)
 ], Admin.prototype, "suscriptions", void 0);
 __decorate([
-    typeorm_1.OneToMany(() => asset_entity_1.Asset, asset => asset.admin),
+    typeorm_1.OneToMany(() => asset_entity_1.Asset, (asset) => asset.admin),
     __metadata("design:type", Array)
 ], Admin.prototype, "assets", void 0);
 __decorate([
-    typeorm_1.Column({ type: "uuid", nullable: true }),
+    typeorm_1.Column({ type: 'uuid', nullable: true }),
     __metadata("design:type", String)
 ], Admin.prototype, "uuid", void 0);
 __decorate([
@@ -132,7 +135,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], Admin.prototype, "createUuid", null);
 Admin = __decorate([
-    typeorm_1.Entity({ schema: "Users" })
+    typeorm_1.Entity({ schema: 'Users' })
 ], Admin);
 exports.Admin = Admin;
 //# sourceMappingURL=admin.entity.js.map

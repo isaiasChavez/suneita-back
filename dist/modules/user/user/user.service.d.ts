@@ -49,6 +49,9 @@ export declare class UserService {
     updateGuest(updateGuestDTO: UpdateGuestDTO): Promise<any>;
     updateAdmin(updateUserAdminDTO: UpdateUserAdminDTO): Promise<any>;
     addNewPeriod(addNewSuscription: AddNewSuscriptionSuscriptionDTO): Promise<any>;
+    deleteperiod(request: SimpleRequest): Promise<{
+        status: number;
+    }>;
     getWhoIsRequesting(request: SimpleRequest): Promise<{
         isAdmin: boolean;
         isSuperAdmin: boolean;

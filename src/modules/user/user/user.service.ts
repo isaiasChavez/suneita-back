@@ -1346,6 +1346,28 @@ export class UserService {
     }
   }
 
+  
+  async deleteperiod(request: SimpleRequest): Promise<{status:number}> {
+    try {
+      
+      const { isAdmin,isSuperAdmin,isGuest,user } =
+      await this.getWhoIsRequesting(request);
+      console.log("Deleting period: ")
+      console.log({request})
+
+      return { status: 0};
+    } catch (err) {
+      console.log('UserService - deleteperiod: ',err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error deleting period  user',
+        },
+        500,
+      );
+    }
+  }
+
   async getWhoIsRequesting(request: SimpleRequest): Promise<{
     isAdmin: boolean;
     isSuperAdmin: boolean;
@@ -1768,12 +1790,12 @@ export class UserService {
   }
   async suspendUser(pauseUserDTO: DeleteUserDTO): Promise<any> {
     try {
-      console.log({ pauseUserDTO })
       const { isAdmin,isSuperAdmin,user } = await this.getWhoIsRequesting(pauseUserDTO)
-
+      
       if (!user) {
         return { status: 1,msg: 'admin not found' };
       }
+      
       const userToUpdate = await this.userRepository.findOne({
         relations: ['admin'],
         where: {
@@ -1782,7 +1804,7 @@ export class UserService {
           superadmin: isSuperAdmin ? user : null
         },
       });
-      console.log({ userToUpdate })
+      
       if (!userToUpdate) {
         return { status: 2,msg: 'user not found' };
       }
