@@ -1,7 +1,4 @@
-export declare const newIdSession: ({ id, name }: {
-    id: string;
-    name: string;
-}) => string;
+export declare const newIdSession: () => string;
 declare type NewInvitation = {
     token: string;
     invitations: number;

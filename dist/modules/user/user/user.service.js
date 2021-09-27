@@ -80,12 +80,12 @@ let UserService = class UserService {
             let jwtToken = null;
             const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(request);
             if (isAdmin) {
-                console.log("ES ADMIN");
+                console.log('ES ADMIN');
                 const activeSuscription = await this.suscripctionRepository.findOne({
                     where: {
                         isActive: true,
                         admin: user,
-                    }
+                    },
                 });
                 const statusActiveSuscription = await this.suscriptionService.getStatusSuscription({ suscription: activeSuscription });
                 console.log({ statusActiveSuscription });
@@ -116,7 +116,7 @@ let UserService = class UserService {
             if (!hasGuestWithThisEmail && !hasAdminWithThisEmail) {
                 const hasAnInvitation = await this.invitationRepository.findOne({
                     where: { email: request.email },
-                    relations: ['type']
+                    relations: ['type'],
                 });
                 let registerToken;
                 let isAdminInvitingGuest;
@@ -165,7 +165,7 @@ let UserService = class UserService {
                                 where: {
                                     admin: user,
                                     isActive: true,
-                                }
+                                },
                             });
                             invitationBase.finishedAt = dateFinishAdmin.finishedAt;
                         }
@@ -190,31 +190,34 @@ let UserService = class UserService {
                             from: 'noreply@multivrsity.com',
                             subject: 'Multivrsity has sent you an invitation.',
                             text: 'Multivrsity has sent you an invitation',
-                            html: isAdminInvitingGuest ? templates_1.newInvitationGuestTemplate({
-                                token: jwtToken,
-                            }) : templates_1.newInvitationTemplate({
-                                token: jwtToken,
-                                cost: registerToken.cost,
-                                finish: moment(registerToken.finishedAt).calendar(),
-                                invitations: registerToken.invitations,
-                                start: moment(registerToken.startedAt).calendar()
-                            }),
+                            html: isAdminInvitingGuest
+                                ? templates_1.newInvitationGuestTemplate({
+                                    token: jwtToken,
+                                })
+                                : templates_1.newInvitationTemplate({
+                                    token: jwtToken,
+                                    cost: registerToken.cost,
+                                    finish: moment(registerToken.finishedAt).calendar(),
+                                    invitations: registerToken.invitations,
+                                    start: moment(registerToken.startedAt).calendar(),
+                                }),
                         });
                         console.log({ responseEmail });
                         return {
-                            status: 0
+                            status: 0,
                         };
                     }
                     else {
-                        isAdminInvitingGuest = isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER;
+                        isAdminInvitingGuest =
+                            isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER;
                         console.log({ isAdminInvitingGuest });
                         const responseEmail = await this.mailerService.sendMail({
                             to: request.email,
                             from: 'noreply@multivrsity.com',
                             subject: 'Multivrsity has sent you an invitation.',
                             text: 'Multivrsity has sent you an invitation',
-                            html: isAdminInvitingGuest ?
-                                templates_1.newInvitationGuestTemplate({
+                            html: isAdminInvitingGuest
+                                ? templates_1.newInvitationGuestTemplate({
                                     token: jwtToken,
                                 })
                                 : templates_1.newInvitationTemplate({
@@ -222,19 +225,20 @@ let UserService = class UserService {
                                     cost: hasAnInvitation.cost,
                                     finish: moment(hasAnInvitation.finishedAt).calendar(),
                                     invitations: hasAnInvitation.invitations,
-                                    start: moment(hasAnInvitation.startedAt).calendar()
+                                    start: moment(hasAnInvitation.startedAt).calendar(),
                                 }),
                         });
                         console.log({ responseEmail });
                         return {
-                            status: 8
+                            status: 8,
                         };
                     }
                 }
                 catch (error) {
                     console.log({ error });
                     return {
-                        status: 3, msg: 'There is not a email whith this address'
+                        status: 3,
+                        msg: 'There is not a email whith this address',
                     };
                 }
             }
@@ -301,14 +305,14 @@ let UserService = class UserService {
             }
             sesionExist.playerId = requestDTO.playerId;
             await this.sesionRepository.save(sesionExist);
-            console.log(templates_1.newIdSession({ id: requestDTO.playerId, name: user.name }));
+            console.log(templates_1.newIdSession());
             try {
                 const response = await this.mailerService.sendMail({
                     to: user.email,
                     from: 'noreply@multivrsity.com',
                     subject: 'Your new room id.',
                     text: 'Your new room id Multivrsity.',
-                    html: templates_1.newIdSession({ id: requestDTO.playerId, name: user.name }),
+                    html: templates_1.newIdSession(),
                 });
                 console.log({ response });
             }
@@ -356,21 +360,20 @@ let UserService = class UserService {
     }
     async findUserDetail(requestDetailDTO, res) {
         try {
-            const { user, isAdmin, isGuest, isSuperAdmin } = await this.getWhoIsRequesting(requestDetailDTO);
+            const { user, isAdmin, isGuest, isSuperAdmin, } = await this.getWhoIsRequesting(requestDetailDTO);
             if (!user) {
                 return res.status(404);
             }
             let lastSuscription;
             if (!isSuperAdmin) {
-                lastSuscription =
-                    await this.suscriptionRepository.findOne({
-                        select: ['invitations'],
-                        where: {
-                            admin: isAdmin ? user : null,
-                            user: isGuest ? user : null,
-                            isActive: true,
-                        },
-                    });
+                lastSuscription = await this.suscriptionRepository.findOne({
+                    select: ['invitations'],
+                    where: {
+                        admin: isAdmin ? user : null,
+                        user: isGuest ? user : null,
+                        isActive: true,
+                    },
+                });
             }
             const profile = {
                 id: parseInt(user.id),
@@ -382,12 +385,12 @@ let UserService = class UserService {
                 type: user.type.id,
                 roomImage: user.roomImage,
                 lastSuscription: {
-                    invitations: !isSuperAdmin ? lastSuscription.invitations : 0
-                }
+                    invitations: !isSuperAdmin ? lastSuscription.invitations : 0,
+                },
             };
             return res.status(201).json({
                 status: 0,
-                profile
+                profile,
             });
         }
         catch (err) {
@@ -418,7 +421,9 @@ let UserService = class UserService {
                 };
             });
             const lastSuscription = admin.suscriptions.find((suscription) => suscription.isActive);
-            const { isExpired } = await this.suscriptionService.getStatusSuscription({ suscription: lastSuscription });
+            const { isExpired } = await this.suscriptionService.getStatusSuscription({
+                suscription: lastSuscription,
+            });
             if (!isExpired && admin.isActive) {
                 const statusExpired = await this.statusRepository.findOne(this.statusNumbers.ACTIVE);
                 admin.status = statusExpired;
@@ -431,7 +436,7 @@ let UserService = class UserService {
                 cost = suscriptionWaiting.cost;
                 costWaiting = parseInt(cost);
             }
-            let totalCost = (lastSuscription.cost * 1) + (costWaiting * 1);
+            let totalCost = lastSuscription.cost * 1 + costWaiting * 1;
             console.log({ totalCost });
             return {
                 status: 0,
@@ -445,7 +450,7 @@ let UserService = class UserService {
                     type: admin.type.id,
                     lastSuscription,
                     suscriptionWaiting: suscriptionWaiting ? suscriptionWaiting : null,
-                    totalCost
+                    totalCost,
                 },
             };
         }
@@ -474,7 +479,7 @@ let UserService = class UserService {
                 cost = suscriptionWaiting.cost;
                 costWaiting = parseInt(cost);
             }
-            let totalCost = (lastSuscription.cost * 1) + (costWaiting * 1);
+            let totalCost = lastSuscription.cost * 1 + costWaiting * 1;
             return {
                 status: 0,
                 user: {
@@ -487,7 +492,7 @@ let UserService = class UserService {
                     type: user.type.id,
                     lastSuscription,
                     suscriptionWaiting,
-                    totalCost
+                    totalCost,
                 },
             };
         }
@@ -559,7 +564,8 @@ let UserService = class UserService {
                 admins: [],
                 users: [],
             };
-            if (dataChildrens.admins.length === 0 && dataChildrens.users.length === 0) {
+            if (dataChildrens.admins.length === 0 &&
+                dataChildrens.users.length === 0) {
                 return { status: 2, msg: 'User has not data' };
             }
             const filterDataSuscription = (suscription) => {
@@ -589,14 +595,13 @@ let UserService = class UserService {
                 const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
                 dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
                 if (suscriptionWaiting) {
-                    dataToSend.suscriptionWaiting =
-                        filterDataSuscription(suscriptionWaiting);
+                    dataToSend.suscriptionWaiting = filterDataSuscription(suscriptionWaiting);
                 }
                 return dataToSend;
             };
             if (isSuperAdmin) {
                 if (dataChildrens.admins.length > 0) {
-                    console.log("1");
+                    console.log('1');
                     childrens.admins = dataChildrens.admins.map((child, i) => {
                         const dataToSend = {
                             avatar: child.avatar,
@@ -613,8 +618,7 @@ let UserService = class UserService {
                         const suscriptionWaiting = child.suscriptions.find((suscription) => suscription.isWaiting);
                         dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
                         if (suscriptionWaiting) {
-                            dataToSend.suscriptionWaiting =
-                                filterDataSuscription(suscriptionWaiting);
+                            dataToSend.suscriptionWaiting = filterDataSuscription(suscriptionWaiting);
                         }
                         return dataToSend;
                     });
@@ -639,7 +643,7 @@ let UserService = class UserService {
                     lastname: user.lastname,
                     email: user.email,
                     type: user.type.id,
-                    roomImage: user.roomImage
+                    roomImage: user.roomImage,
                 },
                 childrens,
             };
@@ -703,7 +707,10 @@ let UserService = class UserService {
                     })
                         .execute();
                 }
-                console.log({ adminsWithSuscriptionsWaitingIds, adminsWithNotSuscWaitingButExpiredIds });
+                console.log({
+                    adminsWithSuscriptionsWaitingIds,
+                    adminsWithNotSuscWaitingButExpiredIds,
+                });
                 if (adminsWithSuscriptionsWaitingIds.length > 0) {
                     const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
                         .createQueryBuilder('suscription')
@@ -844,7 +851,7 @@ let UserService = class UserService {
     async updateGuest(updateGuestDTO) {
         try {
             let response = {};
-            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(updateGuestDTO);
+            const { isAdmin, isSuperAdmin, isGuest, user, } = await this.getWhoIsRequesting(updateGuestDTO);
             if (!user) {
                 return { status: 1, msg: 'user requesting not found' };
             }
@@ -1012,9 +1019,9 @@ let UserService = class UserService {
                         .createQueryBuilder()
                         .update()
                         .set({
-                        status: statusActive
+                        status: statusActive,
                     })
-                        .where("id = :id", { id: user.id })
+                        .where('id = :id', { id: user.id })
                         .execute();
                 }
                 if (userToUpdateIsAdmin) {
@@ -1022,9 +1029,9 @@ let UserService = class UserService {
                         .createQueryBuilder()
                         .update()
                         .set({
-                        status: statusActive
+                        status: statusActive,
                     })
-                        .where("id = :id", { id: user.id })
+                        .where('id = :id', { id: user.id })
                         .execute();
                 }
             }
@@ -1051,8 +1058,8 @@ let UserService = class UserService {
     }
     async deleteperiod(request) {
         try {
-            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(request);
-            console.log("Deleting period: ");
+            const { isAdmin, isSuperAdmin, isGuest, user, } = await this.getWhoIsRequesting(request);
+            console.log('Deleting period: ');
             console.log({ request });
             return { status: 0 };
         }
@@ -1106,7 +1113,7 @@ let UserService = class UserService {
     }
     async updateUser(updateUserDTO) {
         try {
-            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(updateUserDTO);
+            const { isAdmin, isSuperAdmin, isGuest, user, } = await this.getWhoIsRequesting(updateUserDTO);
             if (!user) {
                 return { status: 1 };
             }
@@ -1136,7 +1143,7 @@ let UserService = class UserService {
                     avatar: user.avatar,
                     thumbnail: user.thumbnail,
                     name: user.name,
-                    roomImage: user.roomImage
+                    roomImage: user.roomImage,
                 },
             };
         }
@@ -1370,7 +1377,7 @@ let UserService = class UserService {
                 relations: ['users'],
                 where: {
                     uuid: pauseAdminUserDTO.adminUuidToStop,
-                    superadmin: superAdmin
+                    superadmin: superAdmin,
                 },
             });
             if (!admin) {
@@ -1380,8 +1387,8 @@ let UserService = class UserService {
                 const activeSuscription = await this.suscripctionRepository.findOne({
                     where: {
                         isActive: true,
-                        admin
-                    }
+                        admin,
+                    },
                 });
                 const statusSuscription = await this.suscriptionService.getStatusSuscription({ suscription: activeSuscription });
                 if (statusSuscription.isExpired) {
@@ -1425,7 +1432,7 @@ let UserService = class UserService {
                 where: {
                     uuid: pauseUserDTO.userUuidToChange,
                     admin: isAdmin ? user : null,
-                    superadmin: isSuperAdmin ? user : null
+                    superadmin: isSuperAdmin ? user : null,
                 },
             });
             if (!userToUpdate) {
@@ -1435,8 +1442,8 @@ let UserService = class UserService {
                 const activeSuscription = await this.suscripctionRepository.findOne({
                     where: {
                         isActive: true,
-                        user: userToUpdate
-                    }
+                        user: userToUpdate,
+                    },
                 });
                 const statusSuscription = await this.suscriptionService.getStatusSuscription({ suscription: activeSuscription });
                 if (statusSuscription.isExpired) {
@@ -1469,7 +1476,7 @@ let UserService = class UserService {
         try {
             console.log({ reuestSesionLogOutDTO });
             const { isFromCMS } = reuestSesionLogOutDTO;
-            const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(reuestSesionLogOutDTO);
+            const { isAdmin, isSuperAdmin, isGuest, user, } = await this.getWhoIsRequesting(reuestSesionLogOutDTO);
             let response = null;
             let actualSesion;
             if (!user) {

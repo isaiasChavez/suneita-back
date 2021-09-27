@@ -1,88 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newInfoLanding = exports.newResetPassTemplate = exports.newInvitationGuestTemplate = exports.newInvitationTemplate = exports.newIdSession = void 0;
-const newIdSession = ({ id, name }) => {
+const newIdSession = () => {
     return `
-    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-    <html lang="es">
-    
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-    </head>
-    
-    <body style="margin:0; padding:0; background-color:#FAFAFA;">
-        <center>
-            <table width="720" cellpadding="0" cellspacing="0" border="0" style="border-radius: 8px;" class="wrapper" bgcolor="#000d34">
-                <tr>
-                    <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td align="center" valign="top">
-                        <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                            <tr>
-                                <td align="center" valign="top">
-                                    <h3 style="font-family:Helvetica; font-size:1.5rem;color:white;">Meeting code</h3>
-                                </td>
-                            </tr>
-                            <tr>
-                             <td align="center" valign="top">
-                                 <img src="https://ocupath.fra1.digitaloceanspaces.com/app/Logo15x.svg" alt="">
-                             </td>
-                         </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td align="center" valign="top">
-                        <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                            <tr>
-                                <td align="left" valign="top">
-                                    <p style="font-family:Helvetica; font-size:1rem;font-weight:bold; color:white; line-height: 1.4;">Hello! It's a pleasure to greet you, </p>
-                                    <p style=" margin-bottom:2rem;font-family:Helvetica; font-size:1rem; color:white; line-height: 1.4;"> 
-                                        An user has invited you to a meeting:</p>
-                                    <p style=" margin-bottom:2rem;font-family:Helvetica; font-size:1rem; color:white; line-height: 1.4;"> 
-                                        Enter the followin code within the VR Multivrsity App and be part of the meeting.        
-                                    </p>
-                                   
-                                </td>
-                            </tr>
-                            <tr>
-                                <td align="center" valign="top">
-                                    <p style="font-family:Helvetica; font-size:1.8rem;font-weight:bold; color:white; line-height: 1.4;">Meeting code: </p>
-                                    <p style="font-family:Helvetica; font-size:1.8rem;font-weight:bold; color:white; line-height: 1.4;">${id}  </p>
-                                    
-                                </td>
-                            </tr>
-                            
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td height="30"
-                        style="font-size:10px; line-height:10px; border-bottom: 2px solid #EAEAEA; padding-bottom: 9px;">
-                        &nbsp;</td>
-                </tr>
-                <tr bgcolor="#000d34">
-                    <td align="center" valign="top">
-                        <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                            <tr>
-    
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-               
-            </table>
-        </center>
-    </body>
-    
-    </html>
+    <div>
+    mensaje
+    </div>
  `;
 };
 exports.newIdSession = newIdSession;
