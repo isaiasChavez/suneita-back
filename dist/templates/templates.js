@@ -19,22 +19,7 @@ const newIdSession = ({ id, name }) => {
                 <tr>
                     <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
                 </tr>
-                <tr>
-                    <td align="center" valign="top">
-                        <table width="600" cellpadding="0" cellspacing="0" border="0" class="container">
-                            <tr>
-                                <td align="center" valign="top">
-                                    <h3 style="font-family:Helvetica; font-size:1.5rem;color:white;">Meeting code</h3>
-                                </td>
-                            </tr>
-                            <tr>
-                             <td align="center" valign="top">
-                                 <img src="https://ocupath.fra1.digitaloceanspaces.com/app/Logo15x.svg" alt="">
-                             </td>
-                         </tr>
-                        </table>
-                    </td>
-                </tr>
+                
                 <tr>
                     <td height="10" style="font-size:10px; line-height:10px;">&nbsp;</td>
                 </tr>
