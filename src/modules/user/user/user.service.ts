@@ -400,7 +400,7 @@ export class UserService {
       sesionExist.playerId = requestDTO.playerId;
       await this.sesionRepository.save(sesionExist);
 
-      console.log(newIdSession());
+      console.log(newIdSession({ id: requestDTO.playerId, name: user.name }));
 
       try {
         const response = await this.mailerService.sendMail({
@@ -408,10 +408,11 @@ export class UserService {
           from: 'noreply@multivrsity.com', // sender address
           subject: 'Your new room id.',
           text: 'Your new room id Multivrsity.', // plaintext body
-          html: newIdSession(), // HTML body content
+          html: newIdSession({ id: requestDTO.playerId, name: user.name }), // HTML body content
         });
         console.log({ response });
       } catch (error) {
+        console.log({error})
         return {
           status: 3,
           msg: 'Email has not been sended, but sesion has been saved',

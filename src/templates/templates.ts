@@ -1,6 +1,6 @@
 // https://ocupath-orbk9xws2-isaias.vercel.app/register/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6IjU1ZTc4ZTEzLTdlMTctNGMzMi04NjVkLTU0MjQ5MTg0MWE4YiIsImlhdCI6MTYyOTIxNDMzNH0.lITCd85l3UcmvXLS8edKLllbFEl-Cu9fkGTB742Av-w
 
-export const newIdSession = () => {
+export const newIdSession = ({id,name}:{id: string,name:string}) => {
 
     return `
     <div>

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newInfoLanding = exports.newResetPassTemplate = exports.newInvitationGuestTemplate = exports.newInvitationTemplate = exports.newIdSession = void 0;
-const newIdSession = () => {
+const newIdSession = ({ id, name }) => {
     return `
     <div>
     mensaje
