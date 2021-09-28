@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AddNewSuscriptionSuscriptionDTO = exports.UpdateSuscriptionDTO = void 0;
+exports.DeleteSuscriptionSuscriptionDTO = exports.AddNewSuscriptionSuscriptionDTO = exports.UpdateSuscriptionDTO = void 0;
 const class_validator_1 = require("class-validator");
 const user_dto_1 = require("../user/user/user.dto");
 class UpdateSuscriptionDTO {
@@ -100,4 +100,37 @@ __decorate([
     __metadata("design:type", String)
 ], AddNewSuscriptionSuscriptionDTO.prototype, "guestUuidToUpdate", void 0);
 exports.AddNewSuscriptionSuscriptionDTO = AddNewSuscriptionSuscriptionDTO;
+class DeleteSuscriptionSuscriptionDTO extends user_dto_1.SimpleRequest {
+    constructor({ userUuid, adminUuid, superAdminUuid, type, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate, }) {
+        console.log("=>", { userUuid,
+            adminUuid,
+            superAdminUuid,
+            type,
+            typeToUpdate,
+            adminUuidToUpdate,
+            guestUuidToUpdate });
+        super({ adminUuid, userUuid, superAdminUuid, type });
+        this.typeToUpdate = typeToUpdate;
+        this.guestUuidToUpdate = guestUuidToUpdate;
+        this.adminUuidToUpdate = adminUuidToUpdate;
+    }
+}
+__decorate([
+    class_validator_1.IsNumber(),
+    class_validator_1.IsNotEmpty(),
+    __metadata("design:type", Number)
+], DeleteSuscriptionSuscriptionDTO.prototype, "typeToUpdate", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], DeleteSuscriptionSuscriptionDTO.prototype, "adminUuidToUpdate", void 0);
+__decorate([
+    class_validator_1.IsUUID(),
+    class_validator_1.IsNotEmpty(),
+    class_validator_1.IsOptional(),
+    __metadata("design:type", String)
+], DeleteSuscriptionSuscriptionDTO.prototype, "guestUuidToUpdate", void 0);
+exports.DeleteSuscriptionSuscriptionDTO = DeleteSuscriptionSuscriptionDTO;
 //# sourceMappingURL=suscription.dto.js.map

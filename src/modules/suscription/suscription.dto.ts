@@ -86,3 +86,40 @@ export class AddNewSuscriptionSuscriptionDTO extends SimpleRequest {
   @IsOptional()
   guestUuidToUpdate: string;
 }
+
+export class DeleteSuscriptionSuscriptionDTO extends SimpleRequest {
+  constructor({
+    userUuid,
+    adminUuid,
+    superAdminUuid,
+    type,
+    typeToUpdate,
+    adminUuidToUpdate,
+    guestUuidToUpdate,
+  }) {
+    console.log("=>",{userUuid,
+      adminUuid,
+      superAdminUuid,
+      type,
+      typeToUpdate,
+      adminUuidToUpdate,
+      guestUuidToUpdate})
+    super({ adminUuid, userUuid, superAdminUuid, type });
+    this.typeToUpdate = typeToUpdate;
+    this.guestUuidToUpdate = guestUuidToUpdate;
+    this.adminUuidToUpdate = adminUuidToUpdate;
+  }
+
+  @IsNumber()
+  @IsNotEmpty()
+  typeToUpdate: number;
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  adminUuidToUpdate: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  guestUuidToUpdate: string;
+}

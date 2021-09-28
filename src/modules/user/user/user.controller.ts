@@ -26,7 +26,7 @@ import {
     SetSesionAppId,
 } from "./user.dto";
 import { validateOrReject } from "class-validator";
-import { AddNewSuscriptionSuscriptionDTO } from "src/modules/suscription/suscription.dto";
+import { AddNewSuscriptionSuscriptionDTO, DeleteSuscriptionSuscriptionDTO } from "src/modules/suscription/suscription.dto";
 import { ReuestSesionLogOutDTO } from "../sesion/sesion.dto";
 
 @Controller("user")
@@ -168,8 +168,9 @@ export class UserController {
         }
     }
     @Put('deleteperiod')
-    async deleteperiod(@Body() simpleRequest: SimpleRequest): Promise<any> {
-        let newsimpleRequest = new SimpleRequest(simpleRequest)
+    async deleteperiod(@Body() deleteSuscriptionSuscriptionDTO: DeleteSuscriptionSuscriptionDTO): Promise<any> {
+        let newsimpleRequest = new DeleteSuscriptionSuscriptionDTO(deleteSuscriptionSuscriptionDTO)
+        console.log({deleteSuscriptionSuscriptionDTO,newsimpleRequest})
         try {
             
             await validateOrReject(newsimpleRequest);

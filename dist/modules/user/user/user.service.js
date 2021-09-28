@@ -1060,9 +1060,46 @@ let UserService = class UserService {
     async deleteperiod(request) {
         try {
             const { isAdmin, isSuperAdmin, isGuest, user, } = await this.getWhoIsRequesting(request);
-            console.log('Deleting period: ');
-            console.log({ request });
-            return { status: 0 };
+            if (!isSuperAdmin && !isAdmin) {
+                return { status: 1, msg: 'not allowed' };
+            }
+            let userToUpdate;
+            const userToUpdateIsAdmin = request.typeToUpdate === this.typesNumbers.ADMIN;
+            const userToUpdateIsGuest = request.typeToUpdate === this.typesNumbers.USER;
+            if (userToUpdateIsAdmin) {
+                userToUpdate = await this.adminRepository.findOne({
+                    where: {
+                        uuid: request.adminUuidToUpdate,
+                        superadmin: user,
+                    },
+                    relations: ['status'],
+                });
+            }
+            if (userToUpdateIsGuest) {
+                userToUpdate = await this.userRepository.findOne({
+                    where: {
+                        uuid: request.guestUuidToUpdate,
+                        admin: isAdmin ? user : null,
+                        superadmin: isSuperAdmin ? user : null,
+                    },
+                    relations: ['status'],
+                });
+            }
+            const suscriptionWaiting = await this.suscriptionRepository.findOne({
+                where: {
+                    admin: userToUpdateIsAdmin ? userToUpdate : null,
+                    user: userToUpdateIsGuest ? userToUpdate : null,
+                    isDeleted: false,
+                    isWaiting: true,
+                    isActive: false,
+                },
+            });
+            if (!suscriptionWaiting) {
+                return { status: 401, msg: 'not allowed' };
+            }
+            await this.suscripctionRepository.remove(suscriptionWaiting);
+            console.log('Deleting period: ', { suscriptionWaiting });
+            return { status: 0, msg: 'ok' };
         }
         catch (err) {
             console.log('UserService - deleteperiod: ', err);

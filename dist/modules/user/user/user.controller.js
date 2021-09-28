@@ -134,8 +134,9 @@ let UserController = class UserController {
             };
         }
     }
-    async deleteperiod(simpleRequest) {
-        let newsimpleRequest = new user_dto_1.SimpleRequest(simpleRequest);
+    async deleteperiod(deleteSuscriptionSuscriptionDTO) {
+        let newsimpleRequest = new suscription_dto_1.DeleteSuscriptionSuscriptionDTO(deleteSuscriptionSuscriptionDTO);
+        console.log({ deleteSuscriptionSuscriptionDTO, newsimpleRequest });
         try {
             await class_validator_1.validateOrReject(newsimpleRequest);
             return await this.userService.deleteperiod(newsimpleRequest);
@@ -310,7 +311,7 @@ __decorate([
     common_1.Put('deleteperiod'),
     __param(0, common_1.Body()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.SimpleRequest]),
+    __metadata("design:paramtypes", [suscription_dto_1.DeleteSuscriptionSuscriptionDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "deleteperiod", null);
 __decorate([

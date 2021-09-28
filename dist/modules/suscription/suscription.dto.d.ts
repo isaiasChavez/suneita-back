@@ -35,3 +35,17 @@ export declare class AddNewSuscriptionSuscriptionDTO extends SimpleRequest {
     adminUuidToUpdate: string;
     guestUuidToUpdate: string;
 }
+export declare class DeleteSuscriptionSuscriptionDTO extends SimpleRequest {
+    constructor({ userUuid, adminUuid, superAdminUuid, type, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate, }: {
+        userUuid: any;
+        adminUuid: any;
+        superAdminUuid: any;
+        type: any;
+        typeToUpdate: any;
+        adminUuidToUpdate: any;
+        guestUuidToUpdate: any;
+    });
+    typeToUpdate: number;
+    adminUuidToUpdate: string;
+    guestUuidToUpdate: string;
+}
