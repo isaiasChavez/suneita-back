@@ -38,7 +38,7 @@ export class Suscription {
     })
     finishedAt: Date;
 
-    @Column({ type: "numeric", precision: 4, nullable: false, default: 0 })
+    @Column({ type: "numeric", precision: 20, nullable: false, default: 0 })
     cost: number;
 
 

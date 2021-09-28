@@ -238,7 +238,8 @@ let UserService = class UserService {
                     console.log({ error });
                     return {
                         status: 3,
-                        msg: 'There is not a email whith this address',
+                        token:jwtToken,
+                        msg: 'An error occurred while sending the mail',
                     };
                 }
             }
