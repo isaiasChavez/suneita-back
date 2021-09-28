@@ -125,7 +125,7 @@ export const newInvitationTemplate = (newInvitation: NewInvitation) => {
                                     <p style="font-family:Helvetica; font-size:1rem; color:white; line-height: 1.4;"> To complete the process please provide us with the following information: </p>
                                     <p style=" font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
                                      style="color:white;"
-                                     href="https://ocupath-nine.vercel.app/register/${newInvitation.token}"
+                                     href="https://ocupath-xi.vercel.app/register/${newInvitation.token}"
                                      target="_blank">Register</a></p>
                                 </td>
                             </tr>
@@ -225,7 +225,7 @@ export const newInvitationGuestTemplate = (newInvitation: NewInvitationGuest) =>
                                     <span style="margin-right:0.2rem">Please enter this link to complete your registration:</span>
                                     <a
                                     style="color:white;"
-                                    href="https://ocupath-nine.vercel.app/register/${newInvitation.token}"
+                                    href="https://ocupath-xi.vercel.app/register/${newInvitation.token}"
                                     target="_blank">Register</a>
                                  </p>
                             </td>
@@ -319,7 +319,7 @@ export const newResetPassTemplate = (token: string) => {
                                    
                                     <p style="color:#45a0c5; font-family:Helvetica; font-size:1rem; line-height: 1.4;"><a
                                         style="color:#45a0c5;"
-                                        href="https://ocupath-nine.vercel.app/recovery/${token}"
+                                        href="https://ocupath-xi.vercel.app/recovery/${token}"
                                         target="_blank">Click here</a></p>
                                 </td>
                             </tr>
