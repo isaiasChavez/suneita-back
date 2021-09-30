@@ -286,7 +286,7 @@ export class UserService {
           } else {
             isAnAdminInvitingAGuest =
               isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER;
-
+            
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
               from: 'noreply@multivrsity.com', // sender address
@@ -315,6 +315,7 @@ export class UserService {
           console.log({ error });
           return {
             status: 3,
+            token:jwtToken,
             msg: 'There is not a email whith this address',
           };
         }
