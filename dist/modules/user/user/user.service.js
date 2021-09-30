@@ -1227,7 +1227,7 @@ let UserService = class UserService {
             };
         }
         catch (err) {
-            console.log('UserService - deleteUser: ', err);
+            console.log('UserService - getTypeAndUser: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error deleting user',
@@ -1283,11 +1283,10 @@ let UserService = class UserService {
             admin.isActive = false;
             admin.isDeleted = true;
             await this.adminRepository.save(admin);
-            const userDTO = new user_dto_1.UserDTO(admin);
-            return { status: 0, admin: userDTO };
+            return { status: 0 };
         }
         catch (err) {
-            console.log('UserService - deleteUser: ', err);
+            console.log('UserService - deleteUserAdmin: ', err);
             throw new common_1.HttpException({
                 status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
                 error: 'Error deleting user',
@@ -1295,6 +1294,7 @@ let UserService = class UserService {
         }
     }
     async deleteUser(deleteUserDTO) {
+        console.log("DELETING USER");
         try {
             let userRequesting;
             const isSuperAdmin = deleteUserDTO.type === this.typesNumbers.SUPERADMIN;
@@ -1331,20 +1331,23 @@ let UserService = class UserService {
             }
             userToDelete.isActive = false;
             userToDelete.isDeleted = true;
-            await this.userRepository.save(userToDelete);
-            await this.suscriptionRepository
-                .createQueryBuilder()
-                .update()
-                .set({
-                isActive: false,
-                isDeleted: true,
-            })
-                .where(`userId = ${userToDelete.id}`)
-                .execute();
-            const userDTO = new user_dto_1.UserDTO(userToDelete);
+            try {
+                await this.userRepository.save(userToDelete);
+                await this.suscriptionRepository
+                    .createQueryBuilder()
+                    .update()
+                    .set({
+                    isActive: false,
+                    isDeleted: true,
+                })
+                    .where(`userId = ${userToDelete.id}`)
+                    .execute();
+            }
+            catch (error) {
+                console.log({ error }, "ERRROR AQUÍ");
+            }
             return {
                 status: 0,
-                user: userDTO,
             };
         }
         catch (err) {

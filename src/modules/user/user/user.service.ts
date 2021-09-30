@@ -1564,7 +1564,7 @@ export class UserService {
         isAdmin,
       };
     } catch (err) {
-      console.log('UserService - deleteUser: ', err);
+      console.log('UserService - getTypeAndUser: ', err);
 
       throw new HttpException(
         {
@@ -1634,11 +1634,9 @@ export class UserService {
       admin.isDeleted = true;
       await this.adminRepository.save(admin);
 
-      const userDTO = new UserDTO(admin);
-
-      return { status: 0, admin: userDTO };
+      return { status: 0};
     } catch (err) {
-      console.log('UserService - deleteUser: ', err);
+      console.log('UserService - deleteUserAdmin: ', err);
 
       throw new HttpException(
         {
@@ -1651,6 +1649,7 @@ export class UserService {
   }
 
   async deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any> {
+    console.log("DELETING USER")
     try {
       let userRequesting: SuperAdmin | Admin;
       const isSuperAdmin = deleteUserDTO.type === this.typesNumbers.SUPERADMIN;
@@ -1685,15 +1684,15 @@ export class UserService {
           admin: isAdmin ? userRequesting : null,
         },
       });
+
       if (!userToDelete) {
         return { status: 2, msg: 'user not found' };
       }
-
       userToDelete.isActive = false;
       userToDelete.isDeleted = true;
-      await this.userRepository.save(userToDelete);
-
-      await this.suscriptionRepository
+      try {
+        await this.userRepository.save(userToDelete); 
+        await this.suscriptionRepository
         .createQueryBuilder()
         .update()
         .set({
@@ -1702,11 +1701,11 @@ export class UserService {
         })
         .where(`userId = ${userToDelete.id}`)
         .execute();
-      const userDTO = new UserDTO(userToDelete);
-
+      } catch (error) {
+       console.log({error},"ERRROR AQUÍ") 
+      }
       return {
         status: 0,
-        user: userDTO,
       };
     } catch (err) {
       console.log('UserService - deleteUser: ', err);
