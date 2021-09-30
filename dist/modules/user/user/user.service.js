@@ -246,6 +246,7 @@ let UserService = class UserService {
                     console.log({ error });
                     return {
                         status: 3,
+                        token: jwtToken,
                         msg: 'There is not a email whith this address',
                     };
                 }
@@ -413,19 +414,14 @@ let UserService = class UserService {
                 relations: ['type', 'suscriptions'],
                 where: {
                     uuid: getAdminDetailDTO.adminUuidToGet,
+                    isDeleted: false
                 },
             });
-            const suscriptions = admin.suscriptions.map((suscription) => {
+            if (!admin) {
                 return {
-                    cost: suscription.cost,
-                    createdAt: suscription.createdAt,
-                    finishedAt: suscription.finishedAt,
-                    isActive: suscription.isActive,
-                    isDeleted: suscription.isDeleted,
-                    startedAt: suscription.startedAt,
-                    isWaiting: suscription.isWaiting,
+                    status: 1
                 };
-            });
+            }
             const lastSuscription = admin.suscriptions.find((suscription) => suscription.isActive);
             const { isExpired } = await this.suscriptionService.getStatusSuscription({
                 suscription: lastSuscription,
@@ -473,8 +469,14 @@ let UserService = class UserService {
                 relations: ['type', 'suscriptions'],
                 where: {
                     uuid: getUserDetailDTO.userUuidToGet,
+                    isDeleted: false
                 },
             });
+            if (!user) {
+                return {
+                    status: 1
+                };
+            }
             const lastSuscription = user.suscriptions.find((suscription) => suscription.isActive);
             const suscriptionWaiting = user.suscriptions.find((suscription) => suscription.isWaiting);
             let cost;
@@ -866,6 +868,7 @@ let UserService = class UserService {
                     isActive: true,
                     admin: isAdmin ? user : null,
                     superadmin: isSuperAdmin ? user : null,
+                    isDeleted: false
                 },
             });
             if (!guest) {
@@ -905,6 +908,7 @@ let UserService = class UserService {
                 where: {
                     uuid: updateUserAdminDTO.adminUuidToUpdate,
                     superadmin,
+                    isDeleted: false
                 },
             });
             if (!admin) {
@@ -1246,7 +1250,10 @@ let UserService = class UserService {
             }
             const admin = await this.adminRepository.findOne({
                 relations: ['users', 'assets'],
-                where: { uuid: deleteAdminUserDTO.adminUuidToStop },
+                where: {
+                    uuid: deleteAdminUserDTO.adminUuidToStop,
+                    isDeleted: false
+                },
             });
             if (!admin) {
                 return { status: 2, msg: 'admin not found' };
@@ -1324,6 +1331,7 @@ let UserService = class UserService {
                     uuid: deleteUserDTO.userUuidToChange,
                     superadmin: isSuperAdmin ? userRequesting : null,
                     admin: isAdmin ? userRequesting : null,
+                    isDeleted: false
                 },
             });
             if (!userToDelete) {
@@ -1421,6 +1429,7 @@ let UserService = class UserService {
                 where: {
                     uuid: pauseAdminUserDTO.adminUuidToStop,
                     superadmin: superAdmin,
+                    isDeleted: false
                 },
             });
             if (!admin) {
@@ -1476,6 +1485,7 @@ let UserService = class UserService {
                     uuid: pauseUserDTO.userUuidToChange,
                     admin: isAdmin ? user : null,
                     superadmin: isSuperAdmin ? user : null,
+                    isDeleted: false
                 },
             });
             if (!userToUpdate) {

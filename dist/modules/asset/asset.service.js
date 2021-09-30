@@ -64,13 +64,20 @@ let AssetService = class AssetService {
                     }
                 });
             }
-            const images = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE);
-            const images360 = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE360);
-            const videos = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO);
-            const videos360 = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO360);
+            if (assets) {
+                const images = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE);
+                const images360 = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE360);
+                const videos = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO);
+                const videos360 = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO360);
+                return {
+                    assets: { images, videos360, videos, images360 },
+                    status: 0
+                };
+            }
             return {
-                assets: { images, videos360, videos, images360 },
-                status: 0
+                assets: { images: [], videos360: [], videos: [], images360: [] },
+                status: 3,
+                msg: 'there are not assets'
             };
         }
         catch (err) {
