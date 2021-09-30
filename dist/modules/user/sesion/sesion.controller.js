@@ -22,11 +22,9 @@ let SesionController = class SesionController {
         this.sesionService = sesionService;
     }
     async Login(reuestSesionDTO) {
-        console.log({ reuestSesionDTO });
         const newreuestSesionDTO = new sesion_dto_1.ReuestSesionDTO(reuestSesionDTO);
         try {
             await class_validator_1.validateOrReject(newreuestSesionDTO);
-            console.log('Validado');
             return await this.sesionService.RequesLogin(reuestSesionDTO);
         }
         catch (errors) {
@@ -71,7 +69,9 @@ let SesionController = class SesionController {
         }
     }
     async requestPasswordReset(email) {
-        console.log('requestPasswordReset', { email });
+        if (typeof email !== 'string') {
+            return { status: 500 };
+        }
         return await this.sesionService.requestPasswordReset(email);
     }
     async sendInformationForm(sendEmailInfo) {
@@ -88,7 +88,6 @@ let SesionController = class SesionController {
         }
     }
     async Logout(requestSesionLogOutDTO) {
-        console.log({ requestSesionLogOutDTO });
         return await this.sesionService.RequesLogout(requestSesionLogOutDTO);
     }
     async Decifring(email) {

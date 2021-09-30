@@ -13,7 +13,7 @@ import {
   SendEmailInfo,
 } from './sesion.dto';
 import * as bcrypt from 'bcrypt';
-import { ADMIN,Types,Roles,USER_NORMAL,TypesNumbers } from '../../../types';
+import { Types,Roles,TypesNumbers, Statuses } from '../../../types';
 import { Type } from '../type/type.entity';
 import { User } from '../user/user.entity';
 import { Admin } from '../user/admin.entity';
@@ -29,10 +29,12 @@ import { UserService } from '../user/user.service';
 import { newInfoLanding,newResetPassTemplate } from 'src/templates/templates';
 import { Status } from '../status/status.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
+import { ConfigService } from 'src/config/config.service';
 const jwt = require('jsonwebtoken');
 @Injectable()
 export class SesionService {
   constructor (
+    private readonly _configService: ConfigService,
     private readonly mailerService: MailerService,
     private readonly userService: UserService,
     private readonly suscriptionService: SuscriptionService,
@@ -65,12 +67,16 @@ export class SesionService {
       ADMIN: 2,
       USER: 3,
     };
-    console.log({ jwt });
+    this.statusNumbers = {
+      ACTIVE: 1,
+      INACTIVE: 2,
+      EXPIRED: 3,
+    };
     this.jwtService = jwt;
   }
   types: Types;
   typesNumbers: TypesNumbers;
-
+  statusNumbers: Statuses;
   roles: Roles;
   jwtService;
   token: string;
@@ -160,7 +166,7 @@ export class SesionService {
         };
 
         const token = await this.jwtService.sign(payload,process.env.SECRETA,{
-          expiresIn: 36000000,
+          expiresIn: this._configService.getExpirationTokenTime(),
         });
 
         response = {
@@ -201,9 +207,6 @@ export class SesionService {
           msg: `email does't exist`,
         };
       }
-
-
-
       const match = await bcrypt.compare(requestDTO.password,user.password);
       let response
       if (match) {
@@ -266,7 +269,7 @@ export class SesionService {
           },
         };
         const token = await this.jwtService.sign(payload,process.env.SECRETA,{
-          expiresIn: 36000000000,
+          expiresIn: this._configService.getExpirationTokenTime(),
         });
         response = {
           profile: {
@@ -305,7 +308,6 @@ export class SesionService {
     reuestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
     try {
-      console.log({ reuestSesionLogOutDTO })
       const { isFromCMS } = reuestSesionLogOutDTO
       const { isAdmin,isSuperAdmin,isGuest,user } = await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO)
       let response = null;
@@ -349,13 +351,11 @@ export class SesionService {
   }
   async decifreToken(token: string): Promise<any> {
     try {
-      console.log({ token })
       const dataInvitation: Invitation =
         await this.invitationRepository.findOne({
           where: { id: token },
           relations: ['type'],
         });
-      console.log({ dataInvitation })
       if (!dataInvitation) {
         return { status: 1 };
       }
@@ -382,7 +382,6 @@ export class SesionService {
   }
   async validateIfExistToken(token: string): Promise<any> {
     try {
-      console.log("validateIfExistToken")
       let jwtDecoded: { tokenid: number }
       try {
         jwtDecoded = jwt.verify(token,process.env.TOKEN_SECRET);
@@ -418,7 +417,6 @@ export class SesionService {
         jwtDecoded = jwt.verify(requestDTO.token,process.env.TOKEN_SECRET);
 
       } catch (error) {
-        console.log({ error })
         return { status: 5,msg: "Token invalid" }
       }
 
@@ -464,19 +462,16 @@ export class SesionService {
 
           userToUpdate.password = passwordHashed;
           // Se actualiza password del usuario
-          if (tokenExist.type.id === USER_NORMAL) {
+          if (tokenExist.type.id === this.typesNumbers.USER) {
             await this.userRepository.save(userToUpdate);
           }
 
-          if (tokenExist.type.id === ADMIN) {
+          if (tokenExist.type.id === this.typesNumbers.ADMIN) {
             await this.adminRepository.save(userToUpdate);
           }
           // Se elimina el token de la base de datos
           await this.tokenRepository.remove(tokenExist);
-
           return { status: 0 };
-
-
         } else {
           response = { status: 10,msg: 'token does not exist' };
         }
@@ -529,10 +524,9 @@ export class SesionService {
           { tokenid: registerToken.id },
           process.env.TOKEN_SECRET,
           {
-            expiresIn: 7200000,
+            expiresIn: this._configService.getExpirationTokenTime(),
           },
         );
-        console.log({ token })
         try {
           const resoponseEmail = await this.mailerService.sendMail({
             to: user.email,
@@ -541,7 +535,6 @@ export class SesionService {
             text: 'You have requested the recovery of your password', // plaintext body
             html: newResetPassTemplate(token), // HTML body content
           });
-          console.log("New Request reset:",{ resoponseEmail })
         } catch (error) {
           console.log({error})
           return {
@@ -569,9 +562,7 @@ export class SesionService {
   }
   async sendInformationForm(sendEmailInfo: SendEmailInfo): Promise<any> {
     try {
-      console.log("sendInformationForm")
 
-      console.log({ sendEmailInfo })
       const resoponseEmail = await this.mailerService.sendMail({
         to: 'isaiaschavez.co@gmail.com',
         from: 'noreply@multivrsity.com', // sender address
@@ -638,7 +629,6 @@ export class SesionService {
           admin = user.admin
         }
       }
-      console.log({ isGuestAdmin,user })
 
       return { isAdmin,isSuperAdmin,isGuest,user,admin,isGuestAdmin }
     } catch (err) {
@@ -693,7 +683,6 @@ export class SesionService {
         currentSuscriptionActive = suscriptionActive
         currentSuscriptionWaiting = suscriptionWaiting
       }
-      console.log({ currentSuscriptionActive,currentSuscriptionWaiting,hasSuscriptionActiveExpired })
 
       return {
         currentSuscriptionActive,
@@ -731,20 +720,21 @@ export class SesionService {
         };
       }
       //Verificar que el superadministrador exista
-      const existUser = await this.adminRepository.findOne({
+      const isThisEmailUsed = await this.adminRepository.findOne({
         where: {
           email: createAdminDTO.email,
           isDeleted: false,
         },
       });
-      if (existUser) {
+      if (isThisEmailUsed) {
         await this.invitationRepository.remove(invitation)
         return {
           status: 2,
           error: 'Este email ya existe',
-          existUser,
+          isThisEmailUsed,
         };
       }
+
       const adminRole = await this.roleRepository.findOne({
         where: {
           name: this.roles.ADMIN,
@@ -755,8 +745,8 @@ export class SesionService {
           name: this.types.ADMIN,
         },
       });
+      const userStatus = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
       const userPassword = await bcrypt.hash(createAdminDTO.password,12);
-      const userStatus = await this.statusRepository.findOne(1)
 
       const admin = this.adminRepository.create({
         superadmin: invitation.superAdmin,
@@ -785,6 +775,7 @@ export class SesionService {
         startedAt: new Date(invitation.startedAt),
         finishedAt: new Date(invitation.finishedAt),
       });
+
       await this.suscriptionRepository.save(userSuscription);
       await this.invitationRepository.remove(invitation)
 
@@ -807,12 +798,9 @@ export class SesionService {
       const invitation: Invitation = await this.invitationRepository.findOne({
         relations: ['admin','superAdmin'],
         where: {
-
           email: createUserDTO.email,
         },
       });
-
-
       if (!invitation) {
         return {
           status: 1,

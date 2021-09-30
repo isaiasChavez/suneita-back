@@ -97,13 +97,7 @@ export class DeleteSuscriptionSuscriptionDTO extends SimpleRequest {
     adminUuidToUpdate,
     guestUuidToUpdate,
   }) {
-    console.log("=>",{userUuid,
-      adminUuid,
-      superAdminUuid,
-      type,
-      typeToUpdate,
-      adminUuidToUpdate,
-      guestUuidToUpdate})
+    
     super({ adminUuid, userUuid, superAdminUuid, type });
     this.typeToUpdate = typeToUpdate;
     this.guestUuidToUpdate = guestUuidToUpdate;

@@ -18,7 +18,6 @@ if (fs.existsSync(crPath) && fs.existsSync(pkPath)) {
 
 async function bootstrap() {
 
-  console.log({ options })
   const app = await NestFactory.create(AppModule, options);
   app.use(json({ limit: '10mb' }));
   app.use(helmet());

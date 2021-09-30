@@ -68,7 +68,6 @@ let AssetService = class AssetService {
             const images360 = assets.filter(asset => asset.typeAsset.id === this.types.IMAGE360);
             const videos = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO);
             const videos360 = assets.filter(asset => asset.typeAsset.id === this.types.VIDEO360);
-            console.log({ images, videos360, videos, images360 });
             return {
                 assets: { images, videos360, videos, images360 },
                 status: 0
@@ -84,7 +83,6 @@ let AssetService = class AssetService {
     }
     async create(createAssetDTO) {
         try {
-            console.log({ createAssetDTO });
             const { isAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(createAssetDTO);
             if (!user) {
                 return {

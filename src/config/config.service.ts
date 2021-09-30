@@ -3,10 +3,10 @@ import { parse } from 'dotenv'
 export class ConfigService {
 
     private readonly envConfig: { [key: string]: string }
-
-
+    private readonly oneOur: number = 3600
     constructor() {
         const isDevelopmentEnv = process.env.NODE_ENV !== "production";
+
 
         if (isDevelopmentEnv) {
 
@@ -31,6 +31,9 @@ export class ConfigService {
     }
     get(key: string): string {
         return this.envConfig[key]
+    }
+    getExpirationTokenTime(): number {
+        return this.oneOur * 2
     }
 
 }

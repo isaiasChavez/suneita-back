@@ -26,9 +26,7 @@ let UserController = class UserController {
     async create(inviteUserDTO) {
         let newinviteUserDTO = new user_dto_1.InviteUserDTO(inviteUserDTO);
         try {
-            console.log("inviteUser:", { inviteUserDTO });
             await class_validator_1.validateOrReject(newinviteUserDTO);
-            console.log({ newinviteUserDTO });
             return await this.userService.invite(newinviteUserDTO);
         }
         catch (errors) {
@@ -41,7 +39,6 @@ let UserController = class UserController {
     async setSesionOfApp(setSesionAppId) {
         let newsetSesionAppId = new user_dto_1.SetSesionAppId(setSesionAppId);
         try {
-            console.log("playerid:", { newsetSesionAppId });
             await class_validator_1.validateOrReject(newsetSesionAppId);
             return await this.userService.setSesionOfApp(newsetSesionAppId);
         }
@@ -95,7 +92,6 @@ let UserController = class UserController {
         }
     }
     async getAdminDetail(dto) {
-        console.log("--->", { dto });
         try {
             let getAdminDetailDTO = new user_dto_1.GetAdminDetailDTO(dto);
             await class_validator_1.validateOrReject(getAdminDetailDTO);
@@ -136,7 +132,6 @@ let UserController = class UserController {
     }
     async deleteperiod(deleteSuscriptionSuscriptionDTO) {
         let newsimpleRequest = new suscription_dto_1.DeleteSuscriptionSuscriptionDTO(deleteSuscriptionSuscriptionDTO);
-        console.log({ deleteSuscriptionSuscriptionDTO, newsimpleRequest });
         try {
             await class_validator_1.validateOrReject(newsimpleRequest);
             return await this.userService.deleteperiod(newsimpleRequest);

@@ -38,9 +38,7 @@ export class UserController {
     async create(@Body() inviteUserDTO: InviteUserDTO): Promise<any> {
         let newinviteUserDTO = new InviteUserDTO(inviteUserDTO)
         try {
-            console.log("inviteUser:", { inviteUserDTO })
             await validateOrReject(newinviteUserDTO);
-            console.log({newinviteUserDTO})
             return await this.userService.invite(newinviteUserDTO);
         } catch (errors) {
             console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
@@ -54,7 +52,6 @@ export class UserController {
     async setSesionOfApp(@Body() setSesionAppId: SetSesionAppId): Promise<any> {
         let newsetSesionAppId = new SetSesionAppId(setSesionAppId)
         try {
-            console.log("playerid:", { newsetSesionAppId })
             await validateOrReject(newsetSesionAppId);
             return await this.userService.setSesionOfApp(newsetSesionAppId);
         } catch (errors) {
@@ -115,7 +112,6 @@ export class UserController {
 
     @Post("admininfo")
     async getAdminDetail(@Body() dto: GetAdminDetailDTO): Promise<any> {
-        console.log("--->",{dto})
         try {
             let getAdminDetailDTO = new GetAdminDetailDTO(dto)
             await validateOrReject(getAdminDetailDTO);
@@ -170,7 +166,6 @@ export class UserController {
     @Put('deleteperiod')
     async deleteperiod(@Body() deleteSuscriptionSuscriptionDTO: DeleteSuscriptionSuscriptionDTO): Promise<any> {
         let newsimpleRequest = new DeleteSuscriptionSuscriptionDTO(deleteSuscriptionSuscriptionDTO)
-        console.log({deleteSuscriptionSuscriptionDTO,newsimpleRequest})
         try {
             
             await validateOrReject(newsimpleRequest);

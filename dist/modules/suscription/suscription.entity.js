@@ -48,7 +48,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Suscription.prototype, "finishedAt", void 0);
 __decorate([
-    typeorm_1.Column({ type: "numeric", precision: 4, nullable: false, default: 0 }),
+    typeorm_1.Column({ type: "numeric", precision: 20, nullable: false, default: 0 }),
     __metadata("design:type", Number)
 ], Suscription.prototype, "cost", void 0);
 __decorate([

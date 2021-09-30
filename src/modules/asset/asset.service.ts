@@ -61,7 +61,6 @@ export class AssetService {
             const images360:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.IMAGE360)
             const videos:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.VIDEO)
             const videos360:Asset[] = assets.filter(asset=> asset.typeAsset.id === this.types.VIDEO360)
-            console.log({images,videos360,videos,images360})
             return {
                 assets:{images,videos360,videos,images360},
                 status: 0
@@ -81,7 +80,6 @@ export class AssetService {
 
     async create(createAssetDTO: CreateAssetDTO): Promise<any> {
         try {
-            console.log({createAssetDTO})
             const {isAdmin,isGuest,user}=await this.userService.getWhoIsRequesting(createAssetDTO)
             if (!user) {
                 return {

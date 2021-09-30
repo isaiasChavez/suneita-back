@@ -110,20 +110,21 @@ let SuscriptionService = class SuscriptionService {
         try {
             let canAdd = true;
             const maxAvailableInvitations = suscription.invitations;
-            const { usersActives } = await this.userRepository
+            const users = await this.userRepository
                 .createQueryBuilder("user")
                 .select("COUNT(user)", "usersActives")
                 .innerJoinAndSelect('user.admin', 'admin')
                 .where(" user.isDeleted = false and admin.id = :id", { id: admin.id })
                 .groupBy("admin.id")
                 .getRawOne();
-            console.log({ usersActives });
-            console.log(usersActives);
-            const numberActives = parseInt(usersActives);
+            console.log({ users });
+            if (!users) {
+                return { canAdd: true };
+            }
+            const numberActives = parseInt(users.usersActives);
             if (numberActives >= maxAvailableInvitations) {
                 canAdd = false;
             }
-            console.log({ canAdd, usersActives, numberActives, admin });
             return {
                 canAdd
             };

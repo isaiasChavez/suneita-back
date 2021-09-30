@@ -5,6 +5,7 @@ const fs = require("fs");
 const dotenv_1 = require("dotenv");
 class ConfigService {
     constructor() {
+        this.oneOur = 3600;
         const isDevelopmentEnv = process.env.NODE_ENV !== "production";
         if (isDevelopmentEnv) {
             const envFilePath = __dirname + '/../../.env';
@@ -28,6 +29,9 @@ class ConfigService {
     }
     get(key) {
         return this.envConfig[key];
+    }
+    getExpirationTokenTime() {
+        return this.oneOur * 2;
     }
 }
 exports.ConfigService = ConfigService;

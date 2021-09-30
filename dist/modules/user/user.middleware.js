@@ -30,7 +30,6 @@ let UserMiddleware = class UserMiddleware {
             if (cifrado.usuario.type === types_1.USER_NORMAL) {
                 req.body.userUuid = cifrado.usuario.uuid;
             }
-            console.log(req.body);
             req.body.type = cifrado.usuario.type;
             next();
         }

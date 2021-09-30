@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Sesion } from './sesion.entity';
 import { ReuestSesionDTO, ReuestSesionLogOutDTO, PasswordRecovery, CreateAdminDTO, CreateUserDTO, SendEmailInfo } from './sesion.dto';
-import { Types, Roles, TypesNumbers } from '../../../types';
+import { Types, Roles, TypesNumbers, Statuses } from '../../../types';
 import { Type } from '../type/type.entity';
 import { User } from '../user/user.entity';
 import { Admin } from '../user/admin.entity';
@@ -15,7 +15,9 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { UserService } from '../user/user.service';
 import { Status } from '../status/status.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
+import { ConfigService } from 'src/config/config.service';
 export declare class SesionService {
+    private readonly _configService;
     private readonly mailerService;
     private readonly userService;
     private readonly suscriptionService;
@@ -30,9 +32,10 @@ export declare class SesionService {
     private superAdminRepository;
     private tokenRepository;
     private invitationRepository;
-    constructor(mailerService: MailerService, userService: UserService, suscriptionService: SuscriptionService, sesionRepository: Repository<Sesion>, typeRepository: Repository<Type>, userRepository: Repository<User>, suscriptionRepository: Repository<Suscription>, adminRepository: Repository<Admin>, roleRepository: Repository<Role>, statusRepository: Repository<Status>, assetRepository: Repository<Asset>, superAdminRepository: Repository<SuperAdmin>, tokenRepository: Repository<Token>, invitationRepository: Repository<Invitation>);
+    constructor(_configService: ConfigService, mailerService: MailerService, userService: UserService, suscriptionService: SuscriptionService, sesionRepository: Repository<Sesion>, typeRepository: Repository<Type>, userRepository: Repository<User>, suscriptionRepository: Repository<Suscription>, adminRepository: Repository<Admin>, roleRepository: Repository<Role>, statusRepository: Repository<Status>, assetRepository: Repository<Asset>, superAdminRepository: Repository<SuperAdmin>, tokenRepository: Repository<Token>, invitationRepository: Repository<Invitation>);
     types: Types;
     typesNumbers: TypesNumbers;
+    statusNumbers: Statuses;
     roles: Roles;
     jwtService: any;
     token: string;

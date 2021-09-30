@@ -36,6 +36,7 @@ export declare class UserService {
     types: Types;
     statusNumbers: Statuses;
     typesNumbers: TypesNumbers;
+    isDateInviteValid(request: InviteUserDTO): Promise<any>;
     invite(request: InviteUserDTO): Promise<any>;
     findAllUsers(uuid: number): Promise<any>;
     setSesionOfApp(requestDTO: SetSesionAppId): Promise<any>;

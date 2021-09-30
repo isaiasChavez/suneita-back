@@ -112,18 +112,28 @@ export class UserService {
   types: Types;
   statusNumbers: Statuses;
   typesNumbers: TypesNumbers;
-  async invite(request: InviteUserDTO): Promise<any> {
+
+  
+
+  async isDateInviteValid(request: InviteUserDTO): Promise<any> {
+
+  }
+    async invite(request: InviteUserDTO): Promise<any> {
     try {
-      let status = 0;
-      let invitationToSign = '';
-      let jwtToken = null;
+      let status:number = 0;
+      let invitationToSign:string = '';
+      let jwtToken:string = null;
+      let registerToken: Invitation;
 
       const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(
         request,
       );
-
+      if (!user) {
+        return {
+          status: 5,
+        };
+      }
       if (isAdmin) {
-        console.log('ES ADMIN');
         const activeSuscription: Suscription = await this.suscripctionRepository.findOne(
           {
             where: {
@@ -132,11 +142,9 @@ export class UserService {
             },
           },
         );
-
         const statusActiveSuscription = await this.suscriptionService.getStatusSuscription(
           { suscription: activeSuscription },
         );
-        console.log({ statusActiveSuscription });
         if (statusActiveSuscription.isExpired) {
           return {
             status: 405,
@@ -169,49 +177,39 @@ export class UserService {
         });
       }
 
-      if (!hasGuestWithThisEmail && !hasAdminWithThisEmail) {
+      const isThisEmailUsed = hasGuestWithThisEmail || hasAdminWithThisEmail
+
+      if (!isThisEmailUsed) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
-        const hasAnInvitation = await this.invitationRepository.findOne({
+        const hasAnInvitation:Invitation = await this.invitationRepository.findOne({
           where: { email: request.email },
           relations: ['type'],
         });
-        let registerToken: Invitation;
-        let isAdminInvitingGuest: boolean;
 
+
+        let isAnAdminInvitingAGuest: boolean;
         if (!hasAnInvitation) {
-          // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
-
-          if (!user) {
-            return {
-              status: 5,
-            };
-          }
-
           let yesterday = moment(new Date()).add(-1, 'days');
-
           if (moment(request.startedAt).isBefore(yesterday)) {
             return {
               status: 6,
             };
           }
 
-          let typeToInvite: Type;
-          if (request.typeToInvite === this.typesNumbers.ADMIN) {
-            typeToInvite = await this.typeRepository.findOne(ADMIN);
-          }
-
-          if (request.typeToInvite === this.typesNumbers.USER) {
-            typeToInvite = await this.typeRepository.findOne(USER_NORMAL);
-          }
+          let typeToInvite: Type = await this.typeRepository.findOne(request.typeToInvite);
+          const typeToInviteIsGuest = typeToInvite.id === this.typesNumbers.USER;
+          const typeToInviteIsAdmin = typeToInvite.id === this.typesNumbers.ADMIN;
+          isAnAdminInvitingAGuest = isAdmin && typeToInviteIsGuest;
 
           // Se crea nuevo token asociado al email del nuevo usuario
-          const invitationBase = {
+          const invitation:Invitation = {
+            id:null,
             email: request.email,
             cost: 0,
             finishedAt: new Date(request.finishedAt),
             startedAt: new Date(request.startedAt),
-            admin: isAdmin ? user : null,
-            superAdmin: isSuperAdmin ? user : null,
+            admin: isAdmin ? user as Admin : null,
+            superAdmin: isSuperAdmin ? user as SuperAdmin : null,
             type: typeToInvite,
             company: null,
             invitations: null,
@@ -221,37 +219,33 @@ export class UserService {
           //Hay que tener en cuenta que el usuario y el super usuario pueden enviar invitaciones.
           //Y hay que diferenciar las del super, hay que hacer dos diferenciaciones.
 
-          if (typeToInvite.id === this.typesNumbers.ADMIN) {
-            invitationBase.company = request.company;
-            invitationBase.invitations = request.invitations;
-            invitationBase.cost = request.cost;
+          if (typeToInviteIsAdmin) {
+            invitation.company = request.company;
+            invitation.invitations = request.invitations;
+            invitation.cost = request.cost;
           }
-          const typeToInviteIsGuest =
-            typeToInvite.id === this.typesNumbers.USER;
-          isAdminInvitingGuest = isAdmin && typeToInviteIsGuest;
-          console.log({ isAdmin, typeToInviteIsGuest, isAdminInvitingGuest });
-          if (typeToInvite.id === this.typesNumbers.USER) {
+
+          if (typeToInviteIsGuest) {
             if (isAdmin) {
               const dateFinishAdmin: Suscription = await this.suscripctionRepository.findOne(
                 {
                   where: {
                     admin: user,
                     isActive: true,
+                    isDeleted:false
                   },
                 },
               );
-              invitationBase.finishedAt = dateFinishAdmin.finishedAt;
+              invitation.finishedAt = dateFinishAdmin.finishedAt;
             }
-            invitationBase.name = request.name;
-            invitationBase.cost = request.cost;
+            invitation.name = request.name;
+            invitation.cost = request.cost;
           }
 
+          const {id,...invitationBase} = invitation
           const newInvitation: Invitation = this.invitationRepository.create({
             ...invitationBase,
           });
-
-          console.log({ newInvitation });
-          // Se registra token
           registerToken = await this.invitationRepository.save(newInvitation);
           invitationToSign = registerToken.id;
         } else {
@@ -263,17 +257,16 @@ export class UserService {
           { token: invitationToSign },
           process.env.TOKEN_SECRET,
         );
+        console.log({jwtToken})
         // Se envia correo
-        console.log({ jwtToken });
         try {
-          console.log({ isAdminInvitingGuest });
           if (!hasAnInvitation) {
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
               from: 'noreply@multivrsity.com', // sender address
               subject: 'Multivrsity has sent you an invitation.',
               text: 'Multivrsity has sent you an invitation', // plaintext body
-              html: isAdminInvitingGuest
+              html: isAnAdminInvitingAGuest
                 ? newInvitationGuestTemplate({
                     token: jwtToken,
                   })
@@ -288,18 +281,18 @@ export class UserService {
             console.log({ responseEmail });
             return {
               status: 0,
+              token:jwtToken
             };
           } else {
-            isAdminInvitingGuest =
+            isAnAdminInvitingAGuest =
               isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER;
-            console.log({ isAdminInvitingGuest });
 
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
               from: 'noreply@multivrsity.com', // sender address
               subject: 'Multivrsity has sent you an invitation.',
               text: 'Multivrsity has sent you an invitation', // plaintext body
-              html: isAdminInvitingGuest
+              html: isAnAdminInvitingAGuest
                 ? newInvitationGuestTemplate({
                     token: jwtToken,
                   })
@@ -315,6 +308,7 @@ export class UserService {
             console.log({ responseEmail });
             return {
               status: 8,
+              token:jwtToken
             };
           }
         } catch (error) {
@@ -382,7 +376,6 @@ export class UserService {
       const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(
         requestDTO,
       );
-      console.log({ requestDTO, isAdmin, isGuest, user });
       if (!user) {
         return { status: 1, msg: 'User does not exist' };
       }
@@ -401,7 +394,6 @@ export class UserService {
       sesionExist.playerId = requestDTO.playerId;
       await this.sesionRepository.save(sesionExist);
 
-      console.log(newIdSession({ id: requestDTO.playerId, name: user.name }));
 
       try {
         const response = await this.mailerService.sendMail({
@@ -411,7 +403,6 @@ export class UserService {
           text: 'Your new room id Multivrsity.', // plaintext body
           html: newIdSession({ id: requestDTO.playerId, name: user.name }), // HTML body content
         });
-        console.log({ response });
       } catch (error) {
         console.log({error})
         return {
@@ -573,8 +564,6 @@ export class UserService {
       }
 
       let totalCost: number = lastSuscription.cost * 1 + costWaiting * 1;
-      // + costWaiting
-      console.log({ totalCost });
 
       return {
         status: 0,
@@ -605,7 +594,6 @@ export class UserService {
 
   async getUserDetail(getUserDetailDTO: GetUserDetailDTO): Promise<any> {
     try {
-      console.log({ getUserDetailDTO });
 
       const user = await this.userRepository.findOne({
         relations: ['type', 'suscriptions'],
@@ -1505,7 +1493,6 @@ export class UserService {
         user.roomImage = updateUserDTO.roomImage;
       }
       if (updateUserDTO.avatar) {
-        console.log('Ha actualizado el avatar');
         user.avatar = updateUserDTO.avatar;
         user.thumbnail = updateUserDTO.thumbnail;
       }
@@ -1945,7 +1932,6 @@ export class UserService {
     reuestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
     try {
-      console.log({ reuestSesionLogOutDTO });
       const { isFromCMS } = reuestSesionLogOutDTO;
       const {
         isAdmin,

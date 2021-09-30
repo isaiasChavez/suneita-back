@@ -102,13 +102,6 @@ __decorate([
 exports.AddNewSuscriptionSuscriptionDTO = AddNewSuscriptionSuscriptionDTO;
 class DeleteSuscriptionSuscriptionDTO extends user_dto_1.SimpleRequest {
     constructor({ userUuid, adminUuid, superAdminUuid, type, typeToUpdate, adminUuidToUpdate, guestUuidToUpdate, }) {
-        console.log("=>", { userUuid,
-            adminUuid,
-            superAdminUuid,
-            type,
-            typeToUpdate,
-            adminUuidToUpdate,
-            guestUuidToUpdate });
         super({ adminUuid, userUuid, superAdminUuid, type });
         this.typeToUpdate = typeToUpdate;
         this.guestUuidToUpdate = guestUuidToUpdate;

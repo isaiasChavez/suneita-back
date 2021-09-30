@@ -15,7 +15,6 @@ if (fs.existsSync(crPath) && fs.existsSync(pkPath)) {
     };
 }
 async function bootstrap() {
-    console.log({ options });
     const app = await core_1.NestFactory.create(app_module_1.AppModule, options);
     app.use(body_parser_1.json({ limit: '10mb' }));
     app.use(helmet());

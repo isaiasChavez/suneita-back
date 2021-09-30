@@ -18,7 +18,6 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const sesion_entity_1 = require("./sesion.entity");
 const bcrypt = require("bcrypt");
-const types_1 = require("../../../types");
 const type_entity_1 = require("../type/type.entity");
 const user_entity_1 = require("../user/user.entity");
 const admin_entity_1 = require("../user/admin.entity");
@@ -33,9 +32,11 @@ const user_service_1 = require("../user/user.service");
 const templates_1 = require("../../../templates/templates");
 const status_entity_1 = require("../status/status.entity");
 const suscription_service_1 = require("../../suscription/suscription.service");
+const config_service_1 = require("../../../config/config.service");
 const jwt = require('jsonwebtoken');
 let SesionService = class SesionService {
-    constructor(mailerService, userService, suscriptionService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, statusRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+    constructor(_configService, mailerService, userService, suscriptionService, sesionRepository, typeRepository, userRepository, suscriptionRepository, adminRepository, roleRepository, statusRepository, assetRepository, superAdminRepository, tokenRepository, invitationRepository) {
+        this._configService = _configService;
         this.mailerService = mailerService;
         this.userService = userService;
         this.suscriptionService = suscriptionService;
@@ -65,7 +66,11 @@ let SesionService = class SesionService {
             ADMIN: 2,
             USER: 3,
         };
-        console.log({ jwt });
+        this.statusNumbers = {
+            ACTIVE: 1,
+            INACTIVE: 2,
+            EXPIRED: 3,
+        };
         this.jwtService = jwt;
     }
     async RequesLogin(requestDTO) {
@@ -145,7 +150,7 @@ let SesionService = class SesionService {
                     },
                 };
                 const token = await this.jwtService.sign(payload, process.env.SECRETA, {
-                    expiresIn: 36000000,
+                    expiresIn: this._configService.getExpirationTokenTime(),
                 });
                 response = {
                     profile: {
@@ -241,7 +246,7 @@ let SesionService = class SesionService {
                     },
                 };
                 const token = await this.jwtService.sign(payload, process.env.SECRETA, {
-                    expiresIn: 36000000000,
+                    expiresIn: this._configService.getExpirationTokenTime(),
                 });
                 response = {
                     profile: {
@@ -272,7 +277,6 @@ let SesionService = class SesionService {
     }
     async RequesLogout(reuestSesionLogOutDTO) {
         try {
-            console.log({ reuestSesionLogOutDTO });
             const { isFromCMS } = reuestSesionLogOutDTO;
             const { isAdmin, isSuperAdmin, isGuest, user } = await this.userService.getWhoIsRequesting(reuestSesionLogOutDTO);
             let response = null;
@@ -312,12 +316,10 @@ let SesionService = class SesionService {
     }
     async decifreToken(token) {
         try {
-            console.log({ token });
             const dataInvitation = await this.invitationRepository.findOne({
                 where: { id: token },
                 relations: ['type'],
             });
-            console.log({ dataInvitation });
             if (!dataInvitation) {
                 return { status: 1 };
             }
@@ -340,7 +342,6 @@ let SesionService = class SesionService {
     }
     async validateIfExistToken(token) {
         try {
-            console.log("validateIfExistToken");
             let jwtDecoded;
             try {
                 jwtDecoded = jwt.verify(token, process.env.TOKEN_SECRET);
@@ -370,7 +371,6 @@ let SesionService = class SesionService {
                 jwtDecoded = jwt.verify(requestDTO.token, process.env.TOKEN_SECRET);
             }
             catch (error) {
-                console.log({ error });
                 return { status: 5, msg: "Token invalid" };
             }
             if (!jwtDecoded.tokenid) {
@@ -404,10 +404,10 @@ let SesionService = class SesionService {
                         };
                     }
                     userToUpdate.password = passwordHashed;
-                    if (tokenExist.type.id === types_1.USER_NORMAL) {
+                    if (tokenExist.type.id === this.typesNumbers.USER) {
                         await this.userRepository.save(userToUpdate);
                     }
-                    if (tokenExist.type.id === types_1.ADMIN) {
+                    if (tokenExist.type.id === this.typesNumbers.ADMIN) {
                         await this.adminRepository.save(userToUpdate);
                     }
                     await this.tokenRepository.remove(tokenExist);
@@ -452,9 +452,8 @@ let SesionService = class SesionService {
                 });
                 const registerToken = await this.tokenRepository.save(newToken);
                 const token = await jwt.sign({ tokenid: registerToken.id }, process.env.TOKEN_SECRET, {
-                    expiresIn: 7200000,
+                    expiresIn: this._configService.getExpirationTokenTime(),
                 });
-                console.log({ token });
                 try {
                     const resoponseEmail = await this.mailerService.sendMail({
                         to: user.email,
@@ -463,7 +462,6 @@ let SesionService = class SesionService {
                         text: 'You have requested the recovery of your password',
                         html: templates_1.newResetPassTemplate(token),
                     });
-                    console.log("New Request reset:", { resoponseEmail });
                 }
                 catch (error) {
                     console.log({ error });
@@ -490,8 +488,6 @@ let SesionService = class SesionService {
     }
     async sendInformationForm(sendEmailInfo) {
         try {
-            console.log("sendInformationForm");
-            console.log({ sendEmailInfo });
             const resoponseEmail = await this.mailerService.sendMail({
                 to: 'isaiaschavez.co@gmail.com',
                 from: 'noreply@multivrsity.com',
@@ -546,7 +542,6 @@ let SesionService = class SesionService {
                     admin = user.admin;
                 }
             }
-            console.log({ isGuestAdmin, user });
             return { isAdmin, isSuperAdmin, isGuest, user, admin, isGuestAdmin };
         }
         catch (err) {
@@ -589,7 +584,6 @@ let SesionService = class SesionService {
                 currentSuscriptionActive = suscriptionActive;
                 currentSuscriptionWaiting = suscriptionWaiting;
             }
-            console.log({ currentSuscriptionActive, currentSuscriptionWaiting, hasSuscriptionActiveExpired });
             return {
                 currentSuscriptionActive,
                 currentSuscriptionWaiting,
@@ -618,18 +612,18 @@ let SesionService = class SesionService {
                     error: 'No hay una invitación para este usuario',
                 };
             }
-            const existUser = await this.adminRepository.findOne({
+            const isThisEmailUsed = await this.adminRepository.findOne({
                 where: {
                     email: createAdminDTO.email,
                     isDeleted: false,
                 },
             });
-            if (existUser) {
+            if (isThisEmailUsed) {
                 await this.invitationRepository.remove(invitation);
                 return {
                     status: 2,
                     error: 'Este email ya existe',
-                    existUser,
+                    isThisEmailUsed,
                 };
             }
             const adminRole = await this.roleRepository.findOne({
@@ -642,8 +636,8 @@ let SesionService = class SesionService {
                     name: this.types.ADMIN,
                 },
             });
+            const userStatus = await this.statusRepository.findOne(this.statusNumbers.ACTIVE);
             const userPassword = await bcrypt.hash(createAdminDTO.password, 12);
-            const userStatus = await this.statusRepository.findOne(1);
             const admin = this.adminRepository.create({
                 superadmin: invitation.superAdmin,
                 role: adminRole,
@@ -773,18 +767,19 @@ let SesionService = class SesionService {
 };
 SesionService = __decorate([
     common_1.Injectable(),
-    __param(3, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
-    __param(4, typeorm_1.InjectRepository(type_entity_1.Type)),
-    __param(5, typeorm_1.InjectRepository(user_entity_1.User)),
-    __param(6, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
-    __param(7, typeorm_1.InjectRepository(admin_entity_1.Admin)),
-    __param(8, typeorm_1.InjectRepository(role_entity_1.Role)),
-    __param(9, typeorm_1.InjectRepository(status_entity_1.Status)),
-    __param(10, typeorm_1.InjectRepository(asset_entity_1.Asset)),
-    __param(11, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
-    __param(12, typeorm_1.InjectRepository(token_entity_1.Token)),
-    __param(13, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
-    __metadata("design:paramtypes", [mailer_1.MailerService,
+    __param(4, typeorm_1.InjectRepository(sesion_entity_1.Sesion)),
+    __param(5, typeorm_1.InjectRepository(type_entity_1.Type)),
+    __param(6, typeorm_1.InjectRepository(user_entity_1.User)),
+    __param(7, typeorm_1.InjectRepository(suscription_entity_1.Suscription)),
+    __param(8, typeorm_1.InjectRepository(admin_entity_1.Admin)),
+    __param(9, typeorm_1.InjectRepository(role_entity_1.Role)),
+    __param(10, typeorm_1.InjectRepository(status_entity_1.Status)),
+    __param(11, typeorm_1.InjectRepository(asset_entity_1.Asset)),
+    __param(12, typeorm_1.InjectRepository(superadmin_entity_1.SuperAdmin)),
+    __param(13, typeorm_1.InjectRepository(token_entity_1.Token)),
+    __param(14, typeorm_1.InjectRepository(invitation_entity_1.Invitation)),
+    __metadata("design:paramtypes", [config_service_1.ConfigService,
+        mailer_1.MailerService,
         user_service_1.UserService,
         suscription_service_1.SuscriptionService,
         typeorm_2.Repository,

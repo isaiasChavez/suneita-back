@@ -156,8 +156,6 @@ let UploadService = class UploadService {
                 case '4':
                     this.uploadVideo360(req, res, (error) => {
                         if (error) {
-                            console.log('req.files:', req.files);
-                            console.log('Multer Error:', error);
                             return res
                                 .status(404)
                                 .json(`Failed to upload image file: ${error}`);
