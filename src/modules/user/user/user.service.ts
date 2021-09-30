@@ -524,21 +524,16 @@ export class UserService {
         relations: ['type', 'suscriptions'],
         where: {
           uuid: getAdminDetailDTO.adminUuidToGet,
+          isDeleted:false
         },
+        
       });
-      const suscriptions = admin.suscriptions.map(
-        (suscription: Suscription) => {
-          return {
-            cost: suscription.cost,
-            createdAt: suscription.createdAt,
-            finishedAt: suscription.finishedAt,
-            isActive: suscription.isActive,
-            isDeleted: suscription.isDeleted,
-            startedAt: suscription.startedAt,
-            isWaiting: suscription.isWaiting,
-          };
-        },
-      );
+      if (!admin) {
+        return{
+          status:1
+        };
+      }
+  
       const lastSuscription = admin.suscriptions.find(
         (suscription: Suscription) => suscription.isActive,
       );
@@ -600,8 +595,14 @@ export class UserService {
         relations: ['type', 'suscriptions'],
         where: {
           uuid: getUserDetailDTO.userUuidToGet,
+          isDeleted:false
         },
       });
+      if (!user) {
+        return{
+          status:1
+        };
+      }
 
       const lastSuscription = user.suscriptions.find(
         (suscription: Suscription) => suscription.isActive,
@@ -1099,6 +1100,7 @@ export class UserService {
           isActive: true,
           admin: isAdmin ? user : null,
           superadmin: isSuperAdmin ? user : null,
+          isDeleted:false
         },
       });
 
@@ -1154,6 +1156,7 @@ export class UserService {
         where: {
           uuid: updateUserAdminDTO.adminUuidToUpdate,
           superadmin,
+          isDeleted:false
         },
       });
 
@@ -1590,7 +1593,10 @@ export class UserService {
 
       const admin: Admin = await this.adminRepository.findOne({
         relations: ['users', 'assets'],
-        where: { uuid: deleteAdminUserDTO.adminUuidToStop },
+        where: { 
+          uuid: deleteAdminUserDTO.adminUuidToStop,
+          isDeleted:false
+         },
       });
 
       if (!admin) {
@@ -1683,6 +1689,7 @@ export class UserService {
           uuid: deleteUserDTO.userUuidToChange,
           superadmin: isSuperAdmin ? userRequesting : null,
           admin: isAdmin ? userRequesting : null,
+          isDeleted:false
         },
       });
 
