@@ -1795,6 +1795,7 @@ export class UserService {
         where: {
           uuid: pauseAdminUserDTO.adminUuidToStop,
           superadmin: superAdmin,
+          isDeleted:false
         },
       });
       if (!admin) {
@@ -1874,6 +1875,7 @@ export class UserService {
           uuid: pauseUserDTO.userUuidToChange,
           admin: isAdmin ? user : null,
           superadmin: isSuperAdmin ? user : null,
+          isDeleted:false
         },
       });
 
@@ -1886,6 +1888,7 @@ export class UserService {
             where: {
               isActive: true,
               user: userToUpdate,
+              
             },
           },
         );
