@@ -248,12 +248,14 @@ let SesionService = class SesionService {
                 const token = await this.jwtService.sign(payload, process.env.SECRETA, {
                     expiresIn: this._configService.getExpirationTokenTime(),
                 });
+                const defaultThumbnail = 'user.thumbnail';
+                const thumbnail = user.thumbnail === defaultThumbnail ? null : user.thumbnail;
                 response = {
                     profile: {
                         token,
                         name: user.name,
                         lastname: user.lastname,
-                        thumbnail: user.thumbnail,
+                        thumbnail,
                         email: user.email,
                         avatar: user.avatar,
                         type: user.type.id,

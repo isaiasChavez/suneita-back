@@ -49,7 +49,7 @@ __decorate([
 __decorate([
     typeorm_1.Column({
         type: 'text',
-        default: 'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+        default: 'https://ocupath.fra1.digitaloceanspaces.com/app/thumbnailpre.png',
     }),
     __metadata("design:type", String)
 ], Admin.prototype, "thumbnail", void 0);

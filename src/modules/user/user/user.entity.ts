@@ -37,7 +37,7 @@ export class User {
   @Column({
     type: 'text',
     default:
-      'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+      'https://ocupath.fra1.digitaloceanspaces.com/app/thumbnailpre.png',
   })
   thumbnail: string;
  @Column({

@@ -38,7 +38,7 @@ export class Admin {
   avatar: string;
   @Column({
     type: 'text',
-    default: 'https://renderapi.s3.amazonaws.com/LOZsbkJ26.png',
+    default: 'https://ocupath.fra1.digitaloceanspaces.com/app/thumbnailpre.png',
   })
   thumbnail: string;
   @Column({
