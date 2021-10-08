@@ -273,15 +273,19 @@ export class SesionService {
           expiresIn: this._configService.getExpirationTokenTime(),
         });
 
-        const defaultThumbnail = 'user.thumbnail'
+        const defaultThumbnail:string = this._configService.getDefaultThumbnail()
+        const defaultRoomImage:string = this._configService.getDefaultRoomImage()
 
         const thumbnail = user.thumbnail === defaultThumbnail?null:user.thumbnail
+        const roomImage = user.roomImage === defaultRoomImage?null:user.roomImage
 
         response = {
           profile: {
             token,
             name: user.name,
+            nickname:user.name,
             lastname: user.lastname,
+            roomImage,
             thumbnail,
             email: user.email,
             avatar: user.avatar,

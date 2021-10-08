@@ -248,13 +248,17 @@ let SesionService = class SesionService {
                 const token = await this.jwtService.sign(payload, process.env.SECRETA, {
                     expiresIn: this._configService.getExpirationTokenTime(),
                 });
-                const defaultThumbnail = 'user.thumbnail';
+                const defaultThumbnail = this._configService.getDefaultThumbnail();
+                const defaultRoomImage = this._configService.getDefaultRoomImage();
                 const thumbnail = user.thumbnail === defaultThumbnail ? null : user.thumbnail;
+                const roomImage = user.roomImage === defaultRoomImage ? null : user.roomImage;
                 response = {
                     profile: {
                         token,
                         name: user.name,
+                        nickname: user.name,
                         lastname: user.lastname,
+                        roomImage,
                         thumbnail,
                         email: user.email,
                         avatar: user.avatar,

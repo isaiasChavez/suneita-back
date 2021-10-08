@@ -6,6 +6,8 @@ const dotenv_1 = require("dotenv");
 class ConfigService {
     constructor() {
         this.oneOur = 3600;
+        this.defaultThumbnail = 'https://ocupath.fra1.digitaloceanspaces.com/app/thumbnailpre.png';
+        this.defaultRoomImage = 'https://ocupath.fra1.digitaloceanspaces.com/app/defaultapp.png';
         const isDevelopmentEnv = process.env.NODE_ENV !== "production";
         if (isDevelopmentEnv) {
             const envFilePath = __dirname + '/../../.env';
@@ -32,6 +34,12 @@ class ConfigService {
     }
     getExpirationTokenTime() {
         return this.oneOur * 2;
+    }
+    getDefaultThumbnail() {
+        return this.defaultThumbnail;
+    }
+    getDefaultRoomImage() {
+        return this.defaultRoomImage;
     }
 }
 exports.ConfigService = ConfigService;
