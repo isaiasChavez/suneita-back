@@ -186,6 +186,19 @@ let UserController = class UserController {
             };
         }
     }
+    async createPublication(createPublicationDTO) {
+        let newcreatePublicationDTO = new user_dto_1.CreatePublicationDTO(createPublicationDTO);
+        try {
+            await class_validator_1.validateOrReject(newcreatePublicationDTO);
+            return await this.userService.createPublication(newcreatePublicationDTO);
+        }
+        catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            };
+        }
+    }
     async deleteUser(deleteUserDTO) {
         let newdeleteUserDTO = new user_dto_1.DeleteUserDTO(deleteUserDTO);
         try {
@@ -334,6 +347,13 @@ __decorate([
     __metadata("design:paramtypes", [user_dto_1.UpdateUserDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "updateUser", null);
+__decorate([
+    common_1.Put(),
+    __param(0, common_1.Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.CreatePublicationDTO]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "createPublication", null);
 __decorate([
     common_1.Put("deleteuser"),
     __param(0, common_1.Body()),

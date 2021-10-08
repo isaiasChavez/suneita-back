@@ -19,6 +19,7 @@ import { SuscriptionModule } from './modules/suscription/suscription.module';
 import { UserMiddleware } from './modules/user/user.middleware';
 import { InvitationModule } from './modules/user/invitation/invitation.module';
 import { StatusModule } from './modules/user/status/status.module';
+import { ProductModule } from './modules/user/product/product.module';
 
 
 @Module({
@@ -51,7 +52,7 @@ import { StatusModule } from './modules/user/status/status.module';
         },
       }),
     }),
-    ConfigModule, UserModule, TypeModule, AssetModule, TokenModule, SesionModule, RoleModule, UploadModule, TargetModule, SuscriptionModule, InvitationModule, StatusModule],
+    ConfigModule, UserModule, TypeModule, AssetModule, TokenModule, SesionModule, RoleModule, UploadModule, TargetModule, SuscriptionModule, InvitationModule, StatusModule, ProductModule],
   controllers: [AppController],
   providers: [AppService],
 })

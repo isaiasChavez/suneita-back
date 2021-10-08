@@ -24,6 +24,7 @@ import {
     ChangeName,
     UpdateGuestDTO,
     SetSesionAppId,
+    CreatePublicationDTO,
 } from "./user.dto";
 import { validateOrReject } from "class-validator";
 import { AddNewSuscriptionSuscriptionDTO } from "src/modules/suscription/suscription.dto";
@@ -226,6 +227,19 @@ export class UserController {
         }
     }
 
+    @Put()
+    async createPublication(@Body() createPublicationDTO: CreatePublicationDTO): Promise<any> {
+        let newcreatePublicationDTO = new CreatePublicationDTO(createPublicationDTO)
+        try {
+            await validateOrReject(newcreatePublicationDTO);
+            return await this.userService.createPublication(newcreatePublicationDTO);
+        } catch (errors) {
+            console.log('Caught promise rejection (validation failed) please check your inputs. Errors: ', errors);
+            return {
+                errors
+            }
+        }
+    }
 
 
     @Put("deleteuser")

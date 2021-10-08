@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.FindUserChildrens = exports.InviteUserDTO = exports.SimpleRequest = exports.InviteAdminDTO = exports.UserDTO = void 0;
+exports.DeleteUserDTO = exports.GetAdminDetailDTO = exports.GetUserDetailDTO = exports.DeleteAdminUserDTO = exports.CreatePublicationDTO = exports.UpdateUserDTO = exports.UpdateGuestDTO = exports.UpdateUserAdminDTO = exports.CreateSuperAdminDTO = exports.SetSesionAppId = exports.ConfirmUserPassword = exports.ChangeName = exports.FindUserChildrens = exports.InviteUserDTO = exports.SimpleRequest = exports.InviteAdminDTO = exports.UserDTO = void 0;
 const class_validator_1 = require("class-validator");
 class UserDTO {
     constructor({ email, uuid, name, avatar, isActive, lastname, status }) {
@@ -378,6 +378,38 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateUserDTO.prototype, "roomImage", void 0);
 exports.UpdateUserDTO = UpdateUserDTO;
+class CreatePublicationDTO extends SimpleRequest {
+    constructor({ adminUuid, superAdminUuid, userUuid, type, name, avatar, thumbnail, roomImage, }) {
+        super({ adminUuid, superAdminUuid, userUuid, type });
+        this.name = name;
+        this.avatar = avatar;
+        this.thumbnail = thumbnail;
+        this.roomImage = roomImage;
+    }
+}
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], CreatePublicationDTO.prototype, "name", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    class_validator_1.MaxLength(150),
+    __metadata("design:type", String)
+], CreatePublicationDTO.prototype, "avatar", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    class_validator_1.MaxLength(150),
+    __metadata("design:type", String)
+], CreatePublicationDTO.prototype, "thumbnail", void 0);
+__decorate([
+    class_validator_1.IsOptional(),
+    class_validator_1.IsString(),
+    __metadata("design:type", String)
+], CreatePublicationDTO.prototype, "roomImage", void 0);
+exports.CreatePublicationDTO = CreatePublicationDTO;
 class DeleteAdminUserDTO {
     constructor({ superAdminUuid, adminUuidToStop, status }) {
         this.superAdminUuid = superAdminUuid;

@@ -8,11 +8,11 @@ module.exports = {
   entities: ['dist/**/*.entity.js'],
   migrationTableName: 'migrations',
   migrations: ['dist/database/migrations/*{.ts,.js}'],
-  ssl: true,
+  ssl: false,
   extra: {
     max: 25,
     min: 1,
-    ssl: true,
+    ssl: false,
     ssl: {
       rejectUnauthorized: false,
     },

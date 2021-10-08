@@ -374,6 +374,44 @@ export class UpdateUserDTO extends SimpleRequest {
   roomImage: string
 }
 
+
+export class CreatePublicationDTO extends SimpleRequest {
+  constructor ({
+    adminUuid,
+    superAdminUuid,
+    userUuid,
+    type,
+    name,
+    avatar,
+    thumbnail,
+    roomImage,
+  }) {
+    super({ adminUuid, superAdminUuid, userUuid, type })
+    this.name = name
+    this.avatar = avatar
+    this.thumbnail = thumbnail
+    this.roomImage = roomImage
+  }
+  @IsOptional()
+  @IsString()
+  name: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  avatar: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  thumbnail: string
+  @IsOptional()
+  @IsString()
+  roomImage: string
+}
+
+
+
 export class DeleteAdminUserDTO {
   constructor ({ superAdminUuid, adminUuidToStop, status }) {
     this.superAdminUuid = superAdminUuid

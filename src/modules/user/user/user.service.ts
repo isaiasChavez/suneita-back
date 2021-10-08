@@ -27,7 +27,8 @@ import {
   ChangeName,
   UpdateGuestDTO,
   SetSesionAppId,
-  ResponseProfile
+  ResponseProfile,
+  CreatePublicationDTO
 } from './user.dto';
 import { Configuration } from '../../../config/config.keys';
 
@@ -318,7 +319,38 @@ export class UserService {
       );
     }
   }
+async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
+    try {
+   /*    const admin: Admin = await this.adminRepository.findOne({
+        where: {
+          uuid,
+        },
+      });
+      const users = await this.userRepository.find({
+        select: ['id','name','email'],
+        relations: ['type'],
+        where: {
+          isActive: true,
+          admin,
+        },
+      });
 
+      return { users }; */
+    } catch (err) {
+      console.log('UserService - create publication: ',err);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error creating publication',
+        },
+        500,
+      );
+    }
+  }
+
+
+  
   async setSesionOfApp(requestDTO: SetSesionAppId): Promise<any> {
     try {
       const { isAdmin,isSuperAdmin,isGuest,user } =

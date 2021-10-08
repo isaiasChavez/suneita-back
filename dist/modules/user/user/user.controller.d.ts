@@ -1,5 +1,5 @@
 import { UserService } from "./user.service";
-import { InviteUserDTO, ConfirmUserPassword, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, ChangeName, UpdateGuestDTO, SetSesionAppId } from "./user.dto";
+import { InviteUserDTO, ConfirmUserPassword, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, ChangeName, UpdateGuestDTO, SetSesionAppId, CreatePublicationDTO } from "./user.dto";
 import { AddNewSuscriptionSuscriptionDTO } from "src/modules/suscription/suscription.dto";
 import { ReuestSesionLogOutDTO } from "../sesion/sesion.dto";
 export declare class UserController {
@@ -18,6 +18,7 @@ export declare class UserController {
     updateGuest(updateGuestDTO: UpdateGuestDTO): Promise<any>;
     updateName(changeName: ChangeName): Promise<any>;
     updateUser(updateUserDTO: UpdateUserDTO): Promise<any>;
+    createPublication(createPublicationDTO: CreatePublicationDTO): Promise<any>;
     deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any>;
     deleteAdminUser(deleteAdminUserDTO: DeleteAdminUserDTO): Promise<any>;
     suspendAdminUser(suspendAdminUserDTO: DeleteAdminUserDTO): Promise<any>;

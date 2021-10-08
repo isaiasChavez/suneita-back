@@ -32,6 +32,7 @@ const suscription_module_1 = require("./modules/suscription/suscription.module")
 const user_middleware_1 = require("./modules/user/user.middleware");
 const invitation_module_1 = require("./modules/user/invitation/invitation.module");
 const status_module_1 = require("./modules/user/status/status.module");
+const product_module_1 = require("./modules/user/product/product.module");
 let AppModule = AppModule_1 = class AppModule {
     constructor(_configService) {
         this._configService = _configService;
@@ -74,7 +75,7 @@ AppModule = AppModule_1 = __decorate([
                     },
                 }),
             }),
-            config_module_1.ConfigModule, user_module_1.UserModule, type_module_1.TypeModule, asset_module_1.AssetModule, token_module_1.TokenModule, sesion_module_1.SesionModule, role_module_1.RoleModule, upload_module_1.UploadModule, target_module_1.TargetModule, suscription_module_1.SuscriptionModule, invitation_module_1.InvitationModule, status_module_1.StatusModule
+            config_module_1.ConfigModule, user_module_1.UserModule, type_module_1.TypeModule, asset_module_1.AssetModule, token_module_1.TokenModule, sesion_module_1.SesionModule, role_module_1.RoleModule, upload_module_1.UploadModule, target_module_1.TargetModule, suscription_module_1.SuscriptionModule, invitation_module_1.InvitationModule, status_module_1.StatusModule, product_module_1.ProductModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

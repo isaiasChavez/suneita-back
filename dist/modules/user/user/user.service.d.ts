@@ -4,7 +4,7 @@ import { Token } from '../token/token.entity';
 import { Type } from '../type/type.entity';
 import { Role } from '../role/role.entity';
 import { Sesion } from '../sesion/sesion.entity';
-import { InviteUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, ChangeName, UpdateGuestDTO, SetSesionAppId } from './user.dto';
+import { InviteUserDTO, ConfirmUserPassword, CreateSuperAdminDTO, UpdateUserDTO, UpdateUserAdminDTO, DeleteAdminUserDTO, DeleteUserDTO, SimpleRequest, GetAdminDetailDTO, GetUserDetailDTO, ChangeName, UpdateGuestDTO, SetSesionAppId, CreatePublicationDTO } from './user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Roles, Types, TypesNumbers, Statuses } from 'src/types';
 import { SuperAdmin } from './superadmin.entity';
@@ -38,6 +38,7 @@ export declare class UserService {
     typesNumbers: TypesNumbers;
     invite(request: InviteUserDTO): Promise<any>;
     findAllUsers(uuid: number): Promise<any>;
+    createPublication(createPublication: CreatePublicationDTO): Promise<any>;
     setSesionOfApp(requestDTO: SetSesionAppId): Promise<any>;
     confirmPassword(requestDTO: ConfirmUserPassword): Promise<any>;
     findUserDetail(requestDetailDTO: SimpleRequest, res: any): Promise<any>;

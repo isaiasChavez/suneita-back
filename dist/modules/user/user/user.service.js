@@ -248,6 +248,17 @@ let UserService = class UserService {
             }, 500);
         }
     }
+    async createPublication(createPublication) {
+        try {
+        }
+        catch (err) {
+            console.log('UserService - create publication: ', err);
+            throw new common_1.HttpException({
+                status: common_1.HttpStatus.INTERNAL_SERVER_ERROR,
+                error: 'Error creating publication',
+            }, 500);
+        }
+    }
     async setSesionOfApp(requestDTO) {
         try {
             const { isAdmin, isSuperAdmin, isGuest, user } = await this.getWhoIsRequesting(requestDTO);
