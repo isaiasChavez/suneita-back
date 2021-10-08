@@ -3,10 +3,12 @@ import { parse } from 'dotenv'
 export class ConfigService {
 
     private readonly envConfig: { [key: string]: string }
-
-
+    private readonly oneOur: number = 3600
+    private readonly defaultThumbnail: string = 'https://ocupath.fra1.digitaloceanspaces.com/app/thumbnailpre.png'
+    private readonly defaultRoomImage: string = 'https://ocupath.fra1.digitaloceanspaces.com/app/defaultapp.png'
     constructor() {
         const isDevelopmentEnv = process.env.NODE_ENV !== "production";
+
 
         if (isDevelopmentEnv) {
 
@@ -31,6 +33,15 @@ export class ConfigService {
     }
     get(key: string): string {
         return this.envConfig[key]
+    }
+    getExpirationTokenTime(): number {
+        return this.oneOur * 2
+    }
+    getDefaultThumbnail(): string {
+        return this.defaultThumbnail
+    }
+    getDefaultRoomImage(): string {
+        return this.defaultRoomImage
     }
 
 }

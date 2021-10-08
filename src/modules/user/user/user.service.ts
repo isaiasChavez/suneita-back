@@ -6,7 +6,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository,In } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { User } from './user.entity';
 import { Token } from '../token/token.entity';
 import { Type } from '../type/type.entity';
@@ -28,7 +28,10 @@ import {
   UpdateGuestDTO,
   SetSesionAppId,
   ResponseProfile,
+<<<<<<< HEAD
   CreatePublicationDTO
+=======
+>>>>>>> 2798129a65ce3dbc958cd3793e41c317dae874f0
 } from './user.dto';
 import { Configuration } from '../../../config/config.keys';
 
@@ -50,19 +53,24 @@ import { Admin } from './admin.entity';
 import { Suscription } from 'src/modules/suscription/suscription.entity';
 import {
   AddNewSuscriptionSuscriptionDTO,
+  DeleteSuscriptionSuscriptionDTO,
   UpdateSuscriptionDTO,
 } from 'src/modules/suscription/suscription.dto';
 import { Asset } from 'src/modules/asset/asset.entity';
 import { Invitation } from '../invitation/invitation.entity';
 import { SuscriptionService } from 'src/modules/suscription/suscription.service';
 import { error } from 'console';
-import { newIdSession,newInvitationTemplate } from 'src/templates/templates';
+import {
+  newIdSession,
+  newInvitationGuestTemplate,
+  newInvitationTemplate,
+} from 'src/templates/templates';
 import { ReuestSesionLogOutDTO } from '../sesion/sesion.dto';
 import { Status } from '../status/status.entity';
 
 @Injectable()
 export class UserService {
-  constructor (
+  constructor(
     private readonly mailerService: MailerService,
     private readonly suscriptionService: SuscriptionService,
     @InjectRepository(User) private userRepository: Repository<User>,
@@ -108,65 +116,104 @@ export class UserService {
   types: Types;
   statusNumbers: Statuses;
   typesNumbers: TypesNumbers;
-  async invite(request: InviteUserDTO): Promise<any> {
+
+  
+
+  async isDateInviteValid(request: InviteUserDTO): Promise<any> {
+
+  }
+    async invite(request: InviteUserDTO): Promise<any> {
     try {
-      
-      let status = 0;
-      let invitationToSign = '';
-      let jwtToken = null;
+      let status:number = 0;
+      let invitationToSign:string = '';
+      let jwtToken:string = null;
+      let registerToken: Invitation;
+
+      const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(
+        request,
+      );
+      if (!user) {
+        return {
+          status: 5,
+        };
+      }
+      if (isAdmin) {
+        const activeSuscription: Suscription = await this.suscripctionRepository.findOne(
+          {
+            where: {
+              isActive: true,
+              admin: user,
+            },
+          },
+        );
+        const statusActiveSuscription = await this.suscriptionService.getStatusSuscription(
+          { suscription: activeSuscription },
+        );
+        if (statusActiveSuscription.isExpired) {
+          return {
+            status: 405,
+          };
+        }
+
+        const canAddMore = await this.suscriptionService.canAddMoreSuscriptions(
+          { admin: user as Admin, suscription: activeSuscription },
+        );
+
+        if (!canAddMore.canAdd) {
+          return {
+            status: 405,
+          };
+        }
+      }
+
       // Se verifica si el usuario ya cuenta con una invitacion enviada
-      const userExistInDB: User = await this.userRepository.findOne({
+      const hasGuestWithThisEmail: User = await this.userRepository.findOne({
         where: {
           email: request.email,
           isDeleted: false,
         },
-      });      
-      let adminExistInDB: Admin;
-      if (!userExistInDB) {
-        adminExistInDB = await this.adminRepository.findOne({
-          where: { email: request.email,isDeleted: false },
+      });
+
+      let hasAdminWithThisEmail: Admin;
+      if (!hasGuestWithThisEmail) {
+        hasAdminWithThisEmail = await this.adminRepository.findOne({
+          where: { email: request.email, isDeleted: false },
         });
       }
-      if (!userExistInDB && !adminExistInDB) {
+
+      const isThisEmailUsed = hasGuestWithThisEmail || hasAdminWithThisEmail
+
+      if (!isThisEmailUsed) {
         // Se verifica si el usuario ya cuenta con una invitacion enviada
-        const invitation = await this.invitationRepository.findOne({
+        const hasAnInvitation:Invitation = await this.invitationRepository.findOne({
           where: { email: request.email },
+          relations: ['type'],
         });
-        let registerToken:Invitation
-        if (!invitation) {
-          // Se obtiene el tipo de usuario de la persona que está solicitando la invitación
-          const { isAdmin,isSuperAdmin,user } =
-          await this.getWhoIsRequesting(request);
-          if (!user) {
-            return {
-              status: 5,
-            };
-          }
+
+
+        let isAnAdminInvitingAGuest: boolean;
+        if (!hasAnInvitation) {
           let yesterday = moment(new Date()).add(-1, 'days');
-          console.log({yesterday})
           if (moment(request.startedAt).isBefore(yesterday)) {
             return {
               status: 6,
             };
           }
 
-
-          let typeToInvite: Type;
-          if (request.typeToInvite === this.typesNumbers.ADMIN) {
-            typeToInvite = await this.typeRepository.findOne(ADMIN);
-          }
-          if (request.typeToInvite === this.typesNumbers.USER) {
-            typeToInvite = await this.typeRepository.findOne(USER_NORMAL);
-          }
+          let typeToInvite: Type = await this.typeRepository.findOne(request.typeToInvite);
+          const typeToInviteIsGuest = typeToInvite.id === this.typesNumbers.USER;
+          const typeToInviteIsAdmin = typeToInvite.id === this.typesNumbers.ADMIN;
+          isAnAdminInvitingAGuest = isAdmin && typeToInviteIsGuest;
 
           // Se crea nuevo token asociado al email del nuevo usuario
-          const invitationBase = {
+          const invitation:Invitation = {
+            id:null,
             email: request.email,
             cost: 0,
             finishedAt: new Date(request.finishedAt),
             startedAt: new Date(request.startedAt),
-            admin:isAdmin?user:null,
-            superAdmin:isSuperAdmin?user:null,
+            admin: isAdmin ? user as Admin : null,
+            superAdmin: isSuperAdmin ? user as SuperAdmin : null,
             type: typeToInvite,
             company: null,
             invitations: null,
@@ -176,38 +223,37 @@ export class UserService {
           //Hay que tener en cuenta que el usuario y el super usuario pueden enviar invitaciones.
           //Y hay que diferenciar las del super, hay que hacer dos diferenciaciones.
 
-          if (typeToInvite.id === this.typesNumbers.ADMIN) {
-            invitationBase.company = request.company;
-            invitationBase.invitations = request.invitations;
-            invitationBase.cost = request.cost;
+          if (typeToInviteIsAdmin) {
+            invitation.company = request.company;
+            invitation.invitations = request.invitations;
+            invitation.cost = request.cost;
           }
 
-          if (typeToInvite.id === this.typesNumbers.USER) {
+          if (typeToInviteIsGuest) {
             if (isAdmin) {
-              const dateFinishAdmin:Suscription =await this.suscripctionRepository.findOne({ 
-                where:{
-                  admin:user,
-                  isActive:true,
-                }
-              })
-              invitationBase.finishedAt = dateFinishAdmin.finishedAt
+              const dateFinishAdmin: Suscription = await this.suscripctionRepository.findOne(
+                {
+                  where: {
+                    admin: user,
+                    isActive: true,
+                    isDeleted:false
+                  },
+                },
+              );
+              invitation.finishedAt = dateFinishAdmin.finishedAt;
             }
-            invitationBase.name = request.name;
-            invitationBase.cost = request.cost;
+            invitation.name = request.name;
+            invitation.cost = request.cost;
           }
 
+          const {id,...invitationBase} = invitation
           const newInvitation: Invitation = this.invitationRepository.create({
             ...invitationBase,
           });
-
-          console.log({ newInvitation });
-          // Se registra token
-          registerToken = await this.invitationRepository.save(
-            newInvitation,
-          );
+          registerToken = await this.invitationRepository.save(newInvitation);
           invitationToSign = registerToken.id;
         } else {
-          invitationToSign = invitation.id;
+          invitationToSign = hasAnInvitation.id;
         }
 
         // Se genera jwt para enviar por correo
@@ -215,71 +261,81 @@ export class UserService {
           { token: invitationToSign },
           process.env.TOKEN_SECRET,
         );
+        console.log({jwtToken})
         // Se envia correo
-        console.log({ jwtToken });
-          console.log("Enviando ...")
         try {
-          if (!invitation) {
-            const responseEmail = await this.mailerService.sendMail({
-             to: request.email,
-             from: 'noreply@ocupath.com', // sender address
-             subject: 'Has sido invitado a Ocupath.',
-             text: 'Your new id', // plaintext body
-             html: newInvitationTemplate({
-               token:jwtToken,
-               cost:registerToken.cost,
-               finish:moment(registerToken.finishedAt).calendar(),
-               invitations:registerToken.invitations,
-               start: moment(registerToken.startedAt).calendar()
-             }), // HTML body content
-           });
-           console.log({responseEmail})
-           return { 
-            status:0
-          }
-          }
-          else{
+          if (!hasAnInvitation) {
             const responseEmail = await this.mailerService.sendMail({
               to: request.email,
-              from: 'noreply@ocupath.com', // sender address
-              subject: 'Has sido invitado a Ocupath.',
-              text: 'Your new id', // plaintext body
-              html: newInvitationTemplate({
-                token:jwtToken,
-                cost:invitation.cost,
-                finish:moment(invitation.finishedAt).calendar(),
-                invitations:invitation.invitations,
-                start: moment(invitation.startedAt).calendar()
-              }), // HTML body content
+              from: 'noreply@multivrsity.com', // sender address
+              subject: 'Multivrsity has sent you an invitation.',
+              text: 'Multivrsity has sent you an invitation', // plaintext body
+              html: isAnAdminInvitingAGuest
+                ? newInvitationGuestTemplate({
+                    token: jwtToken,
+                  })
+                : newInvitationTemplate({
+                    token: jwtToken,
+                    cost: registerToken.cost,
+                    finish: moment(registerToken.finishedAt).calendar(),
+                    invitations: registerToken.invitations,
+                    start: moment(registerToken.startedAt).calendar(),
+                  }),
             });
-            console.log({responseEmail})
-            return { 
-              status:8
-            }
+            console.log({ responseEmail });
+            return {
+              status: 0,
+              token:jwtToken
+            };
+          } else {
+            isAnAdminInvitingAGuest =
+              isAdmin && hasAnInvitation.type.id === this.typesNumbers.USER;
+            
+            const responseEmail = await this.mailerService.sendMail({
+              to: request.email,
+              from: 'noreply@multivrsity.com', // sender address
+              subject: 'Multivrsity has sent you an invitation.',
+              text: 'Multivrsity has sent you an invitation', // plaintext body
+              html: isAnAdminInvitingAGuest
+                ? newInvitationGuestTemplate({
+                    token: jwtToken,
+                  })
+                : newInvitationTemplate({
+                    token: jwtToken,
+                    cost: hasAnInvitation.cost,
+                    finish: moment(hasAnInvitation.finishedAt).calendar(),
+                    invitations: hasAnInvitation.invitations,
+                    start: moment(hasAnInvitation.startedAt).calendar(),
+                  }), // HTML body content
+            });
+
+            console.log({ responseEmail });
+            return {
+              status: 8,
+              token:jwtToken
+            };
           }
-          
-
         } catch (error) {
-          console.log({error})
-            return { 
-              status:3, msg: 'There is not a email whith this address'
-            }
+          console.log({ error });
+          return {
+            status: 3,
+            token:jwtToken,
+            msg: 'There is not a email whith this address',
+          };
         }
-
-        
       } else {
         if (
-          (userExistInDB && userExistInDB.isActive) ||
-          (adminExistInDB && adminExistInDB.isActive)
+          (hasGuestWithThisEmail && hasGuestWithThisEmail.isActive) ||
+          (hasAdminWithThisEmail && hasAdminWithThisEmail.isActive)
         ) {
           status = 9;
         } else {
           status = 8;
         }
       }
-      return { status}
+      return { status };
     } catch (err) {
-      console.log('UserService - invite: ',err);
+      console.log('UserService - invite: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -298,7 +354,7 @@ export class UserService {
         },
       });
       const users = await this.userRepository.find({
-        select: ['id','name','email'],
+        select: ['id', 'name', 'email'],
         relations: ['type'],
         where: {
           isActive: true,
@@ -308,7 +364,7 @@ export class UserService {
 
       return { users };
     } catch (err) {
-      console.log('UserService - findAll: ',err);
+      console.log('UserService - findAll: ', err);
 
       throw new HttpException(
         {
@@ -353,12 +409,13 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
   
   async setSesionOfApp(requestDTO: SetSesionAppId): Promise<any> {
     try {
-      const { isAdmin,isSuperAdmin,isGuest,user } =
-        await this.getWhoIsRequesting(requestDTO);
-
+      const { isAdmin, isGuest, user } = await this.getWhoIsRequesting(
+        requestDTO,
+      );
       if (!user) {
-        return { status: 1,msg: 'User does not exist' };
+        return { status: 1, msg: 'User does not exist' };
       }
+
       const sesionExist: Sesion = await this.sesionRepository.findOne({
         where: {
           admin: isAdmin ? user : null,
@@ -368,23 +425,22 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       });
 
       if (!sesionExist) {
-        return { status: 2,msg: 'sesion does not exist' };
+        return { status: 2, msg: 'sesion does not exist' };
       }
       sesionExist.playerId = requestDTO.playerId;
       await this.sesionRepository.save(sesionExist);
 
-      console.log(newIdSession(requestDTO.playerId));
 
       try {
         const response = await this.mailerService.sendMail({
           to: user.email,
-          from: 'noreply@ocupath.com', // sender address
-          subject: 'Tu nuevo ID Ocupath.',
-          text: 'Your new id', // plaintext body
-          html: newIdSession(requestDTO.playerId), // HTML body content
+          from: 'noreply@multivrsity.com', // sender address
+          subject: 'Your new room id.',
+          text: 'Your new room id Multivrsity.', // plaintext body
+          html: newIdSession({ id: requestDTO.playerId, name: user.name }), // HTML body content
         });
-        console.log({ response });
       } catch (error) {
+        console.log({error})
         return {
           status: 3,
           msg: 'Email has not been sended, but sesion has been saved',
@@ -393,12 +449,12 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - confirmPassword: ',err);
+      console.log('UserService - sesion id: ', err);
 
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error confirming user password',
+          error: 'Error setting id',
         },
         500,
       );
@@ -411,7 +467,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       const userExist = await this.userRepository.findOne({
         where: { email: requestDTO.email },
-        select: ['id','name','email','password'],
+        select: ['id', 'name', 'email', 'password'],
       });
 
       if (userExist) {
@@ -429,7 +485,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       return response;
     } catch (err) {
-      console.log('UserService - confirmPassword: ',err);
+      console.log('UserService - confirmPassword: ', err);
 
       throw new HttpException(
         {
@@ -447,42 +503,46 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     @Res() res,
   ): Promise<any> {
     try {
-      const { user,isAdmin,isGuest ,isSuperAdmin} = await this.getWhoIsRequesting(requestDetailDTO);
+      const {
+        user,
+        isAdmin,
+        isGuest,
+        isSuperAdmin,
+      } = await this.getWhoIsRequesting(requestDetailDTO);
       if (!user) {
         return res.status(404);
       }
-      let lastSuscription: Suscription
+      let lastSuscription: Suscription;
       if (!isSuperAdmin) {
-        lastSuscription=
-         await this.suscriptionRepository.findOne({
-           select: [ 'invitations'],
-           where: {
-             admin:isAdmin?user:null,
-             user:isGuest?user:null,
-             isActive: true,
-           },
-         });
-        
+        lastSuscription = await this.suscriptionRepository.findOne({
+          select: ['invitations'],
+          where: {
+            admin: isAdmin ? user : null,
+            user: isGuest ? user : null,
+            isActive: true,
+          },
+        });
       }
-      const profile:ResponseProfile ={
-          id: parseInt(user.id),
-          name: user.name,
-          uuid: user.uuid,
-          lastname: user.lastname,
-          thumbnail: user.thumbnail,
-          email: user.email,
-          type: user.type.id,
-          roomImage: user.roomImage,
-          lastSuscription:{
-            invitations: !isSuperAdmin ? lastSuscription.invitations:0
-          }
-        }
+
+      const profile: ResponseProfile = {
+        id: parseInt(user.id),
+        name: user.name,
+        uuid: user.uuid,
+        lastname: user.lastname,
+        thumbnail: user.thumbnail,
+        email: user.email,
+        type: user.type.id,
+        roomImage: user.roomImage,
+        lastSuscription: {
+          invitations: !isSuperAdmin ? lastSuscription.invitations : 0,
+        },
+      };
       return res.status(201).json({
         status: 0,
-        profile
+        profile,
       });
     } catch (err) {
-      console.log('UserService - findUserDetail: ',err);
+      console.log('UserService - findUserDetail: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -496,48 +556,45 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
   async getAdminDetail(getAdminDetailDTO: GetAdminDetailDTO): Promise<any> {
     try {
       const admin = await this.adminRepository.findOne({
-        relations: ['type','suscriptions'],
+        relations: ['type', 'suscriptions'],
         where: {
           uuid: getAdminDetailDTO.adminUuidToGet,
+          isDeleted:false
         },
+        
       });
-      const suscriptions = admin.suscriptions.map(
-        (suscription: Suscription) => {
-          return {
-            cost: suscription.cost,
-            createdAt: suscription.createdAt,
-            finishedAt: suscription.finishedAt,
-            isActive: suscription.isActive,
-            isDeleted: suscription.isDeleted,
-            startedAt: suscription.startedAt,
-            isWaiting: suscription.isWaiting,
-          };
-        },
-        );
-        const lastSuscription = admin.suscriptions.find(
-          (suscription: Suscription) => suscription.isActive,
-          );
-        const statusSuscription =await this.getStatusSuscription(lastSuscription)
-        if (!statusSuscription.isExpired && admin.isActive) {
-          const statusExpired:Status =await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
-          admin.status = statusExpired
-          await this.adminRepository.save(admin)
-        }
-
-          const suscriptionWaiting = admin.suscriptions.find(
-            (suscription: Suscription) => suscription.isWaiting,
-            );
-
-      let cost 
-      let costWaiting:number = 0
-      if (suscriptionWaiting) {
-        cost = (suscriptionWaiting.cost as unknown) as string
-        costWaiting=parseInt(cost)
+      if (!admin) {
+        return{
+          status:1
+        };
       }
-      
-      let totalCost:number = (lastSuscription.cost*1) + (costWaiting*1)
-        // + costWaiting
-      console.log({totalCost})
+  
+      const lastSuscription = admin.suscriptions.find(
+        (suscription: Suscription) => suscription.isActive,
+      );
+      const { isExpired } = await this.suscriptionService.getStatusSuscription({
+        suscription: lastSuscription,
+      });
+      if (!isExpired && admin.isActive) {
+        const statusExpired: Status = await this.statusRepository.findOne(
+          this.statusNumbers.ACTIVE,
+        );
+        admin.status = statusExpired;
+        await this.adminRepository.save(admin);
+      }
+
+      const suscriptionWaiting = admin.suscriptions.find(
+        (suscription: Suscription) => suscription.isWaiting,
+      );
+
+      let cost;
+      let costWaiting: number = 0;
+      if (suscriptionWaiting) {
+        cost = (suscriptionWaiting.cost as unknown) as string;
+        costWaiting = parseInt(cost);
+      }
+
+      let totalCost: number = lastSuscription.cost * 1 + costWaiting * 1;
 
       return {
         status: 0,
@@ -550,12 +607,12 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           email: admin.email,
           type: admin.type.id,
           lastSuscription,
-          suscriptionWaiting:suscriptionWaiting?suscriptionWaiting:null,
-          totalCost
+          suscriptionWaiting: suscriptionWaiting ? suscriptionWaiting : null,
+          totalCost,
         },
       };
     } catch (err) {
-      console.log('UserService - getAdminDetail: ',err);
+      console.log('UserService - getAdminDetail: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -566,44 +623,37 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     }
   }
 
-
   async getUserDetail(getUserDetailDTO: GetUserDetailDTO): Promise<any> {
     try {
-      console.log({ getUserDetailDTO });
 
       const user = await this.userRepository.findOne({
-        relations: ['type','suscriptions'],
+        relations: ['type', 'suscriptions'],
         where: {
           uuid: getUserDetailDTO.userUuidToGet,
+          isDeleted:false
         },
       });
-      const suscriptions = user.suscriptions.map((suscription: Suscription) => {
-        return {
-          cost: suscription.cost,
-          createdAt: suscription.createdAt,
-          finishedAt: suscription.finishedAt,
-          isActive: suscription.isActive,
-          isDeleted: suscription.isDeleted,
-          startedAt: suscription.startedAt,
+      if (!user) {
+        return{
+          status:1
         };
-      });
+      }
+
       const lastSuscription = user.suscriptions.find(
         (suscription: Suscription) => suscription.isActive,
       );
-      const status = this.getStatusSuscription(lastSuscription)
-      console.log({status})
 
       const suscriptionWaiting = user.suscriptions.find(
         (suscription: Suscription) => suscription.isWaiting,
       );
-      let cost 
-      let costWaiting:number = 0
+      let cost;
+      let costWaiting: number = 0;
       if (suscriptionWaiting) {
-        cost = (suscriptionWaiting.cost as unknown) as string
-        costWaiting=parseInt(cost)
+        cost = (suscriptionWaiting.cost as unknown) as string;
+        costWaiting = parseInt(cost);
       }
-      
-      let totalCost:number = (lastSuscription.cost*1) + (costWaiting*1)
+
+      let totalCost: number = lastSuscription.cost * 1 + costWaiting * 1;
 
       return {
         status: 0,
@@ -617,11 +667,11 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           type: user.type.id,
           lastSuscription,
           suscriptionWaiting,
-          totalCost
+          totalCost,
         },
       };
     } catch (err) {
-      console.log('UserService - getUserDetail: ',err);
+      console.log('UserService - getUserDetail: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -632,35 +682,13 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     }
   }
 
-  async getStatusSuscription(suscription: Suscription): Promise<{isExpired:boolean}> {
-    try {
-      let isExpired = false
-
-      if (moment(suscription.finishedAt).isAfter(new Date())) {
-        isExpired = true
-      }
-      return{
-        isExpired:false
-      }
-      
-    } catch (err) {
-      console.log('UserService - getStatusSuscription: ',err);
-      throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error getting Status Suscription ',
-        },
-        500,
-      );
-    }
-  }
   async findUserChildrens(findUserChildrensDTO: SimpleRequest): Promise<any> {
     try {
       const dataChildrens: { admins: Admin[]; users: User[] } = {
         admins: [],
         users: [],
       };
-      const { user,isAdmin,isSuperAdmin } = await this.getWhoIsRequesting(
+      const { user, isAdmin, isSuperAdmin } = await this.getWhoIsRequesting(
         findUserChildrensDTO,
       );
 
@@ -685,7 +713,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
               'isActive',
               'email',
             ],
-            relations: ['suscriptions','status'],
+            relations: ['suscriptions', 'status'],
             where: {
               superadmin: user,
               isDeleted: false,
@@ -696,8 +724,8 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           console.log({ error });
         }
         dataChildrens.users = await this.userRepository.find({
-          select: ['name','email','lastname','avatar','uuid','isActive'],
-          relations: ['suscriptions','status'],
+          select: ['name', 'email', 'lastname', 'avatar', 'uuid', 'isActive'],
+          relations: ['suscriptions', 'status'],
           where: {
             superadmin: user,
             isDeleted: false,
@@ -706,8 +734,8 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       }
       if (isAdmin) {
         dataChildrens.users = await this.userRepository.find({
-          select: ['name','lastname','email','avatar','uuid','isActive'],
-          relations: ['suscriptions','status'],
+          select: ['name', 'lastname', 'email', 'avatar', 'uuid', 'isActive'],
+          relations: ['suscriptions', 'status'],
           where: {
             admin: user,
             isDeleted: false,
@@ -720,10 +748,12 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         users: [],
       };
 
-      if (dataChildrens.admins.length === 0 && dataChildrens.users.length === 0) {
-        return { status: 2,msg: 'User has not data' }
+      if (
+        dataChildrens.admins.length === 0 &&
+        dataChildrens.users.length === 0
+      ) {
+        return { status: 2, msg: 'User has not data' };
       }
-
 
       const filterDataSuscription = (suscription: Suscription) => {
         return {
@@ -757,17 +787,17 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
         dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
         if (suscriptionWaiting) {
-          dataToSend.suscriptionWaiting =
-            filterDataSuscription(suscriptionWaiting);
+          dataToSend.suscriptionWaiting = filterDataSuscription(
+            suscriptionWaiting,
+          );
         }
         return dataToSend;
       };
       if (isSuperAdmin) {
+        if (dataChildrens.admins.length > 0) {
+          console.log('1');
 
-        if (dataChildrens.admins.length>0) {
-          console.log("1")
-
-          childrens.admins = dataChildrens.admins.map((child: Admin,i) => {
+          childrens.admins = dataChildrens.admins.map((child: Admin, i) => {
             const dataToSend = {
               avatar: child.avatar,
               email: child.email,
@@ -779,36 +809,36 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
               suscriptionWaiting: null,
               status: child.status.id,
             };
-  
+
             const lastSuscription: Suscription = child.suscriptions.find(
               (suscription: Suscription) => suscription.isActive,
             );
             const suscriptionWaiting: Suscription = child.suscriptions.find(
               (suscription: Suscription) => suscription.isWaiting,
             );
-  
+
             dataToSend.lastSuscription = filterDataSuscription(lastSuscription);
             if (suscriptionWaiting) {
-              dataToSend.suscriptionWaiting =
-                filterDataSuscription(suscriptionWaiting);
+              dataToSend.suscriptionWaiting = filterDataSuscription(
+                suscriptionWaiting,
+              );
             }
-  
+
             return dataToSend;
           });
-          console.log({childrens})
+          console.log({ childrens });
         }
-        if (dataChildrens.users.length>0) {
-          childrens.users = dataChildrens.users.map(filterUsers)
+        if (dataChildrens.users.length > 0) {
+          childrens.users = dataChildrens.users.map(filterUsers);
         }
       } else {
-        if (dataChildrens.users.length>0) {
-          childrens.users = dataChildrens.users.map(filterUsers)
+        if (dataChildrens.users.length > 0) {
+          childrens.users = dataChildrens.users.map(filterUsers);
         }
       }
 
-      
       return {
-        status:0,
+        status: 0,
         profile: {
           id: user.id,
           name: user.name,
@@ -817,12 +847,12 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           lastname: user.lastname,
           email: user.email,
           type: user.type.id,
-          roomImage:user.roomImage
+          roomImage: user.roomImage,
         },
         childrens,
       };
     } catch (err) {
-      console.log('UserService - findUserChildrens: ',err);
+      console.log('UserService - findUserChildrens: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -842,26 +872,28 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       const adminsExpired = await this.suscriptionRepository
         .createQueryBuilder('suscription')
-        .innerJoinAndSelect('suscription.admin','admin')
-        .select('suscription.id','suscriptionId')
-        .addSelect('admin.id','adminId')
-        .where(querySuscriptionsExpired('admin'),{ date: new Date() })
+        .innerJoinAndSelect('suscription.admin', 'admin')
+        .select('suscription.id', 'suscriptionId')
+        .addSelect('admin.id', 'adminId')
+        .where(querySuscriptionsExpired('admin'), { date: new Date() })
         .execute();
 
       const guestExpired = await this.suscriptionRepository
         .createQueryBuilder('suscription')
-        .innerJoinAndSelect('suscription.user','user')
-        .select('suscription.id','suscriptionId')
-        .addSelect('user.id','userId')
-        .where(querySuscriptionsExpired('user'),{ date: new Date() })
+        .innerJoinAndSelect('suscription.user', 'user')
+        .select('suscription.id', 'suscriptionId')
+        .addSelect('user.id', 'userId')
+        .where(querySuscriptionsExpired('user'), { date: new Date() })
         .execute();
 
-      let expiredStatus: Status
+      let expiredStatus: Status;
 
-      const hasAdminsExpired = adminsExpired.length > 0
-      const hasGuestExpired = guestExpired.length > 0
+      const hasAdminsExpired = adminsExpired.length > 0;
+      const hasGuestExpired = guestExpired.length > 0;
       if (hasAdminsExpired || hasGuestExpired) {
-        expiredStatus = await this.statusRepository.findOne(this.statusNumbers.EXPIRED);
+        expiredStatus = await this.statusRepository.findOne(
+          this.statusNumbers.EXPIRED,
+        );
       }
 
       if (hasAdminsExpired) {
@@ -871,16 +903,16 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
         const sucriptionsAdminWaiting = await this.suscriptionRepository
           .createQueryBuilder('suscription')
-          .innerJoinAndSelect('suscription.admin','admin')
-          .select('suscription.id','suscriptionId')
-          .addSelect('admin.id','adminId')
-          .where(querySuscriptionsWaiting('admin'),{ adminsExpiredIds })
+          .innerJoinAndSelect('suscription.admin', 'admin')
+          .select('suscription.id', 'suscriptionId')
+          .addSelect('admin.id', 'adminId')
+          .where(querySuscriptionsWaiting('admin'), { adminsExpiredIds })
           .execute();
 
         const adminsWithSuscriptionsWaitingIds = sucriptionsAdminWaiting.map(
           (suscription) => suscription.adminId,
         );
-        
+
         const adminsWithNotSuscWaitingButExpiredIds = adminsExpiredIds.filter(
           (adminId) => {
             if (!adminsWithSuscriptionsWaitingIds.includes(adminId)) {
@@ -889,26 +921,27 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           },
         );
         if (adminsWithNotSuscWaitingButExpiredIds.length > 0) {
-
           await this.adminRepository
             .createQueryBuilder()
             .update()
             .set({
               status: expiredStatus,
             })
-            .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)',{
+            .where('id IN (:...adminsWithNotSuscWaitingButExpiredIds)', {
               adminsWithNotSuscWaitingButExpiredIds,
             })
             .execute();
-          
         }
 
-        console.log({adminsWithSuscriptionsWaitingIds,adminsWithNotSuscWaitingButExpiredIds})
+        console.log({
+          adminsWithSuscriptionsWaitingIds,
+          adminsWithNotSuscWaitingButExpiredIds,
+        });
 
         if (adminsWithSuscriptionsWaitingIds.length > 0) {
           const responseUpdateSuscriptionAdmin = await this.suscriptionRepository
             .createQueryBuilder('suscription')
-            .innerJoin('suscription.admin','admin')
+            .innerJoin('suscription.admin', 'admin')
             .update()
             .set({
               isActive: false,
@@ -921,7 +954,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
           const responseUpdateSuscriptionNAdmin = await this.suscriptionRepository
             .createQueryBuilder('suscription')
-            .innerJoin('suscription.admin','admin')
+            .innerJoin('suscription.admin', 'admin')
             .update()
             .set({
               isActive: true,
@@ -944,10 +977,10 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         );
         const sucriptionsUserWaiting = await this.suscriptionRepository
           .createQueryBuilder('suscription')
-          .innerJoinAndSelect('suscription.user','user')
-          .select('suscription.id','suscriptionId')
-          .addSelect('user.id','userId')
-          .where(querySuscriptionsWaiting('user'),{ usersExpiredIds })
+          .innerJoinAndSelect('suscription.user', 'user')
+          .select('suscription.id', 'suscriptionId')
+          .addSelect('user.id', 'userId')
+          .where(querySuscriptionsWaiting('user'), { usersExpiredIds })
           .execute();
         const usersWithSuscriptionsWaitingIds = sucriptionsUserWaiting.map(
           (suscription) => suscription.userId,
@@ -967,7 +1000,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
             .set({
               status: expiredStatus,
             })
-            .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)',{
+            .where('id IN (:...usersWithNotSuscWaitingButExpiredIds)', {
               usersWithNotSuscWaitingButExpiredIds,
             })
             .execute();
@@ -975,7 +1008,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         if (usersWithSuscriptionsWaitingIds.length > 0) {
           const responseUpdateSuscriptionUser = await this.suscriptionRepository
             .createQueryBuilder('suscription')
-            .innerJoin('suscription.user','user')
+            .innerJoin('suscription.user', 'user')
             .update()
             .set({
               isActive: false,
@@ -987,7 +1020,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
             .execute();
           const responseUpdateSuscriptionNUser = await this.suscriptionRepository
             .createQueryBuilder('suscription')
-            .innerJoin('suscription.user','user')
+            .innerJoin('suscription.user', 'user')
             .update()
             .set({
               isActive: true,
@@ -1013,7 +1046,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       // );
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - clearSuscriptionsExpired: ',err);
+      console.log('UserService - clearSuscriptionsExpired: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1057,7 +1090,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     });
 
     try {
-      const userPassword = await bcrypt.hash(createSuperAdminDTO.password,12);
+      const userPassword = await bcrypt.hash(createSuperAdminDTO.password, 12);
       const newUser = this.superAdminRepository.create({
         role: superAdminRole,
         type: superAdminType,
@@ -1069,7 +1102,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       await this.superAdminRepository.save(newUser);
       return { status: 0 };
     } catch (err) {
-      console.log('UserService - create: ',err);
+      console.log('UserService - create: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1084,25 +1117,30 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     try {
       let response = {};
 
-      const { isAdmin,isSuperAdmin,isGuest,user } =
-        await this.getWhoIsRequesting(updateGuestDTO);
+      const {
+        isAdmin,
+        isSuperAdmin,
+        isGuest,
+        user,
+      } = await this.getWhoIsRequesting(updateGuestDTO);
 
       if (!user) {
-        return { status: 1,msg: 'user requesting not found' };
+        return { status: 1, msg: 'user requesting not found' };
       }
 
       const guest: User = await this.userRepository.findOne({
-        relations: ['admin','superadmin'],
+        relations: ['admin', 'superadmin'],
         where: {
           uuid: updateGuestDTO.userUuidToUpdate,
           isActive: true,
           admin: isAdmin ? user : null,
           superadmin: isSuperAdmin ? user : null,
+          isDeleted:false
         },
       });
 
       if (!guest) {
-        response = { status: 1,msg: 'user not found' };
+        response = { status: 1, msg: 'user not found' };
       }
 
       if (updateGuestDTO.name) {
@@ -1125,7 +1163,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       // return response;
     } catch (err) {
-      console.log('UserService - updateAdmin: ',err);
+      console.log('UserService - updateAdmin: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1146,18 +1184,19 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       } = await this.getWhoIsRequesting(updateUserAdminDTO);
 
       if (!superadmin) {
-        return { status: 1,msg: 'supadmin not found' };
+        return { status: 1, msg: 'supadmin not found' };
       }
       const admin = await this.adminRepository.findOne({
         relations: ['superadmin'],
         where: {
           uuid: updateUserAdminDTO.adminUuidToUpdate,
           superadmin,
+          isDeleted:false
         },
       });
 
       if (!admin) {
-        return { status: 1,msg: 'user not found' };
+        return { status: 1, msg: 'user not found' };
       }
 
       const updateSuscriptionDTO: UpdateSuscriptionDTO = {
@@ -1168,15 +1207,16 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         adminUuid: admin.uuid,
       };
 
-      const lastSuscription: Suscription =
-        await this.suscriptionRepository.findOne({
-          select: ['cost','startedAt','finishedAt','isActive'],
+      const lastSuscription: Suscription = await this.suscriptionRepository.findOne(
+        {
+          select: ['cost', 'startedAt', 'finishedAt', 'isActive'],
           where: {
             admin,
             user: null,
             isActive: true,
           },
-        });
+        },
+      );
 
       if (!lastSuscription) {
         return {
@@ -1199,7 +1239,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       return response;
     } catch (err) {
-      console.log('UserService - updateAdmin: ',err);
+      console.log('UserService - updateAdmin: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1213,14 +1253,15 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
   async addNewPeriod(
     addNewSuscription: AddNewSuscriptionSuscriptionDTO,
   ): Promise<any> {
-
     try {
       let response = {};
-      const { user,isAdmin,isSuperAdmin } =
-        await this.getWhoIsRequesting(addNewSuscription);
+
+      const { user, isAdmin, isSuperAdmin } = await this.getWhoIsRequesting(
+        addNewSuscription,
+      );
 
       if (!isSuperAdmin && !isAdmin) {
-        return { status: 1,msg: 'not allowed' };
+        return { status: 1, msg: 'not allowed' };
       }
 
       const userToUpdateIsAdmin: boolean =
@@ -1252,29 +1293,29 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         });
       }
       if (!userToUpdate) {
-        return { status: 1,msg: 'user not found' };
+        return { status: 1, msg: 'user not found' };
       }
       if (!userToUpdate.isActive) {
-        return { status: 500 ,msg: 'You cannot edit an inactive user' };
+        return { status: 500, msg: 'You cannot edit an inactive user' };
       }
       lastSuscription = await this.suscriptionRepository.findOne({
         where: {
-          admin: userToUpdateIsAdmin? userToUpdate:null,
-          user: userToUpdateIsGuest? userToUpdate:null,
+          admin: userToUpdateIsAdmin ? userToUpdate : null,
+          user: userToUpdateIsGuest ? userToUpdate : null,
           isActive: true,
           isWaiting: false,
         },
       });
       hasSuscriptionWaiting = await this.suscriptionRepository.findOne({
         where: {
-          admin: userToUpdateIsAdmin? userToUpdate:null,
-          user: userToUpdateIsGuest? userToUpdate:null,
+          admin: userToUpdateIsAdmin ? userToUpdate : null,
+          user: userToUpdateIsGuest ? userToUpdate : null,
           isWaiting: true,
           isActive: false,
         },
       });
       if (hasSuscriptionWaiting) {
-        return { status: 3,msg: 'There is already a subscription waiting' };
+        return { status: 3, msg: 'There is already a subscription waiting' };
       }
 
       const newSuscription = this.suscripctionRepository.create({
@@ -1284,7 +1325,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         startedAt: new Date(addNewSuscription.startedAt),
         finishedAt: new Date(addNewSuscription.finishedAt),
         invitations: addNewSuscription.invitations,
-      }); 
+      });
 
       //inactivo
       //Expirado
@@ -1292,11 +1333,14 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       //Activo
       //pausado
 
-      const statusLastSuscription = await this.getStatusSuscription(lastSuscription)
-      const statusActive:Status =await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
+      const statusLastSuscription = await this.suscriptionService.getStatusSuscription(
+        { suscription: lastSuscription },
+      );
+      const statusActive: Status = await this.statusRepository.findOne(
+        this.statusNumbers.ACTIVE,
+      );
 
-      if ( statusLastSuscription.isExpired) {
-
+      if (statusLastSuscription.isExpired) {
         lastSuscription.isActive = false;
         lastSuscription.isWaiting = false;
 
@@ -1310,9 +1354,9 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
             .createQueryBuilder()
             .update()
             .set({
-              status:statusActive
+              status: statusActive,
             })
-            .where("id = :id", { id: user.id })            
+            .where('id = :id', { id: user.id })
             .execute();
         }
         if (userToUpdateIsAdmin) {
@@ -1320,12 +1364,11 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
             .createQueryBuilder()
             .update()
             .set({
-              status:statusActive
+              status: statusActive,
             })
-            .where("id = :id", { id: user.id })            
+            .where('id = :id', { id: user.id })
             .execute();
         }
-          
       }
       if (!statusLastSuscription.isExpired) {
         lastSuscription.isActive = true;
@@ -1341,7 +1384,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
       return response;
     } catch (err) {
-      console.log('UserService - addNewPeriod: ',err);
+      console.log('UserService - addNewPeriod: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1352,7 +1395,76 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     }
   }
 
-  async getWhoIsRequesting(request: SimpleRequest): Promise<{
+  async deleteperiod(request: DeleteSuscriptionSuscriptionDTO): Promise<{ status: number,msg:string }> {
+    try {
+      const {
+        isAdmin,
+        isSuperAdmin,
+        isGuest,
+        user,
+      } = await this.getWhoIsRequesting(request);
+
+      if (!isSuperAdmin && !isAdmin) {
+        return { status: 1, msg: 'not allowed' };
+      }
+      let userToUpdate: Admin | User;
+
+      const userToUpdateIsAdmin: boolean = request.typeToUpdate === this.typesNumbers.ADMIN;
+      const userToUpdateIsGuest: boolean = request.typeToUpdate === this.typesNumbers.USER;
+
+      if (userToUpdateIsAdmin) {
+        userToUpdate = await this.adminRepository.findOne({
+          where: {
+            uuid: request.adminUuidToUpdate,
+            superadmin: user,
+          },
+          relations: ['status'],
+        });
+      }
+      if (userToUpdateIsGuest) {
+        userToUpdate = await this.userRepository.findOne({
+          where: {
+            uuid: request.guestUuidToUpdate,
+            admin: isAdmin ? user : null,
+            superadmin: isSuperAdmin ? user : null,
+          },
+          relations: ['status'],
+        });
+      }
+      const suscriptionWaiting = await this.suscriptionRepository.findOne({
+        where: {
+          admin: userToUpdateIsAdmin ? userToUpdate : null,
+          user: userToUpdateIsGuest ? userToUpdate : null,
+          isDeleted:false,
+          isWaiting: true,
+          isActive: false,
+        },
+      });
+
+      if (!suscriptionWaiting) {
+        return { status: 401,msg:'not allowed' };
+      }
+
+      await this.suscripctionRepository.remove(suscriptionWaiting)
+
+      console.log('Deleting period: ',{suscriptionWaiting});
+
+      return { status: 0,msg:'ok' };
+    } catch (err) {
+      console.log('UserService - deleteperiod: ', err);
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error deleting period  user',
+        },
+        500,
+      );
+    }
+  }
+
+  async getWhoIsRequesting(
+    request: SimpleRequest,
+  ): Promise<{
     isAdmin: boolean;
     isSuperAdmin: boolean;
     isGuest: boolean;
@@ -1365,7 +1477,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       const isGuest = request.type === this.typesNumbers.USER;
       if (isAdmin) {
         user = await this.adminRepository.findOne({
-          relations: ['type','users'],
+          relations: ['type', 'users'],
           where: {
             uuid: request.adminUuid,
           },
@@ -1373,7 +1485,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       }
       if (isSuperAdmin) {
         user = await this.superAdminRepository.findOne({
-          relations: ['type','users','admins'],
+          relations: ['type', 'users', 'admins'],
           where: {
             uuid: request.superAdminUuid,
           },
@@ -1388,9 +1500,9 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         });
       }
 
-      return { isAdmin,isSuperAdmin,isGuest,user };
+      return { isAdmin, isSuperAdmin, isGuest, user };
     } catch (err) {
-      console.log('UserService - getWhoIsRequesting: ',err);
+      console.log('UserService - getWhoIsRequesting: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1401,58 +1513,25 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     }
   }
 
-  async updateName(changeNameDto: ChangeName): Promise<any> {
-    try {
-      const { isAdmin,isSuperAdmin,isGuest,user } =
-        await this.getWhoIsRequesting(changeNameDto);
-
-      if (!user) {
-        return { status: 1 };
-      }
-
-      user.name = changeNameDto.name;
-      if (isAdmin) {
-        await this.adminRepository.save(user);
-      }
-      if (isSuperAdmin) {
-        await this.superAdminRepository.save(user);
-      }
-      if (isGuest) {
-        await this.userRepository.save(user);
-      }
-      return {
-        status: 0,
-      };
-    } catch (err) {
-      console.log('UserService - ChangeName: ',err);
-      throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: 'Error Changing Name  user',
-        },
-        500,
-      );
-    }
-  }
   //Actualiza el usuario loggeado
   async updateUser(updateUserDTO: UpdateUserDTO): Promise<any> {
     try {
-      console.log({ updateUserDTO });
-      const { isAdmin,isSuperAdmin,isGuest,user } =
-        await this.getWhoIsRequesting(updateUserDTO);
+      const {
+        isAdmin,
+        isSuperAdmin,
+        isGuest,
+        user,
+      } = await this.getWhoIsRequesting(updateUserDTO);
       if (!user) {
         return { status: 1 };
       }
       if (updateUserDTO.name) {
-        console.log('Ha actualizado el nombre');
         user.name = updateUserDTO.name;
       }
       if (updateUserDTO.roomImage) {
-        console.log('Ha actualizado el nombre');
         user.roomImage = updateUserDTO.roomImage;
       }
       if (updateUserDTO.avatar) {
-        console.log('Ha actualizado el avatar');
         user.avatar = updateUserDTO.avatar;
         user.thumbnail = updateUserDTO.thumbnail;
       }
@@ -1473,11 +1552,11 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           avatar: user.avatar,
           thumbnail: user.thumbnail,
           name: user.name,
-          roomImage:user.roomImage
+          roomImage: user.roomImage,
         },
       };
     } catch (err) {
-      console.log('UserService - updateAdmin: ',err);
+      console.log('UserService - updateAdmin: ', err);
       throw new HttpException(
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1524,7 +1603,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         isAdmin,
       };
     } catch (err) {
-      console.log('UserService - deleteUser: ',err);
+      console.log('UserService - getTypeAndUser: ', err);
 
       throw new HttpException(
         {
@@ -1544,16 +1623,19 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       });
 
       if (!superAdmin) {
-        return { status: 1,msg: 'super not found' };
+        return { status: 1, msg: 'super not found' };
       }
 
       const admin: Admin = await this.adminRepository.findOne({
-        relations: ['users','assets'],
-        where: { uuid: deleteAdminUserDTO.adminUuidToStop },
+        relations: ['users', 'assets'],
+        where: { 
+          uuid: deleteAdminUserDTO.adminUuidToStop,
+          isDeleted:false
+         },
       });
 
       if (!admin) {
-        return { status: 2,msg: 'admin not found' };
+        return { status: 2, msg: 'admin not found' };
       }
       await this.updateArrayUsers(
         admin.users,
@@ -1585,7 +1667,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
             isActive: false,
             isDeleted: true,
           })
-          .where('id IN (:...assetsAdminIds)',{
+          .where('id IN (:...assetsAdminIds)', {
             assetsAdminIds,
           })
           .execute();
@@ -1594,11 +1676,9 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
       admin.isDeleted = true;
       await this.adminRepository.save(admin);
 
-      const userDTO = new UserDTO(admin);
-
-      return { status: 0,admin: userDTO };
+      return { status: 0};
     } catch (err) {
-      console.log('UserService - deleteUser: ',err);
+      console.log('UserService - deleteUserAdmin: ', err);
 
       throw new HttpException(
         {
@@ -1611,6 +1691,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
   }
 
   async deleteUser(deleteUserDTO: DeleteUserDTO): Promise<any> {
+    console.log("DELETING USER")
     try {
       let userRequesting: SuperAdmin | Admin;
       const isSuperAdmin = deleteUserDTO.type === this.typesNumbers.SUPERADMIN;
@@ -1643,17 +1724,18 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           uuid: deleteUserDTO.userUuidToChange,
           superadmin: isSuperAdmin ? userRequesting : null,
           admin: isAdmin ? userRequesting : null,
+          isDeleted:false
         },
       });
-      if (!userToDelete) {
-        return { status: 2,msg: 'user not found' };
-      }
 
+      if (!userToDelete) {
+        return { status: 2, msg: 'user not found' };
+      }
       userToDelete.isActive = false;
       userToDelete.isDeleted = true;
-      await this.userRepository.save(userToDelete);
-
-      await this.suscriptionRepository
+      try {
+        await this.userRepository.save(userToDelete); 
+        await this.suscriptionRepository
         .createQueryBuilder()
         .update()
         .set({
@@ -1662,14 +1744,14 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         })
         .where(`userId = ${userToDelete.id}`)
         .execute();
-      const userDTO = new UserDTO(userToDelete);
-
+      } catch (error) {
+       console.log({error},"ERRROR AQUÍ") 
+      }
       return {
         status: 0,
-        user: userDTO,
       };
     } catch (err) {
-      console.log('UserService - deleteUser: ',err);
+      console.log('UserService - deleteUser: ', err);
 
       throw new HttpException(
         {
@@ -1695,17 +1777,18 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
         .createQueryBuilder()
         .update()
         .set(statusUser)
-        .where('id IN (:...usersIds)',{
+        .where('id IN (:...usersIds)', {
           usersIds,
         })
         .execute();
       if (statusSuscription) {
-        const suscriptions: Suscription[] =
-          await this.suscripctionRepository.find({
+        const suscriptions: Suscription[] = await this.suscripctionRepository.find(
+          {
             where: {
               user: In(usersIds),
             },
-          });
+          },
+        );
         const suscriptionsIds = suscriptions.map(
           (suscription) => suscription.id,
         );
@@ -1713,7 +1796,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           .createQueryBuilder()
           .update()
           .set(statusSuscription)
-          .where('id IN (:...suscriptionsIds)',{
+          .where('id IN (:...suscriptionsIds)', {
             suscriptionsIds,
           })
           .execute();
@@ -1729,7 +1812,7 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           .createQueryBuilder()
           .update()
           .set(statusAsset)
-          .where('id IN (:...assetsIds)',{
+          .where('id IN (:...assetsIds)', {
             assetsIds,
           })
           .execute();
@@ -1739,46 +1822,56 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
 
   async suspendUserAdmin(pauseAdminUserDTO: DeleteAdminUserDTO): Promise<any> {
     try {
-
-      console.log({pauseAdminUserDTO})
+      console.log({ pauseAdminUserDTO });
       const superAdmin = await this.superAdminRepository.findOne({
         where: {
           uuid: pauseAdminUserDTO.superAdminUuid,
         },
       });
-      console.log({superAdmin})
+      console.log({ superAdmin });
       if (!superAdmin) {
-        return { status: 1,msg: 'super not found' };
+        return { status: 1, msg: 'super not found' };
       }
       const admin: Admin = await this.adminRepository.findOne({
         relations: ['users'],
         where: {
-           uuid: pauseAdminUserDTO.adminUuidToStop,
-           superadmin:superAdmin
-           },
+          uuid: pauseAdminUserDTO.adminUuidToStop,
+          superadmin: superAdmin,
+          isDeleted:false
+        },
       });
       if (!admin) {
-        return { status: 2,msg: 'admin not found' };
+        return { status: 2, msg: 'admin not found' };
       }
 
       if (pauseAdminUserDTO.status) {
-        const activeSuscription:Suscription =await  this.suscripctionRepository.findOne({
-          where: {
-            isActive:true,
-            admin
-          }
-        })
-        const statusSuscription = await this.getStatusSuscription(activeSuscription)
+        const activeSuscription: Suscription = await this.suscripctionRepository.findOne(
+          {
+            where: {
+              isActive: true,
+              admin,
+            },
+          },
+        );
+        const statusSuscription = await this.suscriptionService.getStatusSuscription(
+          { suscription: activeSuscription },
+        );
         if (statusSuscription.isExpired) {
-          const statusExpired:Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
-          admin.status=statusExpired
-        }else{
-          const statusActive:Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
-          admin.status=statusActive
+          const statusExpired: Status = await this.statusRepository.findOne(
+            this.statusNumbers.EXPIRED,
+          );
+          admin.status = statusExpired;
+        } else {
+          const statusActive: Status = await this.statusRepository.findOne(
+            this.statusNumbers.ACTIVE,
+          );
+          admin.status = statusActive;
         }
-      }else{
-        const statusInactive:Status = await this.statusRepository.findOne(this.statusNumbers.INACTIVE)
-        admin.status=statusInactive
+      } else {
+        const statusInactive: Status = await this.statusRepository.findOne(
+          this.statusNumbers.INACTIVE,
+        );
+        admin.status = statusInactive;
       }
 
       await this.updateArrayUsers(
@@ -1788,16 +1881,16 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
           isDeleted: false,
         },
         null,
-        { isActive: pauseAdminUserDTO.status,isDeleted: false },
+        { isActive: pauseAdminUserDTO.status, isDeleted: false },
       );
       admin.isActive = pauseAdminUserDTO.status;
 
       await this.adminRepository.save(admin);
       const userDTO = new UserDTO(admin);
 
-      return { status: 0,admin: userDTO };
+      return { status: 0, admin: userDTO };
     } catch (err) {
-      console.log('UserService - pauseUser: ',err);
+      console.log('UserService - pauseUser: ', err);
 
       throw new HttpException(
         {
@@ -1810,51 +1903,65 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
   }
   async suspendUser(pauseUserDTO: DeleteUserDTO): Promise<any> {
     try {
-      console.log({pauseUserDTO})
-      const { isAdmin,isSuperAdmin,user } = await this.getWhoIsRequesting(pauseUserDTO)
-     
+      const { isAdmin, isSuperAdmin, user } = await this.getWhoIsRequesting(
+        pauseUserDTO,
+      );
+
       if (!user) {
-        return { status: 1,msg: 'admin not found' };
+        return { status: 1, msg: 'admin not found' };
       }
+
       const userToUpdate = await this.userRepository.findOne({
         relations: ['admin'],
-        where: { 
+        where: {
           uuid: pauseUserDTO.userUuidToChange,
-          admin:isAdmin?user:null,
-          superadmin:isSuperAdmin?user:null
-         },
+          admin: isAdmin ? user : null,
+          superadmin: isSuperAdmin ? user : null,
+          isDeleted:false
+        },
       });
-      console.log({userToUpdate})
+
       if (!userToUpdate) {
-        return { status: 2,msg: 'user not found' };
+        return { status: 2, msg: 'user not found' };
       }
       if (pauseUserDTO.status) {
-        const activeSuscription:Suscription =await  this.suscripctionRepository.findOne({
-          where: {
-            isActive:true,
-            user:userToUpdate
-          }
-        })
-        const statusSuscription = await this.getStatusSuscription(activeSuscription)
+        const activeSuscription: Suscription = await this.suscripctionRepository.findOne(
+          {
+            where: {
+              isActive: true,
+              user: userToUpdate,
+              
+            },
+          },
+        );
+        const statusSuscription = await this.suscriptionService.getStatusSuscription(
+          { suscription: activeSuscription },
+        );
         if (statusSuscription.isExpired) {
-          const statusExpired:Status = await this.statusRepository.findOne(this.statusNumbers.EXPIRED)
-          userToUpdate.status=statusExpired
-        }else{
-          const statusActive:Status = await this.statusRepository.findOne(this.statusNumbers.ACTIVE)
-          userToUpdate.status=statusActive
+          const statusExpired: Status = await this.statusRepository.findOne(
+            this.statusNumbers.EXPIRED,
+          );
+          userToUpdate.status = statusExpired;
+        } else {
+          const statusActive: Status = await this.statusRepository.findOne(
+            this.statusNumbers.ACTIVE,
+          );
+          userToUpdate.status = statusActive;
         }
-      }else{
-        const statusInactive:Status = await this.statusRepository.findOne(this.statusNumbers.INACTIVE)
-        userToUpdate.status=statusInactive
+      } else {
+        const statusInactive: Status = await this.statusRepository.findOne(
+          this.statusNumbers.INACTIVE,
+        );
+        userToUpdate.status = statusInactive;
       }
 
       userToUpdate.isActive = pauseUserDTO.status;
       await this.userRepository.save(userToUpdate);
       const userDTO = new UserDTO(userToUpdate);
 
-      return { status: 0,user: userDTO };
+      return { status: 0, user: userDTO };
     } catch (err) {
-      console.log('UserService - pause user: ',err);
+      console.log('UserService - pause user: ', err);
 
       throw new HttpException(
         {
@@ -1870,39 +1977,42 @@ async createPublication(createPublication: CreatePublicationDTO): Promise<any> {
     reuestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
     try {
-      console.log({ reuestSesionLogOutDTO });
       const { isFromCMS } = reuestSesionLogOutDTO;
-      const { isAdmin,isSuperAdmin,isGuest,user } =
-        await this.getWhoIsRequesting(reuestSesionLogOutDTO);
+      const {
+        isAdmin,
+        isSuperAdmin,
+        isGuest,
+        user,
+      } = await this.getWhoIsRequesting(reuestSesionLogOutDTO);
       let response = null;
       let actualSesion: Sesion;
       if (!user) {
-        return { status: 1,msg: 'user not found' };
+        return { status: 1, msg: 'user not found' };
       }
       if (isSuperAdmin) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { superadmin: user,isFromCMS },
+          where: { superadmin: user, isFromCMS },
         });
       }
       if (isAdmin) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { admin: user,isFromCMS },
+          where: { admin: user, isFromCMS },
         });
       }
       if (isGuest) {
         actualSesion = await this.sesionRepository.findOne({
-          where: { user,isFromCMS },
+          where: { user, isFromCMS },
         });
       }
       if (!actualSesion) {
-        return { status: 2,msg: 'sesion not found' };
+        return { status: 2, msg: 'sesion not found' };
       }
       await this.sesionRepository.remove(actualSesion);
       response = { status: 0 };
 
       return response;
     } catch (err) {
-      console.log('SesionService - RequesLogout: ',err);
+      console.log('SesionService - RequesLogout: ', err);
 
       throw new HttpException(
         {

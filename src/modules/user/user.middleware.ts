@@ -24,7 +24,6 @@ export class UserMiddleware implements NestMiddleware {
       if (cifrado.usuario.type === USER_NORMAL) {
         req.body.userUuid = cifrado.usuario.uuid;
       }
-      console.log(req.body)
       req.body.type = cifrado.usuario.type;
       next();
     } catch (error) {

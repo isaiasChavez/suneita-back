@@ -41,7 +41,7 @@ import { ProductModule } from './modules/user/product/product.module';
           },
         },
         defaults: {
-          from: '"Ocupath" <noreplay@ocupath.mx>',
+          from: '"Multivrsity" <noreply@multivrsity.com>',
         },
         template: {
           dir: __dirname + "/templates",

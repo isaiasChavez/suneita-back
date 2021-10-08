@@ -14,12 +14,10 @@ export class SesionController {
   constructor (private sesionService: SesionService) {}
   @Post()
   async Login (@Body() reuestSesionDTO: ReuestSesionDTO): Promise<any> {
-    console.log({ reuestSesionDTO })
 
     const newreuestSesionDTO = new ReuestSesionDTO(reuestSesionDTO)
     try {
       await validateOrReject(newreuestSesionDTO)
-      console.log('Validado')
       return await this.sesionService.RequesLogin(reuestSesionDTO)
     } catch (errors) {
       console.log(
@@ -78,7 +76,11 @@ export class SesionController {
   }
   @Post('requestreset/:email')
   async requestPasswordReset (@Param('email') email): Promise<any> {
-    console.log('requestPasswordReset')
+
+    if (typeof email !== 'string') {
+      return{ status:500}
+    }
+
     return await this.sesionService.requestPasswordReset(email)
   }
 
@@ -106,7 +108,6 @@ export class SesionController {
   async Logout (
     @Body() requestSesionLogOutDTO: ReuestSesionLogOutDTO,
   ): Promise<any> {
-    console.log({ requestSesionLogOutDTO })
     return await this.sesionService.RequesLogout(requestSesionLogOutDTO)
   }
   @Get('des/:email')

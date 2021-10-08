@@ -89,8 +89,6 @@ export class UploadService {
         case '4':
           this.uploadVideo360(req, res,  (error)=> {
             if (error) {
-              console.log('req.files:', req.files);
-              console.log('Multer Error:', error);
               return res
                 .status(404)
                 .json(`Failed to upload image file: ${error}`);
@@ -117,7 +115,6 @@ export class UploadService {
                 .status(404)
                 .json(`Failed to upload image file: ${error}`);
             }
-            // console.log("ASSETS: ", req.files);
             let urlToReturn = req.files[0].Location;
             urlToReturn = urlToReturn.substring(
               urlToReturn.indexOf('/users/'),
@@ -139,7 +136,6 @@ export class UploadService {
                 .status(404)
                 .json(`Failed to upload room file: ${error}`);
             }
-            // console.log("ASSETS: ", req.files);
             let urlToReturn = req.files[0].Location;
             urlToReturn = urlToReturn.substring(
               urlToReturn.indexOf('/rooms/'),
