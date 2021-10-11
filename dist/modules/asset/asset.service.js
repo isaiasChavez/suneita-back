@@ -21,6 +21,8 @@ const asset_entity_1 = require("./asset.entity");
 const user_entity_1 = require("../user/user/user.entity");
 const type_asset_entity_1 = require("./type-asset/type-asset.entity");
 const user_service_1 = require("../user/user/user.service");
+const imageThumbnail = require('image-thumbnail');
+const Blob = require('node:buffer');
 let AssetService = class AssetService {
     constructor(userService, adminRepository, userRepository, assetRepository, typeAssetRepository) {
         this.userService = userService;
@@ -76,6 +78,9 @@ let AssetService = class AssetService {
             }
             return {
                 assets: { images: [], videos360: [], videos: [], images360: [] },
+                user: {
+                    roomImage: user.roomImage,
+                },
                 status: 3,
                 msg: 'there are not assets'
             };
@@ -122,6 +127,17 @@ let AssetService = class AssetService {
                     thumbnail: createAssetDTO.thumbnail,
                     typeAsset
                 });
+            }
+            console.log(createAssetDTO.url);
+            try {
+                const thumbnail = await imageThumbnail({ uri: createAssetDTO.url });
+                let binary = Buffer.from(thumbnail);
+                let imgData = new Blob(binary.buffer, { type: 'application/octet-binary' });
+                let link = URL.createObjectURL(imgData);
+                console.log({ thumbnail, link });
+            }
+            catch (error) {
+                console.log("Error creando thumbnail", { error });
             }
             await this.assetRepository.save(asset);
             return {
