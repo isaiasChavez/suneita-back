@@ -7,7 +7,10 @@ import { Asset } from './asset.entity';
 import { User } from '../user/user/user.entity';
 import { TypeAsset } from './type-asset/type-asset.entity';
 import { UserService } from '../user/user/user.service';
+const imageThumbnail = require('image-thumbnail');
 import { SimpleRequest } from '../user/user/user.dto';
+const Blob  = require('node:buffer') 
+
 @Injectable()
 export class AssetService {
 
@@ -70,6 +73,9 @@ export class AssetService {
             }
             return {
                 assets:{images:[],videos360:[],videos:[],images360:[]},
+                user:{
+                    roomImage:user.roomImage,
+                },
                 status: 3,
                 msg:'there are not assets'
             }
@@ -125,6 +131,19 @@ export class AssetService {
                     typeAsset
                 })
             }
+
+            console.log(createAssetDTO.url)
+            try {
+                const thumbnail = await imageThumbnail({ uri: createAssetDTO.url } );
+                let binary = Buffer.from(thumbnail); //or Buffer.from(data, 'binary')
+                let imgData = new Blob(binary.buffer as any, { type: 'application/octet-binary' });
+                let link = URL.createObjectURL(imgData);
+                console.log({thumbnail,link})
+                
+            } catch (error) {
+                console.log("Error creando thumbnail",{error})
+            }
+
 
             await this.assetRepository.save(asset)
             return {

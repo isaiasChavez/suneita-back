@@ -40,6 +40,7 @@
     "dotenv": "^10.0.0",
     "handlebars": "^4.7.7",
     "helmet": "^4.6.0",
+    "image-thumbnail": "^1.0.14",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
