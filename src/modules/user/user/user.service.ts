@@ -28,11 +28,7 @@ import {
   UpdateGuestDTO,
   SetSesionAppId,
   ResponseProfile,
-<<<<<<< HEAD
-  CreatePublicationDTO
-=======
->>>>>>> 2798129a65ce3dbc958cd3793e41c317dae874f0
-} from './user.dto';
+  CreatePublicationDTO} from './user.dto';
 import { Configuration } from '../../../config/config.keys';
 
 import { MailerService } from '@nestjs-modules/mailer';
